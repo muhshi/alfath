@@ -14,11 +14,11 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->string('category_id');
+            $table->string('team_id');
             $table->date('start_periode');
             $table->date('end_periode');
-            $table->string('img_survey')->nullable(); // path ke upload
             $table->unsignedBigInteger('metabase_dashboard_id');
-            $table->json('metabase_params')->nullable(); // ['tahun'=>2024,'wil'=>32]
             $table->timestamps();
         });
     }
