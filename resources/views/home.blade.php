@@ -64,7 +64,6 @@
                                                 <div class="me-auto">
                                                     <span class="text-green d-inline-flex align-items-center lh-1">
                                                         7%
-
                                                     </span>
                                                 </div>
                                             </div>
