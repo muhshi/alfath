@@ -8,6 +8,15 @@
 // Tabler Vendor Styles
 @use "../../node_modules/@tabler/core/scss/tabler-vendors" as *;
 
+// Tabler Flags Styles (Icon bendera)
+@use "../../node_modules/@tabler/core/scss/tabler-flags" as *;
+
+// Tabler Payment Styles (Icon pembayaran)
+@use "../../node_modules/@tabler/core/scss/tabler-payments" as *;
+
+// Tabler Social Styles (Icon sosial media)
+@use "../../node_modules/@tabler/core/scss/tabler-social" as *;
+
 // Tabler Webfont Icons
 @use "../../node_modules/@tabler/icons-webfont/tabler-icons.css";
 
