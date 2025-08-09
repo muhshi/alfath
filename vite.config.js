@@ -1,21 +1,23 @@
-import { defineConfig } from 'vite';
+import {defineConfig} from 'vite';
 import laravel from 'laravel-vite-plugin';
-import path from 'path';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: [
-                'resources/sass/app.scss',
-                'resources/js/app.js',
-            ],
+            input: ['resources/js/app.js'],
             refresh: true,
         }),
     ],
-    resolve: {
-        alias: {
-            '@tabler': path.resolve(__dirname, 'node_modules/@tabler'),
-            '@icons-webfont': path.resolve(__dirname, 'node_modules/@tabler/icons-webfont'),
-        },
+    server: {
+        hmr: {
+            host: 'localhost',
+            protocol: 'ws',
+            port: 3000
+        }
     },
+    build: {
+        commonjsOptions: {
+            transformMixedEsModules: true
+        }
+    }
 });
