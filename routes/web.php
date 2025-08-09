@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SurveyController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -11,9 +12,13 @@ use Illuminate\Support\Facades\Route;
 //         'embedUrl' => \App\Support\WilkerstatMetabase::dashboard(6),
 //     ]);
 // });
+Route::get('/surveys', [SurveyController::class, 'index'])->name('surveys.index');
 
-Route::resource('/surveys', \App\Http\Controllers\SurveyController::class);
-Route::get('/surveys/{survey}/embed', [\App\Http\Controllers\SurveyController::class, 'embed'])->name('surveys.embed');
+Route::get('/surveys/category/{category}', [SurveyController::class, 'index'])
+    ->name('surveys.byCategory');
+
+Route::get('/surveys/{survey}/embed', [SurveyController::class, 'embed'])->name('surveys.embed');
+
 Auth::routes();
 
 Route::get('/home', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');

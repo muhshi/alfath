@@ -14,13 +14,14 @@ class SurveySeeder extends Seeder
     public function run(): void
     {
         Survey::create([
-            'name' => 'Survey Ekonomi Q1-2024',
-            'description' => 'Dashboard ekonomi triwulan 1',
-            'start_periode' => '2024-01-01',
-            'end_periode' => '2024-03-31',
-            'metabase_dashboard_id' => 6,
-            'metabase_params' => ['tahun' => 2024],
-            'img_survey' => 'surveys/ekonomi.jpg',
+            'name' => 'Wilkerstat Updating SE2026',
+            'description' => 'Dashboard Wilkerstat Updating SE2026',
+            'start_periode' => '2025-08-01',
+            'end_periode' => '2025-08-31',
+            'category_id' => '1', // Assuming category_id 1 exists
+            'team_id' => '1', // Assuming team_id 1 exists
+            'metabase_dashboard_id' => 5,
+
         ]);
 
     }

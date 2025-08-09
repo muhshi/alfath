@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Survey;
+use App\Models\Team;
 use Illuminate\Http\Request;
 
 class SurveyController extends Controller
@@ -10,10 +11,31 @@ class SurveyController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $surveys = Survey::latest()->get();   // ambil semua record
-        return view('surveys.index', compact('surveys'));
+        $categorySlug = $request->get('category');
+
+        $categoryId = null;
+        if ($categorySlug) {
+            $categoryId = \App\Models\Category::whereRaw('LOWER(name) = ?', [strtolower($categorySlug)])
+                ->value('id');
+        }
+
+        $teams = Team::whereHas('surveys', function ($query) use ($categoryId) {
+            if ($categoryId) {
+                $query->where('category_id', $categoryId);
+            }
+        })
+            ->with([
+                'surveys' => function ($query) use ($categoryId) {
+                    if ($categoryId) {
+                        $query->where('category_id', $categoryId);
+                    }
+                }
+            ])
+            ->get();
+
+        return view('surveys.index', compact('teams', 'categorySlug'));
     }
 
     public function embed(Survey $survey)

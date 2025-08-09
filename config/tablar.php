@@ -151,17 +151,16 @@ return [
         ],
 
         [
-            'text' => 'Survei',
-            'url' => 'surveys',
-            'icon' => 'ti ti-agenda',
-            'active' => ['surveys'],
+            'text' => 'Monitoring',
+            'url' => 'surveys?category=monitoring',
+            'icon' => 'ti ti-clipboard-data',
+            'active' => ['surveys?category=monitoring'],
         ],
-
         [
             'text' => 'Validasi',
-            'url' => '#',
-            'icon' => 'ti ti-write',
-            //'active' => ['validasi'],
+            'url' => 'surveys?category=validasi',
+            'icon' => 'ti ti-file-analytics',
+            'active' => ['surveys?category=validasi'],
         ],
 
         // [
