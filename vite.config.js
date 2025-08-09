@@ -1,23 +1,35 @@
-import {defineConfig} from 'vite';
-import laravel from 'laravel-vite-plugin';
+import { defineConfig } from "vite";
+import laravel from "laravel-vite-plugin";
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/js/app.js'],
+            input: ["resources/js/app.js"],
             refresh: true,
         }),
     ],
     server: {
         hmr: {
-            host: 'localhost',
-            protocol: 'ws',
-            port: 3000
-        }
+            host: "localhost",
+            protocol: "ws",
+            port: 3000,
+        },
     },
     build: {
         commonjsOptions: {
-            transformMixedEsModules: true
-        }
-    }
+            transformMixedEsModules: true,
+        },
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                silenceDeprecations: [
+                    "import",
+                    "legacy-js-api",
+                    "global-builtin",
+                    "color-functions",
+                ],
+            },
+        },
+    },
 });
