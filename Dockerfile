@@ -25,6 +25,11 @@ COPY . /app
 # Copy composer dari image resminya
 COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
 
+# Install Node.js & npm
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g pnpm
+
 # Install dependencies Laravel
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
