@@ -1,26 +1,26 @@
 import { defineConfig } from "vite";
-import path from "path";
+import laravel from "laravel-vite-plugin";
 
 export default defineConfig({
+    plugins: [
+        laravel({
+            input: ["resources/js/app.js", "resources/css/app.css"], // Letak file JavaScript dan CSS utama
+            refresh: true,
+        }),
+    ],
     resolve: {
         alias: {
-            "@": path.resolve(__dirname, "./src"),
-            "@tabler/core": path.resolve(
-                __dirname,
-                "./node_modules/@tabler/core"
-            ),
+            "@": "/resources",
         },
     },
     css: {
         preprocessorOptions: {
             scss: {
-                silenceDeprecations: [
-                    "import",
-                    "legacy-js-api",
-                    "global-builtin",
-                    "color-functions",
-                ],
+                additionalData: `@use "sass:math";`, // Tambahkan ini jika ada masalah dengan Sass
             },
         },
+    },
+    build: {
+        outDir: "public/build", // Folder output build
     },
 });
