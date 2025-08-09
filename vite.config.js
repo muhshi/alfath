@@ -1,23 +1,14 @@
 import { defineConfig } from "vite";
-import laravel from "laravel-vite-plugin";
+import path from "path";
 
 export default defineConfig({
-    plugins: [
-        laravel({
-            input: ["resources/js/app.js"],
-            refresh: true,
-        }),
-    ],
-    server: {
-        hmr: {
-            host: "localhost",
-            protocol: "ws",
-            port: 3000,
-        },
-    },
-    build: {
-        commonjsOptions: {
-            transformMixedEsModules: true,
+    resolve: {
+        alias: {
+            "@": path.resolve(__dirname, "./src"),
+            "@tabler/core": path.resolve(
+                __dirname,
+                "./node_modules/@tabler/core"
+            ),
         },
     },
     css: {
