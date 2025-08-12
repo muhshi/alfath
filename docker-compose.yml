@@ -1,0 +1,19 @@
+services:
+    alfath-franken:
+        container_name: alfath-franken
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - '8002:80'
+        volumes:
+            - '.:/app'
+        networks:
+            - default
+            - mysql-stack_mysql_network
+
+networks:
+    default: null
+    mysql-stack_mysql_network:
+        external: true

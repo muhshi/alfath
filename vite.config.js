@@ -1,23 +1,26 @@
-import {defineConfig} from 'vite';
-import laravel from 'laravel-vite-plugin';
+import { defineConfig } from "vite";
+import laravel from "laravel-vite-plugin";
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/js/app.js'],
+            input: ["resources/js/app.js", "resources/css/app.css"], // Letak file JavaScript dan CSS utama
             refresh: true,
         }),
     ],
-    server: {
-        hmr: {
-            host: 'localhost',
-            protocol: 'ws',
-            port: 3000
-        }
+    resolve: {
+        alias: {
+            "@": "/resources",
+        },
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                additionalData: `@use "sass:math";`, // Tambahkan ini jika ada masalah dengan Sass
+            },
+        },
     },
     build: {
-        commonjsOptions: {
-            transformMixedEsModules: true
-        }
-    }
+        outDir: "public/build", // Folder output build
+    },
 });

@@ -9,7 +9,7 @@
     "devDependencies": {
         "@melloware/coloris": "^0.19.1",
         "@popperjs/core": "^2.11.8",
-        "@tabler/core": "1.0.0",
+        "@tabler/core": "1.4.0",
         "@tabler/icons": "^3.30.0",
         "@tabler/icons-webfont": "^2.32.0",
         "@tailwindcss/vite": "^4.0.0",
@@ -41,7 +41,6 @@
         "vite": "^5.0.0"
     },
     "dependencies": {
-        "@tabler/core": "^1.4.0",
         "@tabler/icons": "^3.34.1"
     }
 }
