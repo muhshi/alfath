@@ -36,14 +36,14 @@ WORKDIR /app
 # Copy file yang dibutuhkan untuk install dependencies
 COPY composer.json composer.lock package.json pnpm-lock.yaml vite.config.* ./
 
+# Copy seluruh source code
+COPY . .
+
 # Install Laravel dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
 # Install frontend dependencies
 RUN pnpm install --frozen-lockfile
-
-# Copy seluruh source code
-COPY . .
 
 # Build frontend
 RUN pnpm run build
