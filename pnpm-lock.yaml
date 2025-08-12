@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@tabler/core':
-        specifier: ^1.4.0
-        version: 1.4.0
       '@tabler/icons':
         specifier: ^3.34.1
         version: 3.34.1
@@ -21,6 +18,9 @@ importers:
       '@popperjs/core':
         specifier: ^2.11.8
         version: 2.11.8
+      '@tabler/core':
+        specifier: 1.4.0
+        version: 1.4.0
       '@tabler/icons-webfont':
         specifier: ^2.32.0
         version: 2.47.0
