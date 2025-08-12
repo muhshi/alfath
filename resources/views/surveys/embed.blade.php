@@ -11,7 +11,7 @@
                         Overview
                     </div>
                     <h2 class="page-title">
-                        Detail Survey
+                        Detai Monitoring survei
                     </h2>
                 </div>
                 <!-- Page title actions -->

@@ -20,42 +20,7 @@
                                     <h3 class="h2">Welcome to ALFATH</h3>
                                     <p class="text-muted">ALFATH (Aplikasi FASIH Monitoring Harian)</p>
                                     <div class="row g-3 mt-auto">
-                                        <div class="col-auto">
-                                            <div class="subheader">Today's Sales</div>
-                                            <div class="d-flex align-items-baseline">
-                                                <div class="h3 me-2">6,782</div>
-                                                <div class="me-auto">
-                                                    <span class="text-green d-inline-flex align-items-center lh-1">
-                                                        7%
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="progress progress-sm">
-                                                <div class="progress-bar bg-success" style="width: 75%" role="progressbar"
-                                                    aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"
-                                                    aria-label="75% Complete">
-                                                    <span class="visually-hidden">75% Complete</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <div class="subheader">Growth Rate</div>
-                                            <div class="d-flex align-items-baseline">
-                                                <div class="h3 me-2">78,4%</div>
-                                                <div class="me-auto">
-                                                    <span class="text-red d-inline-flex align-items-center lh-1">
-                                                        -1%
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="progress progress-sm">
-                                                <div class="progress-bar bg-danger" style="width: 78%" role="progressbar"
-                                                    aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"
-                                                    aria-label="78% Complete">
-                                                    <span class="visually-hidden">78% Complete</span>
-                                                </div>
-                                            </div>
-                                        </div>
+
                                     </div>
                                 </div>
                                 <div class="col-12 col-sm-auto d-flex justify-content-center">
@@ -331,7 +296,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <div class="text-secondary mt-2">24,635 users increased from last month</div>
+                            <div class="text-secondary mt-2">ini dihapus</div>
                         </div>
                         <div id="chart-visitors" class="position-relative"></div>
                     </div>
@@ -339,7 +304,7 @@
                 <div class="col-sm-6 col-lg-3">
                     <div class="card">
                         <div class="card-body">
-                            <div class="subheader">Active Users</div>
+                            <div class="subheader">ini juga di </div>
                             <div class="d-flex align-items-baseline mb-2">
                                 <div class="h1 mb-0 me-2">25,782</div>
                                 <div class="me-auto">
