@@ -9,7 +9,7 @@ services:
       - "8002:80"
     # Untuk produksi: cukup persist storage & (opsional) SQLite
     volumes:
-      - ./.env:/app/.env:ro
+      - ./.env:/app/.env
       - ./storage:/app/storage
       - ./bootstrap/cache:/app/bootstrap/cache
       # Kalau pakai SQLite di server:
