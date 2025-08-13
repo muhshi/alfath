@@ -21,4 +21,4 @@ Route::get('/surveys/{survey}/embed', [SurveyController::class, 'embed'])->name(
 
 Auth::routes();
 
-Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('dashboard');
