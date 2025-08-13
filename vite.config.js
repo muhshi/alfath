@@ -4,23 +4,21 @@ import laravel from "laravel-vite-plugin";
 export default defineConfig({
     plugins: [
         laravel({
-            input: ["resources/js/app.js", "resources/css/app.css"], // Letak file JavaScript dan CSS utama
+            // kalau kamu memang pakai SCSS, pakai file scss sebagai entry
+            input: ["resources/js/app.js", "resources/sass/app.scss"],
             refresh: true,
         }),
     ],
     resolve: {
-        alias: {
-            "@": "/resources",
-        },
+        alias: { "@": "/resources" },
     },
     css: {
         preprocessorOptions: {
             scss: {
-                additionalData: `@use "sass:math";`, // Tambahkan ini jika ada masalah dengan Sass
+                // bantu Sass menemukan partial bootstrap
+                includePaths: ["node_modules", "node_modules/bootstrap/scss"],
             },
         },
     },
-    build: {
-        outDir: "public/build", // Folder output build
-    },
+    build: { outDir: "public/build" },
 });
