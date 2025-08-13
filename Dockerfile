@@ -21,9 +21,16 @@ RUN pnpm run build
 # =========================================
 FROM composer:2 AS vendor
 WORKDIR /app
+
+# (opsional) biar composer gak protes root
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
-# Salin sisa kode agar dump-autoload bisa finalize (opsional)
+# ABAIKAN ext-intl DI SINI SAJA, karena final stage memasangnya
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
+    --ignore-platform-req=ext-intl
+
+# (opsional) salin kode lalu finalize autoload
 COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
