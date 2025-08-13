@@ -1,38 +1,30 @@
 # =========================================
-# Stage 1: Build front-end assets dengan Node
+# Stage 1: Build front-end assets (Node)
 # =========================================
 FROM node:22-alpine AS assets
 WORKDIR /app
 
-# Aktifkan pnpm via corepack
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
-# Salin file lock & manifest dulu agar cache install efektif
+# pakai cache yang efisien
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm fetch
 
-# Salin seluruh source lalu install offline + build
 COPY . .
 RUN pnpm install --offline
 RUN pnpm run build
 
 # =========================================
-# Stage 2: Install composer dependencies
+# Stage 2: Install composer dependencies (tanpa scripts)
 # =========================================
 FROM composer:2 AS vendor
 WORKDIR /app
-
-# (opsional) biar composer gak protes root
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 COPY composer.json composer.lock ./
-# ABAIKAN ext-intl DI SINI SAJA, karena final stage memasangnya
+# skip scripts (no artisan here) + abaikan ext-intl (akan dipasang di final)
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
-    --ignore-platform-req=ext-intl
-
-# (opsional) salin kode lalu finalize autoload
-COPY . .
-RUN composer dump-autoload --optimize --no-dev
+    --no-scripts --ignore-platform-req=ext-intl
 
 # =========================================
 # Stage 3: FrankenPHP final image
@@ -42,7 +34,7 @@ FROM dunglas/frankenphp:php8.3 AS final
 ENV SERVER_NAME=":80"
 WORKDIR /app
 
-# OS deps & ekstensi PHP yang umum dipakai Laravel + GD + intl + zip + mysql + sqlite
+# Ekstensi yang dibutuhkan Laravel + Filament
 RUN apt-get update && apt-get install -y \
     libicu-dev libzip-dev libpng-dev libjpeg-dev libfreetype6-dev \
     zip curl unzip git sqlite3 \
@@ -51,23 +43,25 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-enable intl gd zip pdo_mysql pdo_sqlite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy source code
+# Salin source code dahulu
 COPY . .
 
-# Copy vendor & build assets hasil stage sebelumnya
+# Salin vendor & aset yang sudah terbangun
 COPY --from=vendor /app/vendor /app/vendor
 COPY --from=assets /app/public/build /app/public/build
 
-# Optimasi Laravel (tanpa memaksa jika APP_KEY belum ada)
+# Laravel optimize (jalankan artisan scripts di sini)
+# package:discover dulu agar packages.php terbentuk
 RUN php artisan key:generate --force || true \
+    && php artisan package:discover --ansi \
     && php artisan config:cache \
     && php artisan route:cache \
     && php artisan view:cache
 
-# Permission untuk storage & cache
+# Permission
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
-# Caddyfile untuk FrankenPHP
+# FrankenPHP (Caddy) config
 COPY Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80 443 443/udp
