@@ -11,9 +11,9 @@ Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])
     ->name('dashboard');
 
 // ===== Kalau mau tetap punya /home, tapi tanpa bentrok nama =====
-Route::get('/home', function () {
-    return redirect()->route('dashboard');
-})->name('home');
+// Route::get('/home', function () {
+//     return redirect()->route('dashboard');
+// })->name('home');
 
 // ===== Routes survei =====
 Route::get('/surveys', [SurveyController::class, 'index'])->name('surveys.index');
