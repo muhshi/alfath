@@ -1,19 +1,25 @@
 services:
   alfath-franken:
     container_name: alfath-franken
-    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
-      - '8002:80'
+      - "8002:80"
+    # Untuk produksi: cukup persist storage & (opsional) SQLite
     volumes:
-      # Mount hanya folder storage & cache untuk development
       - ./storage:/app/storage
       - ./bootstrap/cache:/app/bootstrap/cache
+      # Kalau pakai SQLite di server:
+      # - ./database/database.sqlite:/app/database/database.sqlite
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: "http://your-host-or-ip:8002"
     networks:
       - default
-      - mysql-stack_mysql_network
+      - mysql-stack_mysql_network  # kalau kamu butuh akses MySQL external
 
 networks:
   default: null

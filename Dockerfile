@@ -1,66 +1,66 @@
 # =========================================
-# Stage 1: Base PHP + dependency
+# Stage 1: Build front-end assets dengan Node
 # =========================================
-FROM dunglas/frankenphp:php8.3 AS base
+FROM node:22-alpine AS assets
+WORKDIR /app
+
+# Aktifkan pnpm via corepack
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+# Salin file lock & manifest dulu agar cache install efektif
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm fetch
+
+# Salin seluruh source lalu install offline + build
+COPY . .
+RUN pnpm install --offline
+RUN pnpm run build
+
+# =========================================
+# Stage 2: Install composer dependencies
+# =========================================
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+# Salin sisa kode agar dump-autoload bisa finalize (opsional)
+COPY . .
+RUN composer dump-autoload --optimize --no-dev
+
+# =========================================
+# Stage 3: FrankenPHP final image
+# =========================================
+FROM dunglas/frankenphp:php8.3 AS final
 
 ENV SERVER_NAME=":80"
 WORKDIR /app
 
+# OS deps & ekstensi PHP yang umum dipakai Laravel + GD + intl + zip + mysql + sqlite
 RUN apt-get update && apt-get install -y \
-    libicu-dev \
-    libzip-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    zip curl unzip git \
-    python3 make g++ \
+    libicu-dev libzip-dev libpng-dev libjpeg-dev libfreetype6-dev \
+    zip curl unzip git sqlite3 \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) intl gd zip pdo_mysql \
-    && docker-php-ext-enable intl gd zip pdo_mysql \
+    && docker-php-ext-install -j$(nproc) intl gd zip pdo_mysql pdo_sqlite \
+    && docker-php-ext-enable intl gd zip pdo_mysql pdo_sqlite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
-
-# Install Node.js & pnpm
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g pnpm
-
-# =========================================
-# Stage 2: Build dependencies
-# =========================================
-FROM base AS build
-
-WORKDIR /app
-
-# Copy file yang dibutuhkan untuk install dependencies
-COPY composer.json composer.lock package.json pnpm-lock.yaml vite.config.* ./
-
-# Copy seluruh source code
+# Copy source code
 COPY . .
 
-# Install Laravel dependencies
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+# Copy vendor & build assets hasil stage sebelumnya
+COPY --from=vendor /app/vendor /app/vendor
+COPY --from=assets /app/public/build /app/public/build
 
-# Install frontend dependencies
-RUN pnpm install --frozen-lockfile
+# Optimasi Laravel (tanpa memaksa jika APP_KEY belum ada)
+RUN php artisan key:generate --force || true \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
-# Build frontend
-RUN pnpm run build
-
-# =========================================
-# Stage 3: Final image
-# =========================================
-FROM base AS final
-
-WORKDIR /app
-
-# Copy hasil build dari stage build
-COPY --from=build /app /app
-
-# Set permission Laravel
+# Permission untuk storage & cache
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
-EXPOSE 80 443 443/udp
-
+# Caddyfile untuk FrankenPHP
 COPY Caddyfile /etc/caddy/Caddyfile
+
+EXPOSE 80 443 443/udp
