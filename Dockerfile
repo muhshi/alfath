@@ -1,7 +1,7 @@
 # =========================================
 # Stage 1: Build front-end assets (Node)
 # =========================================
-FROM node:22-alpine AS assets
+FROM node:22-bullseye AS assets
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9 --activate
