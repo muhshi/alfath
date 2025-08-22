@@ -1,16 +1,16 @@
 # =========================================
 # Stage 1: Build front-end assets (Node)
 # =========================================
-FROM node:22-alpine AS assets
+FROM node:22-bullseye AS assets
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
 # pakai cache yang efisien
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml vite.config.js ./
 RUN pnpm fetch
 
-COPY . .
+COPY resources/ resources/
 RUN pnpm install --offline
 RUN pnpm run build
 
@@ -44,7 +44,18 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Salin source code dahulu
-COPY . .
+COPY artisan ./
+COPY app/ app/
+COPY bootstrap/ bootstrap/
+COPY config/ config/
+COPY database/ database/
+COPY public/ public/
+COPY resources/ resources/
+COPY routes/ routes/
+COPY composer.json composer.lock ./
+
+# Buat direktori yang dibutuhkan Laravel
+RUN mkdir -p storage bootstrap/cache
 
 # Salin vendor & aset yang sudah terbangun
 COPY --from=vendor /app/vendor /app/vendor

@@ -22,3 +22,26 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Node dependencies
+node_modules
+
+# Composer dependencies
+vendor
+
+# Laravel storage and cache
+storage
+bootstrap/cache
+
+# Git files
+.git
+.gitignore
+
+# Build artifacts
+public/build
+public/hot
+public/storage
+
+# Local environment files
+.env
+.env.*
