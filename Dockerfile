@@ -37,7 +37,7 @@ WORKDIR /app
 # Ekstensi yang dibutuhkan Laravel + Filament
 RUN apt-get update && apt-get install -y \
     libicu-dev libzip-dev libpng-dev libjpeg-dev libfreetype6-dev \
-    zip curl unzip git sqlite3 \
+    zip curl unzip git sqlite3 pkg-config libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) intl gd zip pdo_mysql pdo_sqlite \
     && docker-php-ext-enable intl gd zip pdo_mysql pdo_sqlite \
