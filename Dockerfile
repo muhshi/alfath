@@ -59,7 +59,7 @@ WORKDIR /app
 COPY --from=build /app /app
 
 # Set permission Laravel
-RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/database
 
 EXPOSE 80 443 443/udp
 
