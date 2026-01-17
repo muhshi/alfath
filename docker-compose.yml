@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '8002:80'
+      - '8005:80'
     volumes:
       # Mount hanya folder storage & cache untuk development
       - ./storage:/app/storage
