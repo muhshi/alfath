@@ -11,6 +11,7 @@ services:
       # Mount hanya folder storage & cache untuk development
       - ./storage:/app/storage
       - ./bootstrap/cache:/app/bootstrap/cache
+      - ./database:/app/database
     networks:
       - default
       - mysql-stack_mysql_network
