@@ -23,6 +23,13 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home');
+        $totalSurveys = \App\Models\Survey::count();
+        $totalTeams = \App\Models\Team::count();
+        $activeSurveys = \App\Models\Survey::whereDate('start_periode', '<=', now())
+            ->whereDate('end_periode', '>=', now())
+            ->count();
+        $recentSurveys = \App\Models\Survey::with('team')->latest()->take(5)->get();
+
+        return view('home', compact('totalSurveys', 'totalTeams', 'activeSurveys', 'recentSurveys'));
     }
 }

@@ -5,7 +5,7 @@ export default defineConfig({
     plugins: [
         laravel({
             // kalau kamu memang pakai SCSS, pakai file scss sebagai entry
-            input: ["resources/js/app.js", "resources/sass/app.scss"],
+            input: ["resources/js/app.js", "resources/sass/tabler.scss", "resources/css/app.css"],
             refresh: true,
         }),
     ],
