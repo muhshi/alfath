@@ -6,11 +6,11 @@ use Firebase\JWT\JWT;
 
 class WilkerstatMetabase
 {
-    private const SITE_URL = 'http://10.133.21.24:3002';
-    private const SECRET = 'd5b19a0ae96796c9fd9f854b952ccd1dab4cff3d39fb68b9acb81c2ab0cff407';
-
     public static function dashboard(int $id, array $params = [], int $ttlMin = 10): string
     {
+        $siteUrl = rtrim(config('services.metabase.site_url'), '/');
+        $secret = config('services.metabase.secret_key');
+
         // jika tidak ada parameter, tetap kirim object kosong, bukan array numerik
         $params = empty($params) ? (object) [] : $params;
 
@@ -20,8 +20,8 @@ class WilkerstatMetabase
             'exp' => now()->addMinutes($ttlMin)->timestamp,
         ];
 
-        $token = JWT::encode($payload, self::SECRET, 'HS256');
+        $token = JWT::encode($payload, $secret, 'HS256');
 
-        return self::SITE_URL . '/embed/dashboard/' . $token . '#bordered=true&titled=true';
+        return $siteUrl . '/embed/dashboard/' . $token . '#bordered=true&titled=true';
     }
 }
