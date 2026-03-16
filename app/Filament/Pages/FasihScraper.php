@@ -35,19 +35,38 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
         return $table
             ->query(
                 GcPln::query()
-                    ->selectRaw('MAX(id) as id, DATE(created_at) as date, count(*) as total_data')
-                    ->groupBy('date')
-                    ->orderByDesc('date')
             )
             ->columns([
-                TextColumn::make('date')
-                    ->label('Tanggal (created_at)')
+                TextColumn::make('unitup')
+                    ->label('UNITUP')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('email_biller')
+                    ->label('Email Biller')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('open_count')
+                    ->label('OPEN')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('submitted_count')
+                    ->label('SUBMITTED')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('rejected_count')
+                    ->label('REJECTED')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('fetch_date')
+                    ->label('Tanggal')
                     ->date('d M Y')
                     ->sortable(),
-                TextColumn::make('total_data')
-                    ->label('Total Records Ditarik')
-                    ->numeric(),
-            ]);
+                TextColumn::make('fetched_at')
+                    ->label('Terakhir Ditarik')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+            ])
+            ->defaultSort('fetch_date', 'desc');
     }
 
     protected function getHeaderActions(): array
@@ -87,7 +106,7 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                 ->color('primary')
                 ->requiresConfirmation()
                 ->modalHeading('Mulai Sinkronisasi Data?')
-                ->modalDescription('Proses ini akan menjalankan script Python di latar belakang untuk menarik data terbaru. Log dapat dilihat di bagian atas "Live Scraper Progress".')
+                ->modalDescription('Proses ini akan menjalankan script Python untuk menarik data terbaru dari FASIH Dashboard API. Log dapat dilihat di bagian atas halaman.')
                 ->action(function () {
                     // Clear log file if exists
                     $logPath = storage_path('logs/scraper.log');
@@ -97,7 +116,7 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                     
                     Notification::make()
                         ->title('Sinkronisasi Dimulai')
-                        ->body('Proses scraping sedang berjalan di latar belakang.')
+                        ->body('Proses penarikan data sedang berjalan di latar belakang.')
                         ->success()
                         ->send();
                 }),

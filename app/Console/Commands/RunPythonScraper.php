@@ -32,13 +32,13 @@ class RunPythonScraper extends Command
         Log::info('Trigger scraper Python GC-PLN...');
 
         // Tentukan path absolut ke script Python
-        $pythonScriptPath = storage_path('app/python-scripts/gc-pln/app.py');
+        $pythonScriptPath = storage_path('app/python-scripts/gc-pln/fasih_dashboard.py');
         $scriptDir = dirname($pythonScriptPath);
         $pythonBin = storage_path('app/python-scripts/gc-pln/venv/bin/python3');
 
-        // Menjalankan command python3 app.py --workers 10
-        // Set timeout ke 0 (unlimited) karena proses scraping bisa memakan waktu lama
-        $process = new Process([$pythonBin, 'app.py', '--workers', '10']);
+        // Menjalankan script fasih_dashboard.py
+        // Set timeout ke 0 (unlimited) karena bisa memakan waktu
+        $process = new Process([$pythonBin, 'fasih_dashboard.py']);
         $process->setWorkingDirectory($scriptDir);
         $process->setTimeout(0); 
 
