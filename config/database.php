@@ -62,6 +62,26 @@ return [
             ]) : [],
         ],
 
+        'fasih' => [
+            'driver' => 'mysql',
+            'url' => env('FASIH_DB_URL'),
+            'host' => env('FASIH_DB_HOST', '10.133.21.24'),
+            'port' => env('FASIH_DB_PORT', '3306'),
+            'database' => env('FASIH_DB_DATABASE', 'fasih'),
+            'username' => env('FASIH_DB_USERNAME', 'root'),
+            'password' => env('FASIH_DB_PASSWORD', 'demak3321'),
+            'unix_socket' => env('FASIH_DB_SOCKET', ''),
+            'charset' => env('FASIH_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('FASIH_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

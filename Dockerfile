@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     zip curl unzip git \
-    python3 make g++ \
+    python3 python3-venv python3-pip make g++ \
+    openfortivpn tmux \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) intl gd zip pdo_mysql \
     && docker-php-ext-enable intl gd zip pdo_mysql \
