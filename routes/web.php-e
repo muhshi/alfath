@@ -22,4 +22,4 @@ Route::get('/surveys/{survey}/embed', [SurveyController::class, 'embed'])->name(
 Auth::routes();
 
 Route::get('/home', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
-Route::get('/debug-db', function() { try { return 'Conn: ' . (new \App\Models\ScraperCookie)->getConnectionName(); } catch (\Exception $e) { return $e->getMessage(); } });
+Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');Route::get('/debug-env', function() { return 'Default DB: ' . config('database.default') . ' | Env DB: ' . env('DB_DATABASE') . ' | Env Conn: ' . env('DB_CONNECTION'); });
