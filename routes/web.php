@@ -12,14 +12,23 @@ use Illuminate\Support\Facades\Route;
 //         'embedUrl' => \App\Support\WilkerstatMetabase::dashboard(6),
 //     ]);
 // });
-Route::get('/surveys', [SurveyController::class, 'index'])->name('surveys.index');
+Route::get('/surveys', [SurveyController::class , 'index'])->name('surveys.index');
 
-Route::get('/surveys/category/{category}', [SurveyController::class, 'index'])
+Route::get('/surveys/category/{category}', [SurveyController::class , 'index'])
     ->name('surveys.byCategory');
 
-Route::get('/surveys/{survey}/embed', [SurveyController::class, 'embed'])->name('surveys.embed');
+Route::get('/surveys/{survey}/embed', [SurveyController::class , 'embed'])->name('surveys.embed');
 
 Auth::routes();
 
-Route::get('/home', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
-Route::get('/debug-db', function() { try { return 'Conn: ' . (new \App\Models\ScraperCookie)->getConnectionName(); } catch (\Exception $e) { return $e->getMessage(); } });
+Route::get('/', [\App\Http\Controllers\HomeController::class , 'index'])->name('dashboard');
+
+Route::get('/home', [\App\Http\Controllers\HomeController::class , 'index'])->name('home');
+Route::get('/debug-db', function () {
+    try {
+        return 'Conn: ' . (new \App\Models\ScraperCookie)->getConnectionName();
+    }
+    catch (\Exception $e) {
+        return $e->getMessage();
+    }
+});
