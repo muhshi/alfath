@@ -2,12 +2,13 @@
 Tarik Data GC PLN dari FASIH Dashboard API (Superset)
 =====================================================
 Sumber: https://fasih-dashboard.bps.go.id/api/v1/chart/data
-Filter: Kab. Demak (UNITUP mengandung 'DEMAK')
+Filter: Kab. Demak (UNITUP = [52551] DEMAK, via API filter)
 Output: MySQL tabel GC_PLN
 
 Cara pakai:
 1. Update cookies.txt dengan cookies terbaru dari browser fasih-dashboard.bps.go.id
-2. Jalankan: python fasih_dashboard.py
+2. Update csrf_token.txt dengan X-CSRFToken terbaru
+3. Jalankan: python fasih_dashboard.py
 """
 
 import requests
@@ -29,6 +30,11 @@ API_URL = "https://fasih-dashboard.bps.go.id/api/v1/chart/data"
 DASHBOARD_ID = 514
 SLICE_ID = 11365
 
+# Filter values
+FILTER_UNITUPI = "[52] JAWA TENGAH DAN DIY"
+FILTER_UNITAP = "[52550] GROBOGAN"
+FILTER_UNITUP = "[52551] DEMAK"
+
 # Database
 DB_CONFIG = {
     "host": "10.133.21.24",
@@ -38,6 +44,7 @@ DB_CONFIG = {
 }
 
 COOKIES_FILE = Path(__file__).parent / "cookies.txt"
+CSRF_TOKEN_FILE = Path(__file__).parent / "csrf_token.txt"
 
 # ============================================================
 # LOGGING
@@ -52,7 +59,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ============================================================
-# COOKIES
+# COOKIES & CSRF TOKEN
 # ============================================================
 
 
@@ -74,20 +81,121 @@ def load_cookies() -> dict:
     return cookies
 
 
+def load_csrf_token() -> str:
+    """Load CSRF token dari csrf_token.txt."""
+    if not CSRF_TOKEN_FILE.exists():
+        log.warning(f"File csrf_token.txt tidak ditemukan: {CSRF_TOKEN_FILE}")
+        return ""
+
+    token = CSRF_TOKEN_FILE.read_text(encoding="utf-8").strip()
+    if token:
+        log.info(f"Loaded CSRF token ({len(token)} chars)")
+    return token
+
+
 # ============================================================
 # REQUEST PAYLOAD
 # ============================================================
 
 def build_payload():
-    """Bangun request payload untuk Superset Chart API."""
+    """Bangun request payload untuk Superset Chart API (dengan filter Demak)."""
+
+    # Shared filter definitions
+    filters = [
+        {"col": "UNITUPI", "op": "IN", "val": [FILTER_UNITUPI]},
+        {"col": "UNITAP", "op": "IN", "val": [FILTER_UNITAP]},
+        {"col": "UNITUP", "op": "IN", "val": [FILTER_UNITUP]},
+        {"col": "date_modified", "op": "TEMPORAL_RANGE", "val": "No filter"},
+    ]
+
+    # Shared metrics
+    metrics = [
+        {
+            "aggregate": "SUM",
+            "column": {
+                "advanced_data_type": None,
+                "certification_details": None,
+                "certified_by": None,
+                "column_name": "OPEN",
+                "description": None,
+                "expression": None,
+                "filterable": True,
+                "groupby": True,
+                "id": 251970,
+                "is_certified": False,
+                "is_dttm": False,
+                "python_date_format": None,
+                "type": "INT",
+                "type_generic": 0,
+                "verbose_name": None,
+                "warning_markdown": None,
+            },
+            "datasourceWarning": False,
+            "expressionType": "SIMPLE",
+            "hasCustomLabel": True,
+            "label": "OPEN",
+            "optionName": "metric_d3fu6qxbkrn_xnrl2z8pxcr",
+            "sqlExpression": None,
+        },
+        {
+            "aggregate": None,
+            "column": None,
+            "datasourceWarning": False,
+            "expressionType": "SQL",
+            "hasCustomLabel": True,
+            "label": "SUBMITTED",
+            "optionName": "metric_1pbrcid8yi1_lboi8kuhqg",
+            "sqlExpression": "SUM(SUBMITTED) + SUM(COMPLETED) + SUM(EDITED)",
+        },
+        {
+            "aggregate": None,
+            "column": None,
+            "datasourceWarning": False,
+            "expressionType": "SQL",
+            "hasCustomLabel": True,
+            "label": "REJECTED",
+            "optionName": "metric_fdnkf9tijw8_k2budi485e9",
+            "sqlExpression": "SUM(REJECTED)+SUM(REVOKED)",
+        },
+    ]
+
+    # Series limit metric (shared)
+    series_limit_metric = {
+        "aggregate": "MAX",
+        "column": {
+            "advanced_data_type": None,
+            "changed_on": "2026-03-09T02:08:56.891372",
+            "column_name": "level_4_full_code",
+            "created_on": "2026-03-09T02:08:56.891358",
+            "description": None,
+            "expression": None,
+            "extra": "{}",
+            "filterable": True,
+            "groupby": True,
+            "id": 253319,
+            "is_active": True,
+            "is_dttm": False,
+            "python_date_format": None,
+            "type": "STRING",
+            "type_generic": 1,
+            "uuid": "9e70a272-6f55-409e-8b8a-19ced1b00dd8",
+            "verbose_name": None,
+        },
+        "datasourceWarning": False,
+        "expressionType": "SIMPLE",
+        "hasCustomLabel": False,
+        "label": "MAX(level_4_full_code)",
+        "optionName": "metric_16x0ninyb5d_elwclx66o8",
+        "sqlExpression": None,
+    }
+
     return {
         "datasource": {"id": 5978, "type": "table"},
         "force": False,
         "queries": [
+            # Query 1: Detail per biller (with columns/groupby)
             {
-                "filters": [
-                    {"col": "date_modified", "op": "TEMPORAL_RANGE", "val": "No filter"}
-                ],
+                "filters": filters,
                 "extras": {"time_grain_sqla": "P1D", "having": "", "where": ""},
                 "applied_time_extras": {},
                 "columns": [
@@ -100,54 +208,32 @@ def build_payload():
                         "sqlExpression": "email_pencacah",
                     },
                 ],
-                "metrics": [
-                    {
-                        "aggregate": "SUM",
-                        "column": {
-                            "column_name": "OPEN",
-                            "type": "INT",
-                            "type_generic": 0,
-                            "id": 251970,
-                            "filterable": True,
-                            "groupby": True,
-                        },
-                        "expressionType": "SIMPLE",
-                        "hasCustomLabel": True,
-                        "label": "OPEN",
-                    },
-                    {
-                        "expressionType": "SQL",
-                        "hasCustomLabel": True,
-                        "label": "SUBMITTED",
-                        "sqlExpression": "SUM(SUBMITTED) + SUM(COMPLETED) + SUM(EDITED)",
-                    },
-                    {
-                        "expressionType": "SQL",
-                        "hasCustomLabel": True,
-                        "label": "REJECTED",
-                        "sqlExpression": "SUM(REJECTED)+SUM(REVOKED)",
-                    },
-                ],
+                "metrics": metrics,
                 "orderby": [
-                    [
-                        {
-                            "aggregate": "MAX",
-                            "column": {
-                                "column_name": "level_4_full_code",
-                                "type": "STRING",
-                                "type_generic": 1,
-                                "id": 253319,
-                            },
-                            "expressionType": "SIMPLE",
-                            "hasCustomLabel": False,
-                            "label": "MAX(level_4_full_code)",
-                        },
-                        False,
-                    ]
+                    [series_limit_metric, False]
                 ],
+                "annotation_layers": [],
                 "row_limit": 50000,
                 "series_limit": 0,
+                "series_limit_metric": series_limit_metric,
                 "order_desc": True,
+                "url_params": {},
+                "custom_params": {},
+                "custom_form_data": {},
+                "post_processing": [],
+            },
+            # Query 2: Summary totals (no columns/groupby)
+            {
+                "filters": filters,
+                "extras": {"time_grain_sqla": "P1D", "having": "", "where": ""},
+                "applied_time_extras": {},
+                "columns": [],
+                "metrics": metrics,
+                "annotation_layers": [],
+                "row_limit": 0,
+                "row_offset": 0,
+                "series_limit": 0,
+                "series_limit_metric": series_limit_metric,
                 "url_params": {},
                 "custom_params": {},
                 "custom_form_data": {},
@@ -158,7 +244,65 @@ def build_payload():
             "datasource": "5978__table",
             "viz_type": "table",
             "slice_id": SLICE_ID,
+            "url_params": {},
+            "query_mode": "aggregate",
+            "groupby": [
+                "UNITUPI",
+                "UNITAP",
+                "UNITUP",
+                {
+                    "expressionType": "SQL",
+                    "label": "Email Biller",
+                    "sqlExpression": "email_pencacah",
+                },
+            ],
+            "time_grain_sqla": "P1D",
+            "temporal_columns_lookup": {},
+            "metrics": metrics,
+            "all_columns": [],
+            "percent_metrics": [],
+            "adhoc_filters": [
+                {
+                    "clause": "WHERE",
+                    "comparator": "No filter",
+                    "datasourceWarning": False,
+                    "expressionType": "SIMPLE",
+                    "filterOptionName": "filter_mm7f81j9nx_yqe6y7b28m7",
+                    "isExtra": False,
+                    "isNew": False,
+                    "operator": "TEMPORAL_RANGE",
+                    "sqlExpression": None,
+                    "subject": "date_modified",
+                },
+            ],
+            "timeseries_limit_metric": series_limit_metric,
+            "order_by_cols": [],
+            "row_limit": 50000,
+            "server_page_length": 10,
+            "order_desc": True,
+            "show_totals": True,
+            "table_timestamp_format": "smart_date",
+            "include_search": True,
+            "show_cell_bars": False,
+            "color_pn": True,
+            "column_config": {
+                "OPEN": {"d3NumberFormat": ",d", "d3SmallNumberFormat": "SMART_NUMBER"},
+                "SUBMITTED": {"d3NumberFormat": ",d"},
+            },
+            "conditional_formatting": [],
             "dashboards": [DASHBOARD_ID],
+            "extra_form_data": {
+                "filters": [
+                    {"col": "UNITUPI", "op": "IN", "val": [FILTER_UNITUPI]},
+                    {"col": "UNITAP", "op": "IN", "val": [FILTER_UNITAP]},
+                    {"col": "UNITUP", "op": "IN", "val": [FILTER_UNITUP]},
+                ],
+            },
+            "label_colors": {},
+            "shared_label_colors": {},
+            "color_scheme": "echarts5Colors",
+            "extra_filters": [],
+            "dashboardId": DASHBOARD_ID,
             "force": None,
             "result_format": "json",
             "result_type": "full",
@@ -173,25 +317,39 @@ def build_payload():
 # ============================================================
 
 
-def fetch_data(cookies: dict) -> list:
-    """Fetch data dari FASIH Dashboard API."""
+def fetch_data(cookies: dict, csrf_token: str) -> list:
+    """Fetch data dari FASIH Dashboard API (sudah difilter Demak dari API)."""
     log.info("Mengirim request ke FASIH Dashboard API...")
+    log.info(f"Filter: UNITUPI={FILTER_UNITUPI}, UNITAP={FILTER_UNITAP}, UNITUP={FILTER_UNITUP}")
 
     headers = {
         "Accept": "application/json",
+        "Accept-Language": "en-US,en;q=0.9",
         "Content-Type": "application/json",
         "Origin": "https://fasih-dashboard.bps.go.id",
         "Referer": f"https://fasih-dashboard.bps.go.id/superset/dashboard/{DASHBOARD_ID}/",
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36",
+                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36",
         "Cache-Control": "no-cache",
         "Pragma": "no-cache",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "same-origin",
+        "Sec-Fetch-Site": "same-origin",
+        "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+        "sec-ch-ua-mobile": "?1",
+        "sec-ch-ua-platform": '"Android"',
     }
 
-    # Ambil CSRF token dari cookies jika ada
-    csrf_token = cookies.get("csrf_access_token", "")
+    # Set CSRF token dari file terpisah atau dari cookies
     if csrf_token:
         headers["X-CSRFToken"] = csrf_token
+    else:
+        # Fallback: coba ambil dari cookies
+        csrf_from_cookie = cookies.get("csrf_access_token", "")
+        if csrf_from_cookie:
+            headers["X-CSRFToken"] = csrf_from_cookie
+            log.info("Menggunakan csrf_access_token dari cookies sebagai X-CSRFToken")
 
     payload = build_payload()
 
@@ -220,29 +378,18 @@ def fetch_data(cookies: dict) -> list:
         log.error("Response tidak mengandung 'result'")
         return []
 
-    # Ambil data dari query pertama
+    # Ambil data dari query pertama (detail per biller)
     first_query = queries[0]
     data = first_query.get("data", [])
-    log.info(f"Total records dari API: {len(data)}")
+    log.info(f"Total records detail dari API: {len(data)}")
+
+    # Log summary dari query kedua jika ada
+    if len(queries) > 1:
+        summary = queries[1].get("data", [])
+        if summary:
+            log.info(f"Summary dari API: {summary}")
 
     return data
-
-
-# ============================================================
-# FILTER KAB. DEMAK
-# ============================================================
-
-
-def filter_demak(data: list) -> list:
-    """Filter data khusus Kab. Demak berdasarkan kolom UNITUP."""
-    filtered = []
-    for row in data:
-        unitup = str(row.get("UNITUP", "")).upper()
-        if "DEMAK" in unitup:
-            filtered.append(row)
-
-    log.info(f"Data Kab. Demak: {len(filtered)} dari {len(data)} total records")
-    return filtered
 
 
 # ============================================================
@@ -338,37 +485,34 @@ def main():
     log.info("=" * 60)
     log.info("TARIK DATA FASIH DASHBOARD - SUPERSET API")
     log.info(f"Tanggal  : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    log.info(f"Filter   : Kab. Demak")
+    log.info(f"Filter   : UNITUP={FILTER_UNITUP}")
     log.info("=" * 60)
 
     # Load cookies
     cookies = load_cookies()
 
-    # Fetch data dari API
-    all_data = fetch_data(cookies)
-    if not all_data:
-        log.error("Tidak ada data yang diterima dari API. Cek cookies atau koneksi VPN.")
-        return
+    # Load CSRF token
+    csrf_token = load_csrf_token()
 
-    # Filter Demak
-    demak_data = filter_demak(all_data)
-    if not demak_data:
-        log.warning("Tidak ada data Kab. Demak ditemukan dalam response.")
+    # Fetch data dari API (sudah difilter Demak dari sisi API)
+    data = fetch_data(cookies, csrf_token)
+    if not data:
+        log.error("Tidak ada data yang diterima dari API. Cek cookies, CSRF token, atau koneksi VPN.")
         return
 
     # Hitung ringkasan
-    total_open = sum(int(r.get("OPEN", 0) or 0) for r in demak_data)
-    total_submitted = sum(int(r.get("SUBMITTED", 0) or 0) for r in demak_data)
-    total_rejected = sum(int(r.get("REJECTED", 0) or 0) for r in demak_data)
+    total_open = sum(int(r.get("OPEN", 0) or 0) for r in data)
+    total_submitted = sum(int(r.get("SUBMITTED", 0) or 0) for r in data)
+    total_rejected = sum(int(r.get("REJECTED", 0) or 0) for r in data)
 
     log.info(f"\nRINGKASAN DATA KAB. DEMAK:")
-    log.info(f"  Jumlah Biller : {len(demak_data)}")
+    log.info(f"  Jumlah Biller : {len(data)}")
     log.info(f"  OPEN          : {total_open:,}")
     log.info(f"  SUBMITTED     : {total_submitted:,}")
     log.info(f"  REJECTED      : {total_rejected:,}")
 
     # Simpan ke database
-    save_to_db(demak_data)
+    save_to_db(data)
 
     elapsed = time.time() - start_time
     log.info(f"\n[COMPLETED] Selesai dalam {elapsed:.1f} detik")

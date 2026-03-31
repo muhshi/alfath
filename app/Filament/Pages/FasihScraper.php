@@ -73,16 +73,25 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
     {
         return [
             Actions\Action::make('update-cookies')
-                ->label('Ubah Cookies')
+                ->label('Ubah Cookies & CSRF')
                 ->icon('heroicon-o-key')
                 ->color('warning')
                 ->form([
                     Forms\Components\Textarea::make('cookie_string')
                         ->label('Cookie String')
                         ->required()
+                        ->rows(4)
                         ->default(function () {
                             $cookie = ScraperCookie::first();
                             return $cookie ? $cookie->cookie_string : '';
+                        }),
+                    Forms\Components\Textarea::make('csrf_token')
+                        ->label('X-CSRFToken')
+                        ->helperText('Ambil dari header X-CSRFToken di request browser (bukan dari cookies)')
+                        ->rows(2)
+                        ->default(function () {
+                            $path = storage_path('app/python-scripts/gc-pln/csrf_token.txt');
+                            return file_exists($path) ? file_get_contents($path) : '';
                         }),
                 ])
                 ->action(function (array $data) {
@@ -91,13 +100,19 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                     $cookie->save();
 
                     // Update file cookies.txt
-                    $path = storage_path('app/python-scripts/gc-pln/cookies.txt');
-                    if (!is_dir(dirname($path))) {
-                        mkdir(dirname($path), 0755, true);
+                    $cookiePath = storage_path('app/python-scripts/gc-pln/cookies.txt');
+                    if (!is_dir(dirname($cookiePath))) {
+                        mkdir(dirname($cookiePath), 0755, true);
                     }
-                    file_put_contents($path, $data['cookie_string']);
+                    file_put_contents($cookiePath, $data['cookie_string']);
 
-                    Notification::make()->title('Cookies berhasil diperbarui!')->success()->send();
+                    // Update file csrf_token.txt
+                    if (!empty($data['csrf_token'])) {
+                        $csrfPath = storage_path('app/python-scripts/gc-pln/csrf_token.txt');
+                        file_put_contents($csrfPath, trim($data['csrf_token']));
+                    }
+
+                    Notification::make()->title('Cookies & CSRF Token berhasil diperbarui!')->success()->send();
                 }),
                 
             Actions\Action::make('sync-fasih')
