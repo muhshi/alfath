@@ -85,7 +85,9 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Menambahkan rute publik `/dashboard-se2026` di `routes/web.php`.
   - Pembaruan Judul & Keterangan Beban: Mengubah judul KPI 1 menjadi **Total Beban Pendataan** dengan subteks *"Campuran KK Berusaha, KK Tidak Berusaha & Bangunan Khusus Usaha"*.
   - Pembaruan Rincian SDM (1.000 Petugas): Menambahkan rincian tim **UM/UMK (992): 876 PPL + 116 PML** dan **Usaha Besar (8): 6 PPL + 2 PML**.
-  - Redesain & Penataan Halaman Utama (`home.blade.php`): Mempercantik tampilan beranda ALFATH dengan Hero Banner bergradien resmi BPS, kartu metrik statistik ringkas, dan penyajian tabel survei yang rapi.
+  - Pembaruan Identitas Logo BPS: Menggunakan logo resmi `assets/logo_bps.png` pada header **Dashboard Executive SE2026** dan **Beranda ALFATH**.
+  - Redesain Halaman Utama (Clean Corporate Style): Menghilangkan gradasi warna menyolok dan mengubah tampilan Beranda ALFATH menjadi desain korporat eksekutif yang sangat bersih (*Pure White Card*, aksen *Border Left SE Orange*, typography *Outfit*, dan lencana *BPS Kabupaten Demak*).
+  - Penegasan Kepanjangan ALFATH: Menyajikan nama resmi **ALFATH — Aplikasi Fasih Monitoring Harian** secara jelas pada banner utama.
   - Tombol Navigasi Dua Arah: Menambahkan tombol CTA menonjol menuju **Dashboard Executive SE2026** pada Header & Hero Card `home.blade.php`, serta tombol **Beranda ALFATH** pada header `dashboard-se2026.blade.php` untuk kemudahan navigasi kembali.
   - Menampilkan Status **Terakhir Diperbarui**: Mengambil nilai `MAX(updated_at)` dari tabel `monitoring_se2026` dan memunculkannya pada header badge utama dashboard (contoh: `Terakhir Diperbarui: 29 Jul 2026 | 09:20 WIB`).
   - Orientasi Chart Kecamatan (Vertical Bar Chart): Menampilkan 14 Kecamatan di **Sumbu X** dan Persentase Capaian (%) di **Sumbu Y**.

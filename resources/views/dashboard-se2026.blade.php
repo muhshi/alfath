@@ -332,8 +332,8 @@
     <!-- Header Navigation -->
     <header class="dashboard-header">
         <div class="header-brand">
-            <div class="brand-logo">
-                <i class="fa-solid fa-chart-line"></i>
+            <div class="brand-logo" style="background: transparent; box-shadow: none; width: auto; height: auto;">
+                <img src="{{ asset('assets/logo_bps.png') }}" alt="Logo BPS" style="height: 52px; width: auto; object-fit: contain;">
             </div>
             <div class="brand-title">
                 <h1>Sensus Ekonomi 2026</h1>
