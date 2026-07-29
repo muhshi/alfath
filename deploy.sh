@@ -131,7 +131,7 @@ fi
 
 # 7. Set Directory Permissions for Linux Hosts
 if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-    chmod -R 775 storage bootstrap/cache database || true
+    chmod -R 775 storage bootstrap/cache database 2>/dev/null || true
 fi
 
 echo -e "${BLUE}=====================================================${NC}"

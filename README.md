@@ -92,5 +92,5 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Penyesuaian Pagination Tabel Survei (5 Data per Halaman): Mengubah batasan pagination menjadi 5 survei per halaman (`paginate(5)`) serta membuat bilah footer navigasi pagination dan indikator jumlah data selalu tampil konsisten di bagian bawah tabel.
   - Menampilkan Status **Terakhir Diperbarui**: Mengambil nilai `MAX(updated_at)` dari tabel `monitoring_se2026` dan memunculkannya pada header badge utama dashboard (contoh: `Terakhir Diperbarui: 29 Jul 2026 | 09:20 WIB`).
   - Orientasi Chart Kecamatan (Vertical Bar Chart): Menampilkan 14 Kecamatan di **Sumbu X** dan Persentase Capaian (%) di **Sumbu Y**.
-  - Pembersihan Log Kompilasi Vite (`vite.config.js`): Menambahkan opsi `quietDeps: true` dan `silenceDeprecations` pada konfigurasi SCSS Vite agar log build produksi bersih dari peringatan *Dart Sass deprecation* milik pustaka pihak ketiga `@tabler/core` & `bootstrap`.
+  - Perataan Output Skrip Deploy (`deploy.sh`): Membungkam pesan peringatan permission `Operation not permitted` dari berkas kompilasi view milik pengguna Docker `www-data` (`chmod 2>/dev/null`) agar hasil keluaran terminal bersih.
 
