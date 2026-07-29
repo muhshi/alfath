@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-# ALFATH - Sensus Ekonomi 2026 Ultra-Fast Production Deployment Script
+# ALFATH - Sensus Ekonomi 2026 Production Deployment Script
 # ==============================================================================
-# Fast In-Container Deployment (5-10 seconds) without slow Docker rebuilds!
-# To force a full Docker image rebuild, run: ./deploy.sh --build
+# Priority: Docker Compose V2 (docker compose) over Legacy Python v1 (docker-compose)
 # ==============================================================================
 
 set -e
@@ -17,7 +16,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=====================================================${NC}"
-echo -e "${BLUE}🚀 Starting ALFATH SE2026 Fast Deployment Process...${NC}"
+echo -e "${BLUE}🚀 Starting ALFATH SE2026 Deployment Process...${NC}"
 echo -e "${BLUE}=====================================================${NC}"
 
 # 1. Resolve Unstaged Changes on Server & Fetch Latest Code
@@ -39,6 +38,15 @@ IS_DOCKER_RUNNING=false
 PHP_EXEC=""
 COMPOSER_EXEC=""
 
+# Helper function to invoke docker compose (Prefer Docker CLI v2 plugin)
+run_docker_compose() {
+    if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+        docker compose "$@"
+    elif command -v docker-compose &> /dev/null; then
+        docker-compose "$@"
+    fi
+}
+
 if command -v docker &> /dev/null && docker ps | grep -q "alfath-franken"; then
     IS_DOCKER_RUNNING=true
     PHP_EXEC="docker exec -i alfath-franken php"
@@ -56,11 +64,15 @@ fi
 
 # 4. Handle Execution (Fast In-Container vs Full Rebuild)
 if [ "$FORCE_BUILD" = true ] || [ "$IS_DOCKER_RUNNING" = false ]; then
-    echo -e "${YELLOW}🐳 Performing full Docker Container Rebuild (--build)...${NC}"
-    if command -v docker-compose &> /dev/null; then
-        docker-compose up -d --build
-    elif command -v docker &> /dev/null; then
-        docker compose up -d --build
+    echo -e "${YELLOW}🐳 Starting / Refreshing Docker Container (FrankenPHP)...${NC}"
+    
+    # Remove any stuck old container if KeyError/ContainerConfig occurred
+    docker rm -f alfath-franken 2>/dev/null || true
+
+    if [ "$FORCE_BUILD" = true ]; then
+        run_docker_compose up -d --build
+    else
+        run_docker_compose up -d
     fi
     
     # Re-assign execution commands after container start
@@ -77,7 +89,7 @@ if [ -n "$COMPOSER_EXEC" ]; then
 fi
 
 echo -e "${GREEN}🎨 Building Frontend Assets (Vite)...${NC}"
-if [ "$IS_DOCKER_RUNNING" = true ]; then
+if [ "$IS_DOCKER_RUNNING" = true ] || [ -f "/.dockerenv" ] || docker ps | grep -q "alfath-franken"; then
     docker exec -i alfath-franken pnpm install --frozen-lockfile || true
     docker exec -i alfath-franken pnpm run build || true
 elif command -v pnpm &> /dev/null; then
@@ -120,5 +132,5 @@ if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 fi
 
 echo -e "${BLUE}=====================================================${NC}"
-echo -e "${GREEN}⚡ ALFATH SE2026 Deployment Completed in Seconds!${NC}"
+echo -e "${GREEN}⚡ ALFATH SE2026 Deployment Completed Successfully!${NC}"
 echo -e "${BLUE}=====================================================${NC}"
