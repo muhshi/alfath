@@ -13,13 +13,18 @@ class ExecutiveDashboardController extends Controller
      */
     public function index()
     {
+        // Determine DB connection for monitoring data (prefer 'fasih' if configured)
+        $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
+        $db = $connName ? DB::connection($connName) : DB::connection();
+        $schema = $connName ? Schema::connection($connName) : Schema::connection();
+
         // 1. SDM & Field Team Metrics
-        $totalPetugas = Schema::hasTable('master_petugas') 
-            ? DB::table('master_petugas')->count() 
+        $totalPetugas = $schema->hasTable('master_petugas') 
+            ? $db->table('master_petugas')->count() 
             : 0;
             
-        $totalPengawas = Schema::hasTable('alokasi_pengawas')
-            ? DB::table('alokasi_pengawas')->distinct('nama_pengawas')->count('nama_pengawas')
+        $totalPengawas = $schema->hasTable('alokasi_pengawas')
+            ? $db->table('alokasi_pengawas')->distinct('nama_pengawas')->count('nama_pengawas')
             : 0;
 
         // 2. Monitoring SE2026 Overall Metrics & Daily Trend
@@ -30,25 +35,22 @@ class ExecutiveDashboardController extends Controller
         $trendSubmits = [];
         $kecamatanProgress = [];
 
-        if (Schema::hasTable('monitoring_se2026')) {
-            $monitoringQuery = DB::table('monitoring_se2026');
-            
-            // Calculate overall totals if columns exist
-            $sampleRow = (array) DB::table('monitoring_se2026')->first();
+        if ($schema->hasTable('monitoring_se2026')) {
+            $sampleRow = (array) $db->table('monitoring_se2026')->first();
             
             if (!empty($sampleRow)) {
                 $bebanCol = isset($sampleRow['total_beban']) ? 'total_beban' : (isset($sampleRow['beban_saat_ini']) ? 'beban_saat_ini' : null);
                 $submitCol = isset($sampleRow['total_submit']) ? 'total_submit' : (isset($sampleRow['submitted']) ? 'submitted' : null);
                 $approvedCol = isset($sampleRow['approved']) ? 'approved' : null;
 
-                if ($bebanCol) $totalBebanTarget = DB::table('monitoring_se2026')->sum($bebanCol);
-                if ($submitCol) $totalSubmit = DB::table('monitoring_se2026')->sum($submitCol);
-                if ($approvedCol) $totalApproved = DB::table('monitoring_se2026')->sum($approvedCol);
+                if ($bebanCol) $totalBebanTarget = $db->table('monitoring_se2026')->sum($bebanCol);
+                if ($submitCol) $totalSubmit = $db->table('monitoring_se2026')->sum($submitCol);
+                if ($approvedCol) $totalApproved = $db->table('monitoring_se2026')->sum($approvedCol);
 
                 // Trend data grouped by date if tanggal_tarik or created_at exists
                 $dateCol = isset($sampleRow['tanggal_tarik']) ? 'tanggal_tarik' : (isset($sampleRow['tanggal_data']) ? 'tanggal_data' : null);
                 if ($dateCol && $submitCol) {
-                    $trendData = DB::table('monitoring_se2026')
+                    $trendData = $db->table('monitoring_se2026')
                         ->select(DB::raw("$dateCol as t_date, SUM($submitCol) as total_sub"))
                         ->groupBy('t_date')
                         ->orderBy('t_date', 'asc')
@@ -63,7 +65,7 @@ class ExecutiveDashboardController extends Controller
                 // Kecamatan progress
                 $kecCol = isset($sampleRow['nama_kecamatan']) ? 'nama_kecamatan' : (isset($sampleRow['kode_kec']) ? 'kode_kec' : null);
                 if ($kecCol && $bebanCol && $submitCol) {
-                    $kecData = DB::table('monitoring_se2026')
+                    $kecData = $db->table('monitoring_se2026')
                         ->select(DB::raw("$kecCol as kec_name, SUM($bebanCol) as target, SUM($submitCol) as submit"))
                         ->groupBy('kec_name')
                         ->get();
@@ -81,7 +83,7 @@ class ExecutiveDashboardController extends Controller
             }
         }
 
-        // Dummy/Fallback Kecamatan Data if table empty or format differs
+        // Fallback Kecamatan Data if table empty or format differs
         if (empty($kecamatanProgress)) {
             $defaultKecamatan = [
                 'Mranggen', 'Karangawen', 'Guntur', 'Sayung', 'Karangtengah', 
@@ -103,13 +105,13 @@ class ExecutiveDashboardController extends Controller
         $slsTersentuh = 0;
         $slsSelesai = 0;
 
-        if (Schema::hasTable('monitoring_sls_se2026')) {
-            $totalSLS = DB::table('monitoring_sls_se2026')->count();
-            $slsSample = (array) DB::table('monitoring_sls_se2026')->first();
+        if ($schema->hasTable('monitoring_sls_se2026')) {
+            $totalSLS = $db->table('monitoring_sls_se2026')->count();
+            $slsSample = (array) $db->table('monitoring_sls_se2026')->first();
             
             if (isset($slsSample['status_sls'])) {
-                $slsTersentuh = DB::table('monitoring_sls_se2026')->where('status_sls', '!=', 'OPEN')->count();
-                $slsSelesai = DB::table('monitoring_sls_se2026')->where('status_sls', 'APPROVED')->orWhere('status_sls', 'COMPLETE')->count();
+                $slsTersentuh = $db->table('monitoring_sls_se2026')->where('status_sls', '!=', 'OPEN')->count();
+                $slsSelesai = $db->table('monitoring_sls_se2026')->where('status_sls', 'APPROVED')->orWhere('status_sls', 'COMPLETE')->count();
             } else {
                 $slsTersentuh = (int) ($totalSLS * 0.85);
                 $slsSelesai = (int) ($totalSLS * 0.65);
@@ -119,10 +121,10 @@ class ExecutiveDashboardController extends Controller
         // 4. Usaha Besar (UB) Special Progress (ub_pencacah & ub_pengawas)
         $totalUBTarget = 0;
         $totalUBTerdata = 0;
-        if (Schema::hasTable('ub_pencacah')) {
-            $totalUBTarget = DB::table('ub_pencacah')->count();
-            if (Schema::hasColumn('ub_pencacah', 'status')) {
-                $totalUBTerdata = DB::table('ub_pencacah')->whereIn('status', ['SUBMITTED', 'APPROVED', 'COMPLETE'])->count();
+        if ($schema->hasTable('ub_pencacah')) {
+            $totalUBTarget = $db->table('ub_pencacah')->count();
+            if ($schema->hasColumn('ub_pencacah', 'status')) {
+                $totalUBTerdata = $db->table('ub_pencacah')->whereIn('status', ['SUBMITTED', 'APPROVED', 'COMPLETE'])->count();
             } else {
                 $totalUBTerdata = (int) ($totalUBTarget * 0.78);
             }
@@ -132,11 +134,11 @@ class ExecutiveDashboardController extends Controller
         $ukTotal = 0;
         $ukDitemukan = 0;
         $ukTidakDitemukan = 0;
-        if (Schema::hasTable('usaha_keluarga')) {
-            $ukTotal = DB::table('usaha_keluarga')->count();
-            if (Schema::hasColumn('usaha_keluarga', 'status_keberadaan')) {
-                $ukDitemukan = DB::table('usaha_keluarga')->where('status_keberadaan', 'DITEMUKAN')->count();
-                $ukTidakDitemukan = DB::table('usaha_keluarga')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
+        if ($schema->hasTable('usaha_keluarga')) {
+            $ukTotal = $db->table('usaha_keluarga')->count();
+            if ($schema->hasColumn('usaha_keluarga', 'status_keberadaan')) {
+                $ukDitemukan = $db->table('usaha_keluarga')->where('status_keberadaan', 'DITEMUKAN')->count();
+                $ukTidakDitemukan = $db->table('usaha_keluarga')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
             } else {
                 $ukDitemukan = (int) ($ukTotal * 0.92);
                 $ukTidakDitemukan = $ukTotal - $ukDitemukan;
@@ -147,11 +149,11 @@ class ExecutiveDashboardController extends Controller
         $upTotal = 0;
         $upDitemukan = 0;
         $upTutupAlihFungsi = 0;
-        if (Schema::hasTable('usaha_perusahaan')) {
-            $upTotal = DB::table('usaha_perusahaan')->count();
-            if (Schema::hasColumn('usaha_perusahaan', 'status_keberadaan')) {
-                $upDitemukan = DB::table('usaha_perusahaan')->where('status_keberadaan', 'DITEMUKAN')->count();
-                $upTutupAlihFungsi = DB::table('usaha_perusahaan')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
+        if ($schema->hasTable('usaha_perusahaan')) {
+            $upTotal = $db->table('usaha_perusahaan')->count();
+            if ($schema->hasColumn('usaha_perusahaan', 'status_keberadaan')) {
+                $upDitemukan = $db->table('usaha_perusahaan')->where('status_keberadaan', 'DITEMUKAN')->count();
+                $upTutupAlihFungsi = $db->table('usaha_perusahaan')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
             } else {
                 $upDitemukan = (int) ($upTotal * 0.88);
                 $upTutupAlihFungsi = $upTotal - $upDitemukan;

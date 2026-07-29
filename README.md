@@ -69,4 +69,5 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Menambahkan view standalone `resources/views/dashboard-se2026.blade.php` berdesain Executive Mode (Clean Dark/Light Theme, High-contrast Stat Cards, Donut Chart Usaha Keluarga & Perusahaan, Line Chart Tren Harian, Horizontal Bar Chart Ranking 14 Kecamatan).
   - Penyesuaian script `composer dev` agar kompatibel dengan OS Windows (menghapus dependency `laravel/pail` `pcntl`).
   - Menambahkan *defensive check* (`Schema::hasTable`) pada `HomeController` agar halaman utama tidak crash ketika tabel `surveys` belum ada di DB.
+  - Konfigurasi dual database: database utama aplikasi ALFATH menggunakan `db_alfath` dan data monitoring SE2026 diambil secara khusus dari koneksi `fasih`.
 
