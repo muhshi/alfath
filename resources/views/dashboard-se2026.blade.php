@@ -342,7 +342,7 @@
         <div class="header-controls">
             <div class="badge-live">
                 <span class="pulse-dot"></span>
-                PEMANDUAN DATA LAPANGAN
+                Terakhir Diperbarui: {{ $lastUpdated }}
             </div>
             <div class="clock-display" id="liveClock">--:--:-- WIB</div>
         </div>

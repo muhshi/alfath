@@ -68,6 +68,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Menambahkan rute publik `/dashboard-se2026` di `routes/web.php`.
   - Pembaruan Judul & Keterangan Beban: Mengubah judul KPI 1 menjadi **Total Beban Pendataan** dengan subteks *"Campuran KK Berusaha, KK Tidak Berusaha & Bangunan Khusus Usaha"*.
   - Pembaruan Rincian SDM (1.000 Petugas): Menambahkan rincian tim **UM/UMK (992): 876 PPL + 116 PML** dan **Usaha Besar (8): 6 PPL + 2 PML**.
-  - Pembaruan Perhitungan Sub SLS Tersentuh: Menggunakan logika kueri SQL Metabase dari `monitoring_se2026` (`(total_beban - status_open) > 0`) per Sub SLS (`region_code`) berbasis tanggal tarik data terkini.
+  - Pembaruan Perhitungan Progres Usaha Besar (UB): Menggunakan kueri SQL Metabase dari `ub_pencacah` berbasis `tanggal_tarik` terkini untuk akumulasi total beban dan submit UB.
+  - Menampilkan Status **Terakhir Diperbarui**: Mengambil nilai `MAX(updated_at)` dari tabel `monitoring_se2026` dan memunculkannya pada header badge utama dashboard (contoh: `Terakhir Diperbarui: 29 Jul 2026 | 09:20 WIB`).
   - Orientasi Chart Kecamatan (Vertical Bar Chart): Menampilkan 14 Kecamatan di **Sumbu X** dan Persentase Capaian (%) di **Sumbu Y**.
 

@@ -66,6 +66,8 @@ class ExecutiveDashboardController extends Controller
         $upDitemukan = 3850;
         $upTutupAlihFungsi = 420;
 
+        $lastUpdated = date('d M Y | H:i') . ' WIB';
+
         try {
             // Determine DB connection for monitoring data (prefer 'fasih' if configured)
             $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
@@ -80,6 +82,12 @@ class ExecutiveDashboardController extends Controller
 
             // 2. Monitoring SE2026 Overall Metrics, Daily Trend & Kecamatan Breakdown
             if ($schema->hasTable('monitoring_se2026')) {
+                // Last updated timestamp from MAX(updated_at)
+                $maxUpdatedAt = $db->table('monitoring_se2026')->max('updated_at');
+                if ($maxUpdatedAt) {
+                    $lastUpdated = date('d M Y | H:i', strtotime($maxUpdatedAt)) . ' WIB';
+                }
+
                 // Find latest date in monitoring_se2026
                 $latestDate = $db->table('monitoring_se2026')->max('tanggal_tarik');
 
@@ -174,12 +182,26 @@ class ExecutiveDashboardController extends Controller
                 }
             }
 
-            // 4. Usaha Besar (UB) Special Progress (ub_pencacah & ub_pengawas)
+            // 4. Usaha Besar (UB) Special Progress (ub_pencacah Metabase query logic)
             if ($schema->hasTable('ub_pencacah')) {
-                $countUB = $db->table('ub_pencacah')->count();
-                if ($countUB > 0) $totalUBTarget = $countUB;
-                if ($schema->hasColumn('ub_pencacah', 'status')) {
-                    $totalUBTerdata = $db->table('ub_pencacah')->whereIn('status', ['SUBMITTED', 'APPROVED', 'COMPLETE'])->count();
+                $latestUbDate = $db->table('ub_pencacah')->max('tanggal_tarik');
+                
+                $ubRaw = $db->table('ub_pencacah')
+                    ->when($latestUbDate, function ($query, $latestUbDate) {
+                        return $query->where('tanggal_tarik', $latestUbDate);
+                    })
+                    ->select(DB::raw("
+                        SUM(IFNULL(open, 0) + IFNULL(draft, 0) + IFNULL(submitted_respondent, 0) + IFNULL(submitted_pencacah, 0) + IFNULL(approved_pengawas, 0) + IFNULL(rejected_pengawas, 0)) as total_beban,
+                        SUM(IFNULL(submitted_respondent, 0) + IFNULL(submitted_pencacah, 0) + IFNULL(approved_pengawas, 0) + IFNULL(rejected_pengawas, 0)) as total_submit
+                    "))
+                    ->first();
+
+                if ($ubRaw && (int) $ubRaw->total_beban > 0) {
+                    $totalUBTarget = (int) $ubRaw->total_beban;
+                    $totalUBTerdata = (int) $ubRaw->total_submit;
+                } else {
+                    $countUB = $db->table('ub_pencacah')->count();
+                    if ($countUB > 0) $totalUBTarget = $countUB;
                 }
             }
 
@@ -260,7 +282,8 @@ class ExecutiveDashboardController extends Controller
             'trendDates',
             'trendSubmits',
             'trendTargets',
-            'kecamatanProgress'
+            'kecamatanProgress',
+            'lastUpdated'
         ));
     }
 }
