@@ -67,4 +67,5 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Menambahkan controller `ExecutiveDashboardController` untuk agregasi data 8 tabel (`alokasi_pengawas`, `master_petugas`, `monitoring_se2026`, `monitoring_sls_se2026`, `ub_pencacah`, `ub_pengawas`, `usaha_keluarga`, `usaha_perusahaan`).
   - Menambahkan rute publik `/dashboard-se2026` di `routes/web.php`.
   - Menambahkan view standalone `resources/views/dashboard-se2026.blade.php` berdesain Executive Mode (Clean Dark/Light Theme, High-contrast Stat Cards, Donut Chart Usaha Keluarga & Perusahaan, Line Chart Tren Harian, Horizontal Bar Chart Ranking 14 Kecamatan).
+  - Penyesuaian script `composer dev` agar kompatibel dengan OS Windows (menghapus dependency `laravel/pail` `pcntl`).
 
