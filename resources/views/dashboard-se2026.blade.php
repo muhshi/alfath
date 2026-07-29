@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,19 +17,29 @@
     
     <style>
         :root {
-            --bg-dark: #0b0f19;
-            --bg-card: rgba(23, 31, 51, 0.75);
-            --bg-card-hover: rgba(30, 41, 67, 0.85);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-blue: #38bdf8;
-            --accent-green: #34d399;
-            --accent-purple: #a78bfa;
-            --accent-amber: #fbbf24;
-            --accent-rose: #fb7185;
-            --primary-gradient: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
-            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            /* Light Theme Palette - UI/UX Pro Max Senior Accessibility Spec */
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --border-card: #e2e8f0;
+            --border-hover: #cbd5e1;
+            
+            --text-title: #0f172a;       /* Charcoal Black - WCAG AAA */
+            --text-body: #1e293b;        /* Dark Slate */
+            --text-muted: #475569;       /* Slate (high contrast readable for seniors) */
+            
+            --blue-primary: #1d4ed8;     /* Official BPS Royal Blue */
+            --blue-bg: #eff6ff;
+            --green-success: #059669;    /* Vibrant Emerald */
+            --green-bg: #ecfdf5;
+            --amber-warning: #d97706;   /* Warm Amber */
+            --amber-bg: #fffbeb;
+            --purple-accent: #6d28d9;   /* Deep Indigo */
+            --purple-bg: #f5f3ff;
+            --rose-accent: #e11d48;     /* Crimson Rose */
+            --rose-bg: #fff1f2;
+
+            --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+            --card-shadow-hover: 0 12px 28px -4px rgba(15, 23, 42, 0.12);
         }
 
         * {
@@ -40,16 +50,12 @@
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
+            background-color: var(--bg-page);
+            color: var(--text-body);
             min-height: 100vh;
-            background-image: 
-                radial-gradient(at 10% 10%, rgba(2, 132, 199, 0.15) 0px, transparent 50%),
-                radial-gradient(at 90% 90%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
-                radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
-            background-attachment: fixed;
             padding: 1.5rem;
-            line-height: 1.5;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* Top Header Navigation */
@@ -58,9 +64,7 @@
             justify-content: space-between;
             align-items: center;
             background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
+            border: 1px solid var(--border-card);
             border-radius: 20px;
             padding: 1.25rem 2rem;
             margin-bottom: 1.5rem;
@@ -74,32 +78,30 @@
         }
 
         .brand-logo {
-            width: 50px;
-            height: 50px;
-            background: var(--primary-gradient);
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: #ffffff;
-            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
         }
 
         .brand-title h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--text-title);
             letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         .brand-title p {
-            font-size: 0.875rem;
+            font-size: 0.95rem;
             color: var(--text-muted);
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .header-controls {
@@ -109,68 +111,65 @@
         }
 
         .badge-live {
-            background: rgba(52, 211, 153, 0.15);
-            border: 1px solid rgba(52, 211, 153, 0.3);
-            color: var(--accent-green);
-            padding: 0.5rem 1rem;
+            background: var(--green-bg);
+            border: 1.5px solid #a7f3d0;
+            color: #047857;
+            padding: 0.6rem 1.2rem;
             border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.9rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.6rem;
         }
 
         .badge-live .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--accent-green);
+            width: 10px;
+            height: 10px;
+            background-color: var(--green-success);
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(5, 150, 105, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
         }
 
         .clock-display {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.5rem 1rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-title);
+            background: #f1f5f9;
+            padding: 0.55rem 1.1rem;
             border-radius: 12px;
-            border: 1px solid var(--border-glass);
+            border: 1px solid var(--border-card);
         }
 
-        /* Grid Layout */
+        /* KPI Cards Grid */
         .grid-kpi {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
             gap: 1.25rem;
             margin-bottom: 1.5rem;
         }
 
         .kpi-card {
             background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
-            border-radius: 18px;
-            padding: 1.25rem;
+            border: 1px solid var(--border-card);
+            border-radius: 20px;
+            padding: 1.35rem;
             box-shadow: var(--card-shadow);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.25s ease-in-out;
             position: relative;
-            overflow: hidden;
         }
 
         .kpi-card:hover {
             transform: translateY(-4px);
-            background: var(--bg-card-hover);
-            border-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--border-hover);
+            box-shadow: var(--card-shadow-hover);
         }
 
         .kpi-header {
@@ -181,51 +180,53 @@
         }
 
         .kpi-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
         }
 
-        .icon-blue { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); }
-        .icon-green { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); }
-        .icon-purple { background: rgba(167, 139, 250, 0.15); color: var(--accent-purple); }
-        .icon-amber { background: rgba(251, 191, 36, 0.15); color: var(--accent-amber); }
-        .icon-rose { background: rgba(251, 113, 133, 0.15); color: var(--accent-rose); }
+        .icon-blue { background: var(--blue-bg); color: var(--blue-primary); }
+        .icon-green { background: var(--green-bg); color: var(--green-success); }
+        .icon-purple { background: var(--purple-bg); color: var(--purple-accent); }
+        .icon-amber { background: var(--amber-bg); color: var(--amber-warning); }
+        .icon-rose { background: var(--rose-bg); color: var(--rose-accent); }
 
         .kpi-title {
             font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.04em;
         }
 
         .kpi-value {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.85rem;
-            font-weight: 700;
-            color: #ffffff;
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--text-title);
             margin-bottom: 0.25rem;
+            line-height: 1.2;
         }
 
         .kpi-subtext {
-            font-size: 0.8rem;
+            font-size: 0.88rem;
             color: var(--text-muted);
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.4rem;
         }
 
         .progress-bar-bg {
             width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.08);
+            height: 8px;
+            background: #e2e8f0;
             border-radius: 10px;
-            margin-top: 0.75rem;
+            margin-top: 0.85rem;
             overflow: hidden;
         }
 
@@ -243,20 +244,16 @@
             margin-bottom: 1.5rem;
         }
 
-        .col-4 { grid-column: span 4; }
         .col-6 { grid-column: span 6; }
-        .col-8 { grid-column: span 8; }
         .col-12 { grid-column: span 12; }
 
         @media (max-width: 1024px) {
-            .col-4, .col-6, .col-8 { grid-column: span 12; }
+            .col-6 { grid-column: span 12; }
         }
 
         .section-card {
             background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
+            border: 1px solid var(--border-card);
             border-radius: 20px;
             padding: 1.5rem;
             box-shadow: var(--card-shadow);
@@ -267,60 +264,63 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 1.25rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border-glass);
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid var(--border-card);
         }
 
         .card-header-title h2 {
-            font-size: 1.1rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            color: #ffffff;
+            gap: 0.65rem;
+            color: var(--text-title);
         }
 
         .chart-container {
             position: relative;
             width: 100%;
-            height: 280px;
+            height: 290px;
         }
 
-        /* Sektor Stat Items */
+        /* Sektor Stat Items High-Contrast */
         .sektor-stat-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
-            margin-top: 1rem;
+            margin-top: 1.25rem;
         }
 
         .sektor-item {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-glass);
+            background: #f8fafc;
+            border: 1px solid var(--border-card);
             border-radius: 14px;
             padding: 1rem;
             text-align: center;
         }
 
         .sektor-item .label {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
+            font-weight: 700;
             margin-bottom: 0.25rem;
         }
 
         .sektor-item .val {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.35rem;
-            font-weight: 700;
+            font-size: 1.5rem;
+            font-weight: 800;
         }
 
         /* Footer */
         .dashboard-footer {
             text-align: center;
-            padding: 1.25rem;
+            padding: 1.5rem;
             color: var(--text-muted);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--border-glass);
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-top: 1px solid var(--border-card);
             margin-top: 2rem;
         }
     </style>
@@ -342,7 +342,7 @@
         <div class="header-controls">
             <div class="badge-live">
                 <span class="pulse-dot"></span>
-                LIVE FIELD DATA
+                PEMANDUAN DATA LAPANGAN
             </div>
             <div class="clock-display" id="liveClock">--:--:-- WIB</div>
         </div>
@@ -357,7 +357,7 @@
                 <div class="kpi-icon icon-blue"><i class="fa-solid fa-bullseye"></i></div>
             </div>
             <div class="kpi-value">{{ number_format($totalBebanTarget > 0 ? $totalBebanTarget : 45000, 0, ',', '.') }}</div>
-            <div class="kpi-subtext"><i class="fa-solid fa-building"></i> Estimasi Muatan Usaha Kab. Demak</div>
+            <div class="kpi-subtext"><i class="fa-solid fa-building"></i> Estimasi Muatan Usaha Demak</div>
         </div>
 
         <!-- Realisasi Terdata -->
@@ -369,7 +369,7 @@
             <div class="kpi-value">{{ number_format($totalSubmit > 0 ? $totalSubmit : 34250, 0, ',', '.') }}</div>
             <div class="kpi-subtext"><i class="fa-solid fa-chart-pie"></i> Capaian: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%</div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%; background: linear-gradient(90deg, #34d399, #10b981);"></div>
+                <div class="progress-bar-fill" style="width: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%; background: #059669;"></div>
             </div>
         </div>
 
@@ -382,7 +382,7 @@
             <div class="kpi-value">{{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 88.4 }}%</div>
             <div class="kpi-subtext"><i class="fa-solid fa-layer-group"></i> {{ number_format($slsTersentuh > 0 ? $slsTersentuh : 2450) }} dari {{ number_format($totalSLS > 0 ? $totalSLS : 2772) }} SLS</div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: {{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 88.4 }}%; background: linear-gradient(90deg, #a78bfa, #8b5cf6);"></div>
+                <div class="progress-bar-fill" style="width: {{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 88.4 }}%; background: #6d28d9;"></div>
             </div>
         </div>
 
@@ -395,11 +395,11 @@
             <div class="kpi-value">{{ $persenUB > 0 ? $persenUB : 82.5 }}%</div>
             <div class="kpi-subtext"><i class="fa-solid fa-briefcase"></i> Progres Sektor Perusahaan UMB</div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: {{ $persenUB > 0 ? $persenUB : 82.5 }}%; background: linear-gradient(90deg, #fbbf24, #f59e0b);"></div>
+                <div class="progress-bar-fill" style="width: {{ $persenUB > 0 ? $persenUB : 82.5 }}%; background: #d97706;"></div>
             </div>
         </div>
 
-        <!-- Petugas Siap -->
+        <!-- SDM Lapangan -->
         <div class="kpi-card">
             <div class="kpi-header">
                 <span class="kpi-title">SDM Lapangan</span>
@@ -413,12 +413,12 @@
     <!-- Main Content Section Grid -->
     <div class="grid-sections">
         
-        <!-- Left: Dynamic Doughnut Charts (Usaha Keluarga & Usaha Perusahaan) -->
+        <!-- Left: Usaha Keluarga (Tabel 7) -->
         <div class="col-6">
             <div class="section-card">
                 <div class="card-header-title">
-                    <h2><i class="fa-solid fa-house-laptop" style="color: var(--accent-blue);"></i> Temuan Usaha Keluarga</h2>
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Tabel 7 Analysis</span>
+                    <h2><i class="fa-solid fa-house-laptop" style="color: var(--blue-primary);"></i> Temuan Usaha Keluarga</h2>
+                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Sektor Mikro / Rumah Tangga</span>
                 </div>
                 <div class="chart-container">
                     <canvas id="chartUsahaKeluarga"></canvas>
@@ -426,21 +426,22 @@
                 <div class="sektor-stat-grid">
                     <div class="sektor-item">
                         <div class="label">Usaha Ditemukan Aktif</div>
-                        <div class="val" style="color: var(--accent-green);">{{ number_format($ukDitemukan > 0 ? $ukDitemukan : 12450) }}</div>
+                        <div class="val" style="color: var(--green-success);">{{ number_format($ukDitemukan > 0 ? $ukDitemukan : 12450) }}</div>
                     </div>
                     <div class="sektor-item">
                         <div class="label">Tidak Ditemukan / Tutup</div>
-                        <div class="val" style="color: var(--accent-rose);">{{ number_format($ukTidakDitemukan > 0 ? $ukTidakDitemukan : 1050) }}</div>
+                        <div class="val" style="color: var(--rose-accent);">{{ number_format($ukTidakDitemukan > 0 ? $ukTidakDitemukan : 1050) }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Right: Usaha Perusahaan (Tabel 8) -->
         <div class="col-6">
             <div class="section-card">
                 <div class="card-header-title">
-                    <h2><i class="fa-solid fa-city" style="color: var(--accent-amber);"></i> Keberadaan Bangunan Usaha Perusahaan</h2>
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Tabel 8 Analysis</span>
+                    <h2><i class="fa-solid fa-city" style="color: var(--amber-warning);"></i> Keberadaan Bangunan Usaha Perusahaan</h2>
+                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Sektor Komersial & Industri</span>
                 </div>
                 <div class="chart-container">
                     <canvas id="chartUsahaPerusahaan"></canvas>
@@ -448,11 +449,11 @@
                 <div class="sektor-stat-grid">
                     <div class="sektor-item">
                         <div class="label">Operasional / Ditemukan</div>
-                        <div class="val" style="color: var(--accent-amber);">{{ number_format($upDitemukan > 0 ? $upDitemukan : 3850) }}</div>
+                        <div class="val" style="color: var(--amber-warning);">{{ number_format($upDitemukan > 0 ? $upDitemukan : 3850) }}</div>
                     </div>
                     <div class="sektor-item">
                         <div class="label">Tutup / Alih Fungsi</div>
-                        <div class="val" style="color: var(--accent-purple);">{{ number_format($upTutupAlihFungsi > 0 ? $upTutupAlihFungsi : 420) }}</div>
+                        <div class="val" style="color: var(--purple-accent);">{{ number_format($upTutupAlihFungsi > 0 ? $upTutupAlihFungsi : 420) }}</div>
                     </div>
                 </div>
             </div>
@@ -462,10 +463,10 @@
         <div class="col-12">
             <div class="section-card">
                 <div class="card-header-title">
-                    <h2><i class="fa-solid fa-chart-line" style="color: var(--accent-green);"></i> Tren Akumulasi Pendataan Lapangan Harian</h2>
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Real-time Submissions</span>
+                    <h2><i class="fa-solid fa-chart-line" style="color: var(--green-success);"></i> Tren Akumulasi Laju Pendataan Harian</h2>
+                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Realisasi Submit Kumulatif</span>
                 </div>
-                <div class="chart-container" style="height: 320px;">
+                <div class="chart-container" style="height: 330px;">
                     <canvas id="chartTrendHarian"></canvas>
                 </div>
             </div>
@@ -475,10 +476,10 @@
         <div class="col-12">
             <div class="section-card">
                 <div class="card-header-title">
-                    <h2><i class="fa-solid fa-ranking-star" style="color: var(--accent-purple);"></i> Sebaran Capaian Progres 14 Kecamatan se-Kabupaten Demak</h2>
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Agregat Wilayah</span>
+                    <h2><i class="fa-solid fa-ranking-star" style="color: var(--purple-accent);"></i> Sebaran Capaian Progres 14 Kecamatan se-Kabupaten Demak</h2>
+                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Tingkat Penyelesaian (%)</span>
                 </div>
-                <div class="chart-container" style="height: 380px;">
+                <div class="chart-container" style="height: 400px;">
                     <canvas id="chartKecamatan"></canvas>
                 </div>
             </div>
@@ -488,7 +489,7 @@
 
     <!-- Footer -->
     <footer class="dashboard-footer">
-        <p>&copy; {{ date('Y') }} Badania Pusat Statistik (BPS) Kabupaten Demak — Sensus Ekonomi 2026 Executive Display Systems</p>
+        <p>&copy; {{ date('Y') }} Badan Pusat Statistik (BPS) Kabupaten Demak — Sensus Ekonomi 2026 Executive Display Systems</p>
     </footer>
 
     <!-- JavaScript Visualisations -->
@@ -516,6 +517,12 @@
         const kecNames = kecData.map(item => item.name);
         const kecPcts = kecData.map(item => item.pct);
 
+        // Global Chart Defaults for High Legibility & High Contrast (Senior Friendly)
+        Chart.defaults.font.family = 'Plus Jakarta Sans';
+        Chart.defaults.font.size = 13;
+        Chart.defaults.font.weight = '600';
+        Chart.defaults.color = '#1e293b';
+
         // Chart 1: Usaha Keluarga
         new Chart(document.getElementById('chartUsahaKeluarga'), {
             type: 'doughnut',
@@ -523,8 +530,9 @@
                 labels: ['Ditemukan Aktif', 'Tidak Ditemukan / Ganti'],
                 datasets: [{
                     data: [ukDitemukan, ukTidakDitemukan],
-                    backgroundColor: ['#34d399', '#fb7185'],
-                    borderWidth: 0,
+                    backgroundColor: ['#059669', '#e11d48'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
                     hoverOffset: 6
                 }]
             },
@@ -532,9 +540,9 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 12 } } }
+                    legend: { position: 'bottom', labels: { color: '#0f172a', font: { size: 13, weight: '700' } } }
                 },
-                cutout: '70%'
+                cutout: '65%'
             }
         });
 
@@ -545,8 +553,9 @@
                 labels: ['Operasional / Ditemukan', 'Tutup / Alih Fungsi'],
                 datasets: [{
                     data: [upDitemukan, upTutupAlihFungsi],
-                    backgroundColor: ['#fbbf24', '#a78bfa'],
-                    borderWidth: 0,
+                    backgroundColor: ['#d97706', '#6d28d9'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
                     hoverOffset: 6
                 }]
             },
@@ -554,9 +563,9 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 12 } } }
+                    legend: { position: 'bottom', labels: { color: '#0f172a', font: { size: 13, weight: '700' } } }
                 },
-                cutout: '70%'
+                cutout: '65%'
             }
         });
 
@@ -568,23 +577,26 @@
                 datasets: [{
                     label: 'Realisasi Submit Kumulatif',
                     data: trendSubmits,
-                    borderColor: '#38bdf8',
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    borderColor: '#1d4ed8',
+                    borderWidth: 3,
+                    backgroundColor: 'rgba(29, 78, 216, 0.08)',
                     fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#38bdf8',
-                    pointRadius: 4
+                    tension: 0.35,
+                    pointBackgroundColor: '#1d4ed8',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
-                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    x: { ticks: { color: '#0f172a', font: { weight: '700' } }, grid: { color: '#e2e8f0' } },
+                    y: { ticks: { color: '#0f172a', font: { weight: '700' } }, grid: { color: '#e2e8f0' } }
                 },
                 plugins: {
-                    legend: { labels: { color: '#f8fafc', font: { family: 'Plus Jakarta Sans' } } }
+                    legend: { labels: { color: '#0f172a', font: { size: 13, weight: '700' } } }
                 }
             }
         });
@@ -597,7 +609,7 @@
                 datasets: [{
                     label: 'Capaian (%)',
                     data: kecPcts,
-                    backgroundColor: 'rgba(167, 139, 250, 0.85)',
+                    backgroundColor: '#4f46e5',
                     borderRadius: 8
                 }]
             },
@@ -606,8 +618,8 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
-                    y: { ticks: { color: '#f8fafc' }, grid: { display: false } }
+                    x: { max: 100, ticks: { color: '#0f172a', font: { weight: '700' } }, grid: { color: '#e2e8f0' } },
+                    y: { ticks: { color: '#0f172a', font: { size: 13, weight: '700' } }, grid: { display: false } }
                 },
                 plugins: {
                     legend: { display: false }
