@@ -21,7 +21,7 @@
         <div class="container-xl">
             <div class="row row-deck row-cards">
                 
-                <!-- Hero Banner Card (Elegan & Clean - Non-Gradient) -->
+                <!-- Hero Banner Card (Clean Corporate Style) -->
                 <div class="col-12">
                     <div class="card border-0 shadow-sm" style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 6px solid #ea580c !important; border-radius: 16px;">
                         <div class="card-body p-4 p-md-5">
@@ -119,7 +119,7 @@
                                         {{ number_format($activeSurveys) }}
                                     </div>
                                     <div class="text-muted font-weight-medium small">
-                                        Survei Berjalan
+                                        Survei Berjalan (Aktif)
                                     </div>
                                 </div>
                             </div>
@@ -149,60 +149,97 @@
                     </div>
                 </div>
 
-                <!-- Recent Surveys Table Card -->
+                <!-- Recent & Active Surveys Table Card -->
                 <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-3" style="background: #ffffff;">
-                        <div class="card-header bg-transparent py-3 border-bottom">
+                        <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
                             <h3 class="card-title font-weight-bold text-dark mb-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-orange me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 11l3 3l8 -8"/><path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9"/></svg>
-                                Daftar Survei Lapangan Terdaftar
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-orange me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 11l3 3l8 -8"/><path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9"/></svg>
+                                Daftar Survei Lapangan BPS Kab. Demak
                             </h3>
+                            <span class="badge bg-light text-muted font-weight-bold px-3 py-2 border rounded-pill">
+                                Diurutkan: <strong class="text-primary">Status Aktif</strong> → <strong class="text-dark">Tanggal Terkini</strong>
+                            </span>
                         </div>
                         <div class="table-responsive">
                             <table class="table card-table table-vcenter table-hover text-nowrap">
                                 <thead>
                                     <tr class="bg-light">
-                                        <th class="font-weight-bold text-muted">Nama Survei</th>
-                                        <th class="font-weight-bold text-muted">Tim Kerja</th>
-                                        <th class="font-weight-bold text-muted">Periode Pendataan</th>
-                                        <th class="font-weight-bold text-muted">Status</th>
-                                        <th class="font-weight-bold text-muted text-end">Aksi</th>
+                                        <th class="font-weight-bold text-muted py-3">Nama Survei</th>
+                                        <th class="font-weight-bold text-muted py-3">Tim Kerja</th>
+                                        <th class="font-weight-bold text-muted py-3">Periode Pendataan</th>
+                                        <th class="font-weight-bold text-muted py-3">Status Survei</th>
+                                        <th class="font-weight-bold text-muted py-3 text-end">Aksi Monitoring</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($recentSurveys as $survey)
+                                    @forelse($surveys as $survey)
                                         <tr>
-                                            <td class="font-weight-bold text-dark">{{ $survey->name }}</td>
-                                            <td><span class="badge bg-blue-lt font-weight-medium">{{ $survey->team->name ?? '-' }}</span></td>
-                                            <td class="text-muted small">
-                                                {{ $survey->start_periode?->format('d M Y') }} - {{ $survey->end_periode?->format('d M Y') }}
+                                            <td class="font-weight-bold text-dark py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="avatar avatar-xs me-2 rounded bg-light text-dark font-weight-bold" style="border: 1px solid #e2e8f0;">
+                                                        <i class="fa-solid fa-clipboard-list text-orange"></i>
+                                                    </span>
+                                                    <span>{{ $survey->name }}</span>
+                                                </div>
                                             </td>
-                                            <td>
+                                            <td class="py-3">
+                                                <span class="badge bg-blue-lt font-weight-bold px-2 py-1">
+                                                    <i class="fa-solid fa-users text-blue me-1"></i> {{ $survey->team->name ?? '-' }}
+                                                </span>
+                                            </td>
+                                            <td class="text-muted small py-3">
+                                                <i class="fa-regular fa-calendar me-1"></i>
+                                                {{ $survey->start_periode?->format('d M Y') }} – {{ $survey->end_periode?->format('d M Y') }}
+                                            </td>
+                                            <td class="py-3">
                                                 @if($survey->start_periode <= now() && $survey->end_periode >= now())
-                                                    <span class="badge bg-success-lt text-success font-weight-bold">● Aktif</span>
+                                                    <span class="badge bg-success-lt text-success font-weight-bold px-3 py-1 rounded-pill">
+                                                        <span class="status-dot status-dot-animated bg-success me-1"></span> Aktif Berjalan
+                                                    </span>
                                                 @elseif($survey->end_periode < now())
-                                                    <span class="badge bg-secondary-lt text-secondary font-weight-bold">● Selesai</span>
+                                                    <span class="badge bg-secondary-lt text-secondary font-weight-medium px-3 py-1 rounded-pill">
+                                                        ● Selesai
+                                                    </span>
                                                 @else
-                                                    <span class="badge bg-info-lt text-info font-weight-bold">● Mendatang</span>
+                                                    <span class="badge bg-info-lt text-info font-weight-bold px-3 py-1 rounded-pill">
+                                                        ⏳ Mendatang
+                                                    </span>
                                                 @endif
                                             </td>
-                                            <td class="text-end">
-                                                <a href="{{ route('surveys.embed', $survey) }}" class="btn btn-outline-primary btn-sm rounded-pill font-weight-bold">
-                                                    Lihat Monitoring
+                                            <td class="text-end py-3">
+                                                <a href="{{ route('surveys.embed', $survey) }}" class="btn btn-outline-primary btn-sm rounded-pill font-weight-bold px-3">
+                                                    <i class="fa-solid fa-chart-line me-1"></i> Lihat Monitoring
                                                 </a>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center py-4 text-muted">
-                                                <i class="fa-solid fa-folder-open mb-2 fs-2 d-block opacity-50"></i>
-                                                Belum ada data survei yang terdaftar.
+                                            <td colspan="5" class="text-center py-5 text-muted">
+                                                <div class="mb-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-folder-off text-muted opacity-50" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M3 3l18 18"/><path d="M19 19h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 1.172 -1.821m3.828 -.179h1l3 3h7a2 2 0 0 1 2 2v8"/></svg>
+                                                </div>
+                                                <div class="font-weight-bold fs-3 text-dark">Belum Ada Data Survei</div>
+                                                <div class="small">Survei yang ditambahkan akan otomatis muncul dan diurutkan berdasarkan status aktif di sini.</div>
                                             </td>
                                         </tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Pagination Links -->
+                        @if($surveys instanceof \Illuminate\Pagination\LengthAwarePaginator && $surveys->hasPages())
+                            <div class="card-footer d-flex align-items-center justify-content-between bg-transparent border-top py-3">
+                                <div class="text-muted small">
+                                    Menampilkan <strong>{{ $surveys->firstItem() }}</strong> s.d. <strong>{{ $surveys->lastItem() }}</strong> dari total <strong>{{ $surveys->total() }}</strong> survei
+                                </div>
+                                <div>
+                                    {{ $surveys->links('pagination::bootstrap-5') }}
+                                </div>
+                            </div>
+                        @endif
+
                     </div>
                 </div>
 
