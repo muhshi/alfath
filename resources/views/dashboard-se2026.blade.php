@@ -322,8 +322,39 @@
             color: var(--text-muted);
             font-size: 0.9rem;
             font-weight: 600;
-            border-top: 1px solid var(--border-card);
-            margin-top: 2rem;
+        .btn-home-back {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            color: #ffffff !important;
+            padding: 0.65rem 1.35rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            text-decoration: none !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
+            box-shadow: 0 4px 14px rgba(29, 78, 216, 0.35);
+            border: 1px solid #1e40af;
+            transition: all 0.25s ease-in-out;
+            cursor: pointer;
+        }
+
+        .btn-home-back:hover {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(29, 78, 216, 0.5);
+            color: #ffffff !important;
+        }
+
+        .clock-display {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-title);
+            background: #f5f5f4;
+            padding: 0.55rem 1.1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-card);
         }
     </style>
 </head>
@@ -343,7 +374,9 @@
 
         <div class="header-controls">
             <a href="{{ url('/') }}" class="btn-home-back">
-                <i class="fa-solid fa-house"></i> Beranda ALFATH
+                <i class="fa-solid fa-arrow-left"></i>
+                <i class="fa-solid fa-house"></i>
+                <span>Kembali ke Beranda ALFATH</span>
             </a>
             <div class="badge-live">
                 <span class="pulse-dot"></span>

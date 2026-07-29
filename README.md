@@ -88,7 +88,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Pembaruan Identitas Logo BPS: Menggunakan logo resmi `assets/logo_bps.png` pada header **Dashboard Executive SE2026** dan **Beranda ALFATH**.
   - Redesain Halaman Utama (Clean Corporate Style): Menghilangkan gradasi warna menyolok dan mengubah tampilan Beranda ALFATH menjadi desain korporat eksekutif yang sangat bersih (*Pure White Card*, aksen *Border Left SE Orange*, typography *Outfit*, dan lencana *BPS Kabupaten Demak*).
   - Penegasan Kepanjangan ALFATH: Menyajikan nama resmi **ALFATH — Aplikasi Fasih Monitoring Harian** secara jelas pada banner utama.
-  - Tombol Navigasi Dua Arah: Menambahkan tombol CTA menonjol menuju **Dashboard Executive SE2026** pada Header & Hero Card `home.blade.php`, serta tombol **Beranda ALFATH** pada header `dashboard-se2026.blade.php` untuk kemudahan navigasi kembali.
+  - Redesain Tombol Navigasi Kembali ("Kembali ke Beranda ALFATH"): Mengubah tampilan dari tautan biasa menjadi **Tombol 3D Solid Berwarna Biru BPS (`#1d4ed8`)** dengan efek elevasi bayangan shadow, teks ExtraBold tebal, serta ikon panah & rumah yang sangat kontras dan mudah dikenali.
   - Menampilkan Status **Terakhir Diperbarui**: Mengambil nilai `MAX(updated_at)` dari tabel `monitoring_se2026` dan memunculkannya pada header badge utama dashboard (contoh: `Terakhir Diperbarui: 29 Jul 2026 | 09:20 WIB`).
   - Orientasi Chart Kecamatan (Vertical Bar Chart): Menampilkan 14 Kecamatan di **Sumbu X** dan Persentase Capaian (%) di **Sumbu Y**.
   - Menambahkan skrip rilis/deploy otomatis `deploy.sh` untuk otomasi *maintenance mode*, *git pull*, *composer install*, *asset build*, *safe database migration*, dan *cache optimization*.
