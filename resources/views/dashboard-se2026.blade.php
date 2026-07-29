@@ -342,6 +342,9 @@
         </div>
 
         <div class="header-controls">
+            <a href="{{ url('/') }}" class="btn-home-back">
+                <i class="fa-solid fa-house"></i> Beranda ALFATH
+            </a>
             <div class="badge-live">
                 <span class="pulse-dot"></span>
                 Terakhir Diperbarui: {{ $lastUpdated }}
