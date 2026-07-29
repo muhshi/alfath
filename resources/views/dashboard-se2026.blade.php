@@ -512,6 +512,7 @@
 
         const trendDates = {!! json_encode(!empty($trendDates) ? $trendDates : ['19 Jul', '20 Jul', '21 Jul', '22 Jul', '23 Jul', '24 Jul', '25 Jul', '26 Jul', '27 Jul', '28 Jul']) !!};
         const trendSubmits = {!! json_encode(!empty($trendSubmits) ? $trendSubmits : [3200, 6800, 11200, 16400, 21000, 25300, 29100, 32400, 34250, 36100]) !!};
+        const trendTargets = {!! json_encode(!empty($trendTargets) ? $trendTargets : [15000, 17500, 20000, 22500, 25000, 27500, 30000, 32500, 35000, 37500]) !!};
 
         const kecData = {!! json_encode($kecamatanProgress) !!};
         const kecNames = kecData.map(item => item.name);
@@ -569,24 +570,37 @@
             }
         });
 
-        // Chart 3: Trend Line
+        // Chart 3: Trend Line (Realisasi vs Target Seharusnya 1.33%/Hari)
         new Chart(document.getElementById('chartTrendHarian'), {
             type: 'line',
             data: {
                 labels: trendDates,
-                datasets: [{
-                    label: 'Realisasi Submit Kumulatif',
-                    data: trendSubmits,
-                    borderColor: '#1d4ed8',
-                    borderWidth: 3,
-                    backgroundColor: 'rgba(29, 78, 216, 0.08)',
-                    fill: true,
-                    tension: 0.35,
-                    pointBackgroundColor: '#1d4ed8',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5
-                }]
+                datasets: [
+                    {
+                        label: 'Realisasi Submit Kumulatif',
+                        data: trendSubmits,
+                        borderColor: '#1d4ed8',
+                        borderWidth: 3,
+                        backgroundColor: 'rgba(29, 78, 216, 0.08)',
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#1d4ed8',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    },
+                    {
+                        label: 'Target Seharusnya (1.33% / Hari)',
+                        data: trendTargets,
+                        borderColor: '#d97706',
+                        borderWidth: 2,
+                        borderDash: [6, 6],
+                        fill: false,
+                        tension: 0.1,
+                        pointBackgroundColor: '#d97706',
+                        pointRadius: 3
+                    }
+                ]
             },
             options: {
                 responsive: true,
