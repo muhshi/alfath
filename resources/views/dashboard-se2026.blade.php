@@ -157,8 +157,8 @@
         /* KPI Cards Grid */
         .grid-kpi {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.15rem;
             margin-bottom: 1.5rem;
         }
 
@@ -416,6 +416,34 @@
             <div class="kpi-subtext"><i class="fa-solid fa-chart-pie"></i> Capaian: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%</div>
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%; background: var(--green-bps);"></div>
+            </div>
+        </div>
+
+        <!-- Sebaran Progres Petugas -->
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <span class="kpi-title">Progres Petugas</span>
+                <div class="kpi-icon icon-blue"><i class="fa-solid fa-user-check"></i></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.15rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+                    <span style="font-weight: 700; color: var(--rose-bps); display: flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 0.75rem;"></i> &lt; 50%
+                    </span>
+                    <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.02rem; color: var(--text-title);">{{ number_format($petugasUnder50) }} <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted);">ptg</span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+                    <span style="font-weight: 700; color: #d97706; display: flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-spinner" style="font-size: 0.75rem;"></i> 50% - 70%
+                    </span>
+                    <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.02rem; color: var(--text-title);">{{ number_format($petugas50To70) }} <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted);">ptg</span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+                    <span style="font-weight: 700; color: var(--green-bps); display: flex; align-items: center; gap: 0.35rem;">
+                        <i class="fa-solid fa-circle-check" style="font-size: 0.75rem;"></i> &gt; 70%
+                    </span>
+                    <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.02rem; color: var(--text-title);">{{ number_format($petugasAbove70) }} <span style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted);">ptg</span></span>
+                </div>
             </div>
         </div>
 

@@ -66,6 +66,10 @@ class ExecutiveDashboardController extends Controller
         $upDitemukan = 3850;
         $upTutupAlihFungsi = 420;
 
+        $petugasUnder50 = 142;
+        $petugas50To70 = 275;
+        $petugasAbove70 = 583;
+
         $lastUpdated = date('d M Y | H:i') . ' WIB';
 
         try {
@@ -80,7 +84,7 @@ class ExecutiveDashboardController extends Controller
                 if ($dbCount > 0) $totalPetugas = $dbCount;
             }
 
-            // 2. Monitoring SE2026 Overall Metrics, Daily Trend & Kecamatan Breakdown
+            // 2. Monitoring SE2026 Overall Metrics, Daily Trend, Kecamatan Breakdown & Petugas Distribution
             if ($schema->hasTable('monitoring_se2026')) {
                 // Last updated timestamp from MAX(updated_at)
                 $maxUpdatedAt = $db->table('monitoring_se2026')->max('updated_at');
@@ -132,6 +136,52 @@ class ExecutiveDashboardController extends Controller
                     $totalSubmit = $calcTotalSubmit;
                 }
 
+                // Petugas Progress Distribution (<50%, 50-70%, >70%)
+                $pencacahCol = null;
+                if ($schema->hasColumn('monitoring_se2026', 'email_pencacah')) {
+                    $pencacahCol = 'email_pencacah';
+                } elseif ($schema->hasColumn('monitoring_se2026', 'pencacah_email')) {
+                    $pencacahCol = 'pencacah_email';
+                } elseif ($schema->hasColumn('monitoring_se2026', 'email')) {
+                    $pencacahCol = 'email';
+                }
+
+                if ($pencacahCol) {
+                    $petugasGroup = $db->table('monitoring_se2026')
+                        ->when($latestDate, function ($query, $latestDate) {
+                            return $query->where('tanggal_tarik', $latestDate);
+                        })
+                        ->select(DB::raw("
+                            {$pencacahCol} as email,
+                            SUM(IFNULL(total_beban, 0)) as target,
+                            SUM(IFNULL(total_beban, 0) - IFNULL(status_open, 0) - IFNULL(status_draft, 0)) as submit
+                        "))
+                        ->whereNotNull($pencacahCol)
+                        ->groupBy($pencacahCol)
+                        ->get();
+
+                    if ($petugasGroup->count() > 0) {
+                        $u50 = 0;
+                        $m5070 = 0;
+                        $a70 = 0;
+                        foreach ($petugasGroup as $p) {
+                            $tgt = (int) $p->target;
+                            $sub = (int) $p->submit;
+                            $pct = $tgt > 0 ? ($sub / $tgt) * 100 : 0;
+                            if ($pct < 50) {
+                                $u50++;
+                            } elseif ($pct <= 70) {
+                                $m5070++;
+                            } else {
+                                $a70++;
+                            }
+                        }
+                        $petugasUnder50 = $u50;
+                        $petugas50To70 = $m5070;
+                        $petugasAbove70 = $a70;
+                    }
+                }
+
                 // Daily Trend Data with Target Seharusnya line (1.33% per day from 2026-06-15)
                 $trendRaw = $db->table('monitoring_se2026')
                     ->select(DB::raw("
@@ -164,8 +214,7 @@ class ExecutiveDashboardController extends Controller
                     }
                 }
 
-                // 3. Sub SLS Coverage Metrics using Metabase logic:
-                // Sub SLS tersentuh = region_code (Sub SLS) where (total_beban - status_open) > 0
+                // 3. Sub SLS Coverage Metrics
                 $subSlsTersentuhCount = $db->table('monitoring_se2026')
                     ->when($latestDate, function ($query, $latestDate) {
                         return $query->where('tanggal_tarik', $latestDate);
@@ -182,7 +231,7 @@ class ExecutiveDashboardController extends Controller
                 }
             }
 
-            // 4. Usaha Besar (UB) Special Progress (ub_pencacah Metabase query logic)
+            // 4. Usaha Besar (UB) Special Progress
             if ($schema->hasTable('ub_pencacah')) {
                 $latestUbDate = $db->table('ub_pencacah')->max('tanggal_tarik');
                 
@@ -207,21 +256,57 @@ class ExecutiveDashboardController extends Controller
 
             // 5. Usaha Keluarga Metrics (usaha_keluarga)
             if ($schema->hasTable('usaha_keluarga')) {
-                $countUK = $db->table('usaha_keluarga')->count();
-                if ($countUK > 0) $ukTotal = $countUK;
-                if ($schema->hasColumn('usaha_keluarga', 'status_keberadaan')) {
+                $latestUkDate = $db->table('usaha_keluarga')->max('tanggal_data');
+
+                $ukRaw = $db->table('usaha_keluarga')
+                    ->when($latestUkDate, function ($query, $latestUkDate) {
+                        return $query->where('tanggal_data', $latestUkDate);
+                    })
+                    ->select(DB::raw("
+                        SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka, 0)) as total_ditemukan,
+                        SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru, 0)) as total_baru,
+                        SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup, 0)) as total_tutup,
+                        SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ganda, 0)) as total_ganda,
+                        SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di, 0)) as total_tidak_ditemukan
+                    "))
+                    ->first();
+
+                if ($ukRaw && ($ukRaw->total_ditemukan || $ukRaw->total_baru || $ukRaw->total_tutup || $ukRaw->total_ganda || $ukRaw->total_tidak_ditemukan)) {
+                    $ukDitemukan = (int) ($ukRaw->total_ditemukan + $ukRaw->total_baru);
+                    $ukTidakDitemukan = (int) ($ukRaw->total_tutup + $ukRaw->total_ganda + $ukRaw->total_tidak_ditemukan);
+                    $ukTotal = $ukDitemukan + $ukTidakDitemukan;
+                } elseif ($schema->hasColumn('usaha_keluarga', 'status_keberadaan')) {
                     $ukDitemukan = $db->table('usaha_keluarga')->where('status_keberadaan', 'DITEMUKAN')->count();
                     $ukTidakDitemukan = $db->table('usaha_keluarga')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
+                    $ukTotal = $ukDitemukan + $ukTidakDitemukan;
                 }
             }
 
             // 6. Usaha Perusahaan Metrics (usaha_perusahaan)
             if ($schema->hasTable('usaha_perusahaan')) {
-                $countUP = $db->table('usaha_perusahaan')->count();
-                if ($countUP > 0) $upTotal = $countUP;
-                if ($schema->hasColumn('usaha_perusahaan', 'status_keberadaan')) {
+                $latestUpDate = $db->table('usaha_perusahaan')->max('tanggal_data');
+
+                $upRaw = $db->table('usaha_perusahaan')
+                    ->when($latestUpDate, function ($query, $latestUpDate) {
+                        return $query->where('tanggal_data', $latestUpDate);
+                    })
+                    ->select(DB::raw("
+                        SUM(IFNULL(status___ditemukan, 0)) as total_ditemukan,
+                        SUM(IFNULL(status___baru, 0)) as total_baru,
+                        SUM(IFNULL(status___tutup, 0)) as total_tutup,
+                        SUM(IFNULL(status___ganda, 0)) as total_ganda,
+                        SUM(IFNULL(status___tidak_ditemukan, 0)) as total_tidak_ditemukan
+                    "))
+                    ->first();
+
+                if ($upRaw && ($upRaw->total_ditemukan || $upRaw->total_baru || $upRaw->total_tutup || $upRaw->total_ganda || $upRaw->total_tidak_ditemukan)) {
+                    $upDitemukan = (int) ($upRaw->total_ditemukan + $upRaw->total_baru);
+                    $upTutupAlihFungsi = (int) ($upRaw->total_tutup + $upRaw->total_ganda + $upRaw->total_tidak_ditemukan);
+                    $upTotal = $upDitemukan + $upTutupAlihFungsi;
+                } elseif ($schema->hasColumn('usaha_perusahaan', 'status_keberadaan')) {
                     $upDitemukan = $db->table('usaha_perusahaan')->where('status_keberadaan', 'DITEMUKAN')->count();
                     $upTutupAlihFungsi = $db->table('usaha_perusahaan')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
+                    $upTotal = $upDitemukan + $upTutupAlihFungsi;
                 }
             }
         } catch (\Throwable $e) {
@@ -279,6 +364,9 @@ class ExecutiveDashboardController extends Controller
             'upTotal',
             'upDitemukan',
             'upTutupAlihFungsi',
+            'petugasUnder50',
+            'petugas50To70',
+            'petugasAbove70',
             'trendDates',
             'trendSubmits',
             'trendTargets',
