@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Executive Dashboard - Sensus Ekonomi 2026 BPS Kabupaten Demak</title>
+    <link rel="shortcut icon" href="{{ asset('assets/logo_bps.png') }}" type="image/png">
+    <link rel="icon" href="{{ asset('assets/logo_bps.png') }}" type="image/png">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

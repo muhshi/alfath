@@ -10,11 +10,11 @@ return [
     |
     */
 
-    'title' => 'ALFATH',
+    'title' => 'ALFATH — Aplikasi Fasih Monitoring Harian',
     'title_prefix' => '',
     'title_postfix' => '',
-    'bottom_title' => 'Alfath',
-    'current_version' => 'v11.11',
+    'bottom_title' => 'BPS Kabupaten Demak',
+    'current_version' => 'v1.0',
 
 
     /*
@@ -26,8 +26,8 @@ return [
     |
     */
 
-    'logo' => '<b>Tab</b>LAR',
-    'logo_img_alt' => 'Admin Logo',
+    'logo' => '<img src="/assets/logo_bps.png" height="32" alt="BPS Logo" style="vertical-align: middle; margin-right: 8px;"> <b style="vertical-align: middle;">ALFATH</b>',
+    'logo_img_alt' => 'Logo BPS Demak',
 
     /*
     |--------------------------------------------------------------------------
@@ -40,13 +40,13 @@ return [
     */
 
     'auth_logo' => [
-        'enabled' => false,
+        'enabled' => true,
         'img' => [
-            'path' => 'assets/tablar-logo.png',
-            'alt' => 'Auth Logo',
+            'path' => 'assets/logo_bps.png',
+            'alt' => 'BPS Demak Logo',
             'class' => '',
-            'width' => 50,
-            'height' => 50,
+            'width' => 60,
+            'height' => 60,
         ],
     ],
 
