@@ -17,29 +17,32 @@
     
     <style>
         :root {
-            /* Light Theme Palette - UI/UX Pro Max Senior Accessibility Spec */
-            --bg-page: #f8fafc;
-            --bg-card: #ffffff;
-            --border-card: #e2e8f0;
-            --border-hover: #cbd5e1;
+            /* Official BPS & Sensus Ekonomi Corporate Palette (SE Signature Orange) */
+            --orange-primary: #ea580c;  /* Sensus Ekonomi Signature Orange */
+            --orange-hover: #c2410c;    /* Deep Orange */
+            --orange-bg: #fff7ed;       /* Soft Cream / Orange Light */
+            --orange-border: #ffedd5;
             
-            --text-title: #0f172a;       /* Charcoal Black - WCAG AAA */
-            --text-body: #1e293b;        /* Dark Slate */
-            --text-muted: #475569;       /* Slate (high contrast readable for seniors) */
-            
-            --blue-primary: #1d4ed8;     /* Official BPS Royal Blue */
+            --blue-bps: #1d4ed8;        /* Official BPS Royal Blue */
             --blue-bg: #eff6ff;
-            --green-success: #059669;    /* Vibrant Emerald */
+            
+            --green-bps: #059669;       /* Official BPS Emerald Green */
             --green-bg: #ecfdf5;
-            --amber-warning: #d97706;   /* Warm Amber */
-            --amber-bg: #fffbeb;
-            --purple-accent: #6d28d9;   /* Deep Indigo */
-            --purple-bg: #f5f3ff;
-            --rose-accent: #e11d48;     /* Crimson Rose */
+            
+            --rose-bps: #e11d48;
             --rose-bg: #fff1f2;
+            
+            --bg-page: #fafaf9;
+            --bg-card: #ffffff;
+            --border-card: #e7e5e4;
+            --border-hover: #fed7aa;
+            
+            --text-title: #0c0a09;       /* High Contrast Warm Black (WCAG AAA) */
+            --text-body: #1c1917;        /* High Contrast Charcoal */
+            --text-muted: #57534e;       /* Readable Slate Grey */
 
-            --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-            --card-shadow-hover: 0 12px 28px -4px rgba(15, 23, 42, 0.12);
+            --card-shadow: 0 4px 20px -2px rgba(234, 88, 12, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+            --card-shadow-hover: 0 12px 28px -4px rgba(234, 88, 12, 0.16);
         }
 
         * {
@@ -80,14 +83,14 @@
         .brand-logo {
             width: 52px;
             height: 52px;
-            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.6rem;
             color: #ffffff;
-            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+            box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
         }
 
         .brand-title h1 {
@@ -111,9 +114,9 @@
         }
 
         .badge-live {
-            background: var(--green-bg);
-            border: 1.5px solid #a7f3d0;
-            color: #047857;
+            background: var(--orange-bg);
+            border: 1.5px solid var(--orange-border);
+            color: var(--orange-primary);
             padding: 0.6rem 1.2rem;
             border-radius: 30px;
             font-size: 0.9rem;
@@ -126,15 +129,15 @@
         .badge-live .pulse-dot {
             width: 10px;
             height: 10px;
-            background-color: var(--green-success);
+            background-color: var(--orange-primary);
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5); }
-            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(5, 150, 105, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.5); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(234, 88, 12, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
         }
 
         .clock-display {
@@ -142,7 +145,7 @@
             font-size: 1.15rem;
             font-weight: 700;
             color: var(--text-title);
-            background: #f1f5f9;
+            background: #f5f5f4;
             padding: 0.55rem 1.1rem;
             border-radius: 12px;
             border: 1px solid var(--border-card);
@@ -189,11 +192,10 @@
             font-size: 1.3rem;
         }
 
-        .icon-blue { background: var(--blue-bg); color: var(--blue-primary); }
-        .icon-green { background: var(--green-bg); color: var(--green-success); }
-        .icon-purple { background: var(--purple-bg); color: var(--purple-accent); }
-        .icon-amber { background: var(--amber-bg); color: var(--amber-warning); }
-        .icon-rose { background: var(--rose-bg); color: var(--rose-accent); }
+        .icon-orange { background: var(--orange-bg); color: var(--orange-primary); }
+        .icon-green { background: var(--green-bg); color: var(--green-bps); }
+        .icon-blue { background: var(--blue-bg); color: var(--blue-bps); }
+        .icon-rose { background: var(--rose-bg); color: var(--rose-bps); }
 
         .kpi-title {
             font-size: 0.85rem;
@@ -224,7 +226,7 @@
         .progress-bar-bg {
             width: 100%;
             height: 8px;
-            background: #e2e8f0;
+            background: #e7e5e4;
             border-radius: 10px;
             margin-top: 0.85rem;
             overflow: hidden;
@@ -293,7 +295,7 @@
         }
 
         .sektor-item {
-            background: #f8fafc;
+            background: #fafaf9;
             border: 1px solid var(--border-card);
             border-radius: 14px;
             padding: 1rem;
@@ -354,7 +356,7 @@
         <div class="kpi-card">
             <div class="kpi-header">
                 <span class="kpi-title">Total Beban Pendataan</span>
-                <div class="kpi-icon icon-blue"><i class="fa-solid fa-bullseye"></i></div>
+                <div class="kpi-icon icon-orange"><i class="fa-solid fa-bullseye"></i></div>
             </div>
             <div class="kpi-value">{{ number_format($totalBebanTarget > 0 ? $totalBebanTarget : 569814, 0, ',', '.') }}</div>
             <div class="kpi-subtext"><i class="fa-solid fa-layer-group"></i> Campuran KK Berusaha, KK Tidak Berusaha & Bangunan Khusus Usaha</div>
@@ -369,7 +371,7 @@
             <div class="kpi-value">{{ number_format($totalSubmit > 0 ? $totalSubmit : 342500, 0, ',', '.') }}</div>
             <div class="kpi-subtext"><i class="fa-solid fa-chart-pie"></i> Capaian: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%</div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%; background: #059669;"></div>
+                <div class="progress-bar-fill" style="width: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%; background: var(--green-bps);"></div>
             </div>
         </div>
 
@@ -377,12 +379,12 @@
         <div class="kpi-card">
             <div class="kpi-header">
                 <span class="kpi-title">Cakupan Sub SLS</span>
-                <div class="kpi-icon icon-purple"><i class="fa-solid fa-map-location-dot"></i></div>
+                <div class="kpi-icon icon-blue"><i class="fa-solid fa-map-location-dot"></i></div>
             </div>
             <div class="kpi-value">{{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 62.4 }}%</div>
             <div class="kpi-subtext"><i class="fa-solid fa-layer-group"></i> {{ number_format($slsTersentuh > 0 ? $slsTersentuh : 5160) }} dari 8.270 Sub SLS</div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: {{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 62.4 }}%; background: #6d28d9;"></div>
+                <div class="progress-bar-fill" style="width: {{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 62.4 }}%; background: var(--blue-bps);"></div>
             </div>
         </div>
 
@@ -390,12 +392,12 @@
         <div class="kpi-card">
             <div class="kpi-header">
                 <span class="kpi-title">Usaha Besar (UB)</span>
-                <div class="kpi-icon icon-amber"><i class="fa-solid fa-industry"></i></div>
+                <div class="kpi-icon icon-orange"><i class="fa-solid fa-industry"></i></div>
             </div>
             <div class="kpi-value">{{ $persenUB > 0 ? $persenUB : 82.5 }}%</div>
             <div class="kpi-subtext"><i class="fa-solid fa-briefcase"></i> Progres Perusahaan UMB</div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: {{ $persenUB > 0 ? $persenUB : 82.5 }}%; background: #d97706;"></div>
+                <div class="progress-bar-fill" style="width: {{ $persenUB > 0 ? $persenUB : 82.5 }}%; background: var(--orange-primary);"></div>
             </div>
         </div>
 
@@ -418,7 +420,7 @@
         <div class="col-6">
             <div class="section-card">
                 <div class="card-header-title">
-                    <h2><i class="fa-solid fa-house-laptop" style="color: var(--blue-primary);"></i> Temuan Usaha Keluarga</h2>
+                    <h2><i class="fa-solid fa-house-laptop" style="color: var(--orange-primary);"></i> Temuan Usaha Keluarga</h2>
                     <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Sektor Mikro / Rumah Tangga</span>
                 </div>
                 <div class="chart-container">
@@ -427,11 +429,11 @@
                 <div class="sektor-stat-grid">
                     <div class="sektor-item">
                         <div class="label">Usaha Ditemukan Aktif</div>
-                        <div class="val" style="color: var(--green-success);">{{ number_format($ukDitemukan > 0 ? $ukDitemukan : 12450) }}</div>
+                        <div class="val" style="color: var(--green-bps);">{{ number_format($ukDitemukan > 0 ? $ukDitemukan : 12450) }}</div>
                     </div>
                     <div class="sektor-item">
                         <div class="label">Tidak Ditemukan / Tutup</div>
-                        <div class="val" style="color: var(--rose-accent);">{{ number_format($ukTidakDitemukan > 0 ? $ukTidakDitemukan : 1050) }}</div>
+                        <div class="val" style="color: var(--rose-bps);">{{ number_format($ukTidakDitemukan > 0 ? $ukTidakDitemukan : 1050) }}</div>
                     </div>
                 </div>
             </div>
@@ -441,7 +443,7 @@
         <div class="col-6">
             <div class="section-card">
                 <div class="card-header-title">
-                    <h2><i class="fa-solid fa-city" style="color: var(--amber-warning);"></i> Keberadaan Bangunan Usaha Perusahaan</h2>
+                    <h2><i class="fa-solid fa-city" style="color: var(--orange-primary);"></i> Keberadaan Bangunan Usaha Perusahaan</h2>
                     <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Sektor Komersial & Industri</span>
                 </div>
                 <div class="chart-container">
@@ -450,11 +452,11 @@
                 <div class="sektor-stat-grid">
                     <div class="sektor-item">
                         <div class="label">Operasional / Ditemukan</div>
-                        <div class="val" style="color: var(--amber-warning);">{{ number_format($upDitemukan > 0 ? $upDitemukan : 3850) }}</div>
+                        <div class="val" style="color: var(--orange-primary);">{{ number_format($upDitemukan > 0 ? $upDitemukan : 3850) }}</div>
                     </div>
                     <div class="sektor-item">
                         <div class="label">Tutup / Alih Fungsi</div>
-                        <div class="val" style="color: var(--purple-accent);">{{ number_format($upTutupAlihFungsi > 0 ? $upTutupAlihFungsi : 420) }}</div>
+                        <div class="val" style="color: var(--blue-bps);">{{ number_format($upTutupAlihFungsi > 0 ? $upTutupAlihFungsi : 420) }}</div>
                     </div>
                 </div>
             </div>
@@ -464,7 +466,7 @@
         <div class="col-12">
             <div class="section-card">
                 <div class="card-header-title">
-                    <h2><i class="fa-solid fa-chart-line" style="color: var(--green-success);"></i> Tren Akumulasi Laju Pendataan Harian</h2>
+                    <h2><i class="fa-solid fa-chart-line" style="color: var(--orange-primary);"></i> Tren Akumulasi Laju Pendataan Harian</h2>
                     <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Realisasi Submit vs Target Seharusnya</span>
                 </div>
                 <div class="chart-container" style="height: 340px;">
@@ -477,7 +479,7 @@
         <div class="col-12">
             <div class="section-card">
                 <div class="card-header-title">
-                    <h2><i class="fa-solid fa-ranking-star" style="color: var(--purple-accent);"></i> Sebaran Capaian Progres 14 Kecamatan se-Kabupaten Demak</h2>
+                    <h2><i class="fa-solid fa-ranking-star" style="color: var(--orange-primary);"></i> Sebaran Capaian Progres 14 Kecamatan se-Kabupaten Demak</h2>
                     <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Tingkat Penyelesaian (%)</span>
                 </div>
                 <div class="chart-container" style="height: 420px;">
@@ -523,9 +525,9 @@
         Chart.defaults.font.family = 'Plus Jakarta Sans';
         Chart.defaults.font.size = 13;
         Chart.defaults.font.weight = '600';
-        Chart.defaults.color = '#1e293b';
+        Chart.defaults.color = '#1c1917';
 
-        // Chart 1: Usaha Keluarga
+        // Chart 1: Usaha Keluarga (BPS Green & Red)
         new Chart(document.getElementById('chartUsahaKeluarga'), {
             type: 'doughnut',
             data: {
@@ -542,20 +544,20 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#0f172a', font: { size: 13, weight: '700' } } }
+                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } }
                 },
                 cutout: '65%'
             }
         });
 
-        // Chart 2: Usaha Perusahaan
+        // Chart 2: Usaha Perusahaan (BPS SE Orange & BPS Blue)
         new Chart(document.getElementById('chartUsahaPerusahaan'), {
             type: 'doughnut',
             data: {
                 labels: ['Operasional / Ditemukan', 'Tutup / Alih Fungsi'],
                 datasets: [{
                     data: [upDitemukan, upTutupAlihFungsi],
-                    backgroundColor: ['#d97706', '#6d28d9'],
+                    backgroundColor: ['#ea580c', '#1d4ed8'],
                     borderWidth: 2,
                     borderColor: '#ffffff',
                     hoverOffset: 6
@@ -565,13 +567,13 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#0f172a', font: { size: 13, weight: '700' } } }
+                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } }
                 },
                 cutout: '65%'
             }
         });
 
-        // Chart 3: Trend Line (Realisasi vs Target Seharusnya 1.33%/Hari)
+        // Chart 3: Trend Line (Realisasi SE Orange vs Target BPS Blue)
         new Chart(document.getElementById('chartTrendHarian'), {
             type: 'line',
             data: {
@@ -580,12 +582,12 @@
                     {
                         label: 'Realisasi Submit Kumulatif',
                         data: trendSubmits,
-                        borderColor: '#1d4ed8',
-                        borderWidth: 3,
-                        backgroundColor: 'rgba(29, 78, 216, 0.08)',
+                        borderColor: '#ea580c',
+                        borderWidth: 3.5,
+                        backgroundColor: 'rgba(234, 88, 12, 0.08)',
                         fill: true,
                         tension: 0.35,
-                        pointBackgroundColor: '#1d4ed8',
+                        pointBackgroundColor: '#ea580c',
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
                         pointRadius: 5
@@ -593,12 +595,12 @@
                     {
                         label: 'Target Seharusnya (1.33% / Hari)',
                         data: trendTargets,
-                        borderColor: '#d97706',
+                        borderColor: '#1d4ed8',
                         borderWidth: 2.5,
                         borderDash: [6, 6],
                         fill: false,
                         tension: 0.1,
-                        pointBackgroundColor: '#d97706',
+                        pointBackgroundColor: '#1d4ed8',
                         pointRadius: 4
                     }
                 ]
@@ -607,16 +609,16 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { ticks: { color: '#0f172a', font: { weight: '700' } }, grid: { color: '#e2e8f0' } },
-                    y: { ticks: { color: '#0f172a', font: { weight: '700' } }, grid: { color: '#e2e8f0' } }
+                    x: { ticks: { color: '#0c0a09', font: { weight: '700' } }, grid: { color: '#e7e5e4' } },
+                    y: { ticks: { color: '#0c0a09', font: { weight: '700' } }, grid: { color: '#e7e5e4' } }
                 },
                 plugins: {
-                    legend: { labels: { color: '#0f172a', font: { size: 13, weight: '700' } } }
+                    legend: { labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } }
                 }
             }
         });
 
-        // Chart 4: Vertical Bar Chart Kecamatan (Sumbu X: Kecamatan, Sumbu Y: Capaian %)
+        // Chart 4: Vertical Bar Chart Kecamatan (Sumbu X: Kecamatan, Sumbu Y: Capaian %) - Signature SE Orange
         new Chart(document.getElementById('chartKecamatan'), {
             type: 'bar',
             data: {
@@ -624,8 +626,8 @@
                 datasets: [{
                     label: 'Capaian Progres (%)',
                     data: kecPcts,
-                    backgroundColor: '#4f46e5',
-                    hoverBackgroundColor: '#4338ca',
+                    backgroundColor: '#f97316',
+                    hoverBackgroundColor: '#ea580c',
                     borderRadius: 8
                 }]
             },
@@ -634,17 +636,17 @@
                 maintainAspectRatio: false,
                 scales: {
                     x: { 
-                        ticks: { color: '#0f172a', font: { size: 12, weight: '700' }, maxRotation: 45, minRotation: 0 }, 
+                        ticks: { color: '#0c0a09', font: { size: 12, weight: '700' }, maxRotation: 45, minRotation: 0 }, 
                         grid: { display: false } 
                     },
                     y: { 
                         max: 100, 
                         ticks: { 
-                            color: '#0f172a', 
+                            color: '#0c0a09', 
                             font: { size: 12, weight: '700' },
                             callback: function(value) { return value + '%'; }
                         }, 
-                        grid: { color: '#e2e8f0' } 
+                        grid: { color: '#e7e5e4' } 
                     }
                 },
                 plugins: {
