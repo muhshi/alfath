@@ -208,7 +208,7 @@
                                                 @endif
                                             </td>
                                             <td class="text-end py-3">
-                                                <a href="{{ route('surveys.embed', $survey) }}" class="btn btn-outline-primary btn-sm rounded-pill font-weight-bold px-3">
+                                                <a href="{{ route('surveys.embed', $survey) }}" class="btn btn-primary btn-sm text-white font-weight-bold px-3 shadow-xs" style="background-color: #1d4ed8; border-color: #1d4ed8; border-radius: 8px;">
                                                     <i class="fa-solid fa-chart-line me-1"></i> Lihat Monitoring
                                                 </a>
                                             </td>
@@ -228,11 +228,11 @@
                             </table>
                         </div>
 
-                        <!-- Pagination Links -->
-                        @if($surveys instanceof \Illuminate\Pagination\LengthAwarePaginator && $surveys->hasPages())
-                            <div class="card-footer d-flex align-items-center justify-content-between bg-transparent border-top py-3">
+                        <!-- Pagination Links & Footer -->
+                        @if($surveys instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                            <div class="card-footer d-flex flex-wrap align-items-center justify-content-between bg-transparent border-top py-3">
                                 <div class="text-muted small">
-                                    Menampilkan <strong>{{ $surveys->firstItem() }}</strong> s.d. <strong>{{ $surveys->lastItem() }}</strong> dari total <strong>{{ $surveys->total() }}</strong> survei
+                                    Menampilkan <strong>{{ $surveys->firstItem() ?? 0 }}</strong> s.d. <strong>{{ $surveys->lastItem() ?? 0 }}</strong> dari total <strong>{{ $surveys->total() }}</strong> survei
                                 </div>
                                 <div>
                                     {{ $surveys->links('pagination::bootstrap-5') }}

@@ -50,9 +50,9 @@ class HomeController extends Controller
                 ", [$now, $now, $now])
                 ->orderBy('start_periode', 'desc')
                 ->orderBy('created_at', 'desc')
-                ->paginate(10);
+                ->paginate(5);
         } else {
-            $surveys = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10);
+            $surveys = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 5);
         }
 
         return view('home', compact('totalSurveys', 'totalTeams', 'activeSurveys', 'surveys'));
