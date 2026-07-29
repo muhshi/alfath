@@ -48,6 +48,23 @@ We would like to extend our thanks to the following sponsors for funding Laravel
 
 Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
+## Deployment
+
+Untuk melakukan akumulasi deploy produksi secara otomatis pada server, jalankan script deployment:
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+Script `deploy.sh` secara otomatis mengeksekusi:
+1. Peringatan mode pemeliharaan (`php artisan down`).
+2. Pull update code terbaru dari git (`git pull origin main`).
+3. Optimalisasi instalasi dependensi PHP & JS (`composer install --no-dev`, `pnpm/npm run build`).
+4. Migrasi basis data aman (`php artisan migrate --force`).
+5. Pembersihan & pembaharuan cache produksi (`config`, `route`, `view`, `event`).
+6. Pengaktifan kembali sistem (`php artisan up`).
+
 ## Code of Conduct
 
 In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
@@ -71,4 +88,5 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Penyesuaian Palet Warna Resmi BPS & Sensus Ekonomi: Mengubah skema warna utama menjadi **Khas Sensus Ekonomi (Signature Orange `#ea580c` / `#f97316`)** dipadukan dengan aksen Biru BPS (`#1d4ed8`) dan Hijau BPS (`#059669`) serta mempertahankan tingkat kontras teks yang sangat tinggi (WCAG AAA) untuk kemudahan membaca bagi audiens senior.
   - Menampilkan Status **Terakhir Diperbarui**: Mengambil nilai `MAX(updated_at)` dari tabel `monitoring_se2026` dan memunculkannya pada header badge utama dashboard (contoh: `Terakhir Diperbarui: 29 Jul 2026 | 09:20 WIB`).
   - Orientasi Chart Kecamatan (Vertical Bar Chart): Menampilkan 14 Kecamatan di **Sumbu X** dan Persentase Capaian (%) di **Sumbu Y**.
+  - Menambahkan skrip rilis/deploy otomatis `deploy.sh` untuk otomasi *maintenance mode*, *git pull*, *composer install*, *asset build*, *safe database migration*, dan *cache optimization*.
 
