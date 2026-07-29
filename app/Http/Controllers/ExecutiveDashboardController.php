@@ -31,21 +31,29 @@ class ExecutiveDashboardController extends Controller
             '3321130' => 'Wedung',
         ];
 
-        // Default Fallbacks
+        // Default Fallbacks & SDM Breakdown
         $totalPetugas = 1000;
-        $totalPengawas = 120;
-        $totalBebanTarget = 45000;
-        $totalSubmit = 34250;
-        $totalApproved = 28500;
+        $sdmUmkTotal = 992;
+        $sdmUmkPpl = 876;
+        $sdmUmkPml = 116;
+        
+        $sdmUbTotal = 8;
+        $sdmUbPpl = 6;
+        $sdmUbPml = 2;
+
+        $totalPengawas = 118; // 116 PML UMK + 2 PML UB
+        $totalBebanTarget = 569814;
+        $totalSubmit = 342500;
+        $totalApproved = 285000;
         
         $trendDates = [];
         $trendSubmits = [];
         $trendTargets = [];
         
         $kecamatanProgress = [];
-        $totalSLS = 2772;
-        $slsTersentuh = 2450;
-        $slsSelesai = 1820;
+        $totalSLS = 8270; // Sub SLS
+        $slsTersentuh = 5160;
+        $slsSelesai = 4120;
         
         $totalUBTarget = 250;
         $totalUBTerdata = 206;
@@ -68,16 +76,6 @@ class ExecutiveDashboardController extends Controller
             if ($schema->hasTable('master_petugas')) {
                 $dbCount = $db->table('master_petugas')->count();
                 if ($dbCount > 0) $totalPetugas = $dbCount;
-            }
-                
-            if ($schema->hasTable('alokasi_pengawas')) {
-                if ($schema->hasColumn('alokasi_pengawas', 'nama_pengawas')) {
-                    $pmlCount = $db->table('alokasi_pengawas')->whereNotNull('nama_pengawas')->distinct()->count('nama_pengawas');
-                    if ($pmlCount > 0) $totalPengawas = $pmlCount;
-                } elseif ($schema->hasColumn('alokasi_pengawas', 'nama_pml')) {
-                    $pmlCount = $db->table('alokasi_pengawas')->whereNotNull('nama_pml')->distinct()->count('nama_pml');
-                    if ($pmlCount > 0) $totalPengawas = $pmlCount;
-                }
             }
 
             // 2. Monitoring SE2026 Overall Metrics, Daily Trend & Kecamatan Breakdown
@@ -202,11 +200,11 @@ class ExecutiveDashboardController extends Controller
             \Illuminate\Support\Facades\Log::warning('ExecutiveDashboard error: ' . $e->getMessage());
         }
 
-        // Fallback trend targets if trendDates is populated from default
+        // Fallback trend targets if trendDates is empty
         if (empty($trendDates)) {
             $trendDates = ['19 Jul', '20 Jul', '21 Jul', '22 Jul', '23 Jul', '24 Jul', '25 Jul', '26 Jul', '27 Jul', '28 Jul'];
-            $trendSubmits = [12000, 15500, 19200, 22400, 25000, 28300, 31100, 32400, 34250, 36100];
-            $trendTargets = [15000, 17500, 20000, 22500, 25000, 27500, 30000, 32500, 35000, 37500];
+            $trendSubmits = [150000, 195000, 242000, 284000, 310000, 345000, 381000, 414000, 442500, 461000];
+            $trendTargets = [180000, 210000, 240000, 270000, 300000, 330000, 360000, 390000, 420000, 450000];
         }
 
         // Fallback kecamatan progress if empty
@@ -215,8 +213,8 @@ class ExecutiveDashboardController extends Controller
                 $kecamatanProgress[] = [
                     'code' => $code,
                     'name' => $name,
-                    'target' => 3200,
-                    'submit' => 2400,
+                    'target' => 40000,
+                    'submit' => 30000,
                     'pct' => 75.0
                 ];
             }
@@ -229,6 +227,12 @@ class ExecutiveDashboardController extends Controller
 
         return view('dashboard-se2026', compact(
             'totalPetugas',
+            'sdmUmkTotal',
+            'sdmUmkPpl',
+            'sdmUmkPml',
+            'sdmUbTotal',
+            'sdmUbPpl',
+            'sdmUbPml',
             'totalPengawas',
             'totalBebanTarget',
             'totalSubmit',

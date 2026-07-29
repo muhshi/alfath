@@ -66,7 +66,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 - **Executive Public Dashboard Sensus Ekonomi 2026**:
   - Menambahkan controller `ExecutiveDashboardController` untuk agregasi data 8 tabel (`alokasi_pengawas`, `master_petugas`, `monitoring_se2026`, `monitoring_sls_se2026`, `ub_pencacah`, `ub_pengawas`, `usaha_keluarga`, `usaha_perusahaan`).
   - Menambahkan rute publik `/dashboard-se2026` di `routes/web.php`.
-  - Pembaruan Metrik SDM: Jumlah petugas Demak disesuaikan menjadi 1.000 petugas lapangan.
-  - Menambahkan Garis **Target Seharusnya (1,33%/Hari)** pada Chart Line Tren Kumulatif Pendataan Harian untuk pembanding realisasi vs target ideal.
-  - Pembaruan Kueri Agregasi 14 Kecamatan se-Kabupaten Demak mengacu pada formula SQL Metabase (`LEFT(region_code, 7)` ke pemetaan nama kecamatan resmi: Mranggen, Karangawen, Guntur, Sayung, Karangtengah, Bonang, Demak, Wonosalam, Dempet, Kebonagung, Gajah, Karanganyar, Mijen, Wedung).
+  - Pembaruan Judul & Keterangan Beban: Mengubah judul KPI 1 menjadi **Total Beban Pendataan** dengan subteks *"Campuran KK Berusaha, KK Tidak Berusaha & Bangunan Khusus Usaha"*.
+  - Pembaruan Rincian SDM (1.000 Petugas): Menambahkan rincian tim **UM/UMK (992): 876 PPL + 116 PML** dan **Usaha Besar (8): 6 PPL + 2 PML**.
+  - Pembaruan Cakupan Sub SLS: Mengubah unit dan jumlah cakupan wilayah menjadi **8.270 Sub SLS**.
+  - Orientasi Chart Kecamatan (Vertical Bar Chart): Menampilkan 14 Kecamatan di **Sumbu X** dan Persentase Capaian (%) di **Sumbu Y**.
 

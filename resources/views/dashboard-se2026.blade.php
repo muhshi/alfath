@@ -213,7 +213,7 @@
         }
 
         .kpi-subtext {
-            font-size: 0.88rem;
+            font-size: 0.82rem;
             color: var(--text-muted);
             font-weight: 600;
             display: flex;
@@ -353,11 +353,11 @@
         <!-- Target Usaha -->
         <div class="kpi-card">
             <div class="kpi-header">
-                <span class="kpi-title">Beban Target Usaha</span>
+                <span class="kpi-title">Total Beban Pendataan</span>
                 <div class="kpi-icon icon-blue"><i class="fa-solid fa-bullseye"></i></div>
             </div>
-            <div class="kpi-value">{{ number_format($totalBebanTarget > 0 ? $totalBebanTarget : 45000, 0, ',', '.') }}</div>
-            <div class="kpi-subtext"><i class="fa-solid fa-building"></i> Estimasi Muatan Usaha Demak</div>
+            <div class="kpi-value">{{ number_format($totalBebanTarget > 0 ? $totalBebanTarget : 569814, 0, ',', '.') }}</div>
+            <div class="kpi-subtext"><i class="fa-solid fa-layer-group"></i> Campuran KK Berusaha, KK Tidak Berusaha & Bangunan Khusus Usaha</div>
         </div>
 
         <!-- Realisasi Terdata -->
@@ -366,23 +366,23 @@
                 <span class="kpi-title">Realisasi Terdata</span>
                 <div class="kpi-icon icon-green"><i class="fa-solid fa-circle-check"></i></div>
             </div>
-            <div class="kpi-value">{{ number_format($totalSubmit > 0 ? $totalSubmit : 34250, 0, ',', '.') }}</div>
+            <div class="kpi-value">{{ number_format($totalSubmit > 0 ? $totalSubmit : 342500, 0, ',', '.') }}</div>
             <div class="kpi-subtext"><i class="fa-solid fa-chart-pie"></i> Capaian: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%</div>
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width: {{ $persenCapaianKab > 0 ? $persenCapaianKab : 76.1 }}%; background: #059669;"></div>
             </div>
         </div>
 
-        <!-- SLS Coverage -->
+        <!-- Sub SLS Coverage -->
         <div class="kpi-card">
             <div class="kpi-header">
-                <span class="kpi-title">Cakupan Wilayah SLS</span>
+                <span class="kpi-title">Cakupan Sub SLS</span>
                 <div class="kpi-icon icon-purple"><i class="fa-solid fa-map-location-dot"></i></div>
             </div>
-            <div class="kpi-value">{{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 88.4 }}%</div>
-            <div class="kpi-subtext"><i class="fa-solid fa-layer-group"></i> {{ number_format($slsTersentuh > 0 ? $slsTersentuh : 2450) }} dari {{ number_format($totalSLS > 0 ? $totalSLS : 2772) }} SLS</div>
+            <div class="kpi-value">{{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 62.4 }}%</div>
+            <div class="kpi-subtext"><i class="fa-solid fa-layer-group"></i> {{ number_format($slsTersentuh > 0 ? $slsTersentuh : 5160) }} dari 8.270 Sub SLS</div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: {{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 88.4 }}%; background: #6d28d9;"></div>
+                <div class="progress-bar-fill" style="width: {{ $persenSLSTersentuh > 0 ? $persenSLSTersentuh : 62.4 }}%; background: #6d28d9;"></div>
             </div>
         </div>
 
@@ -393,20 +393,21 @@
                 <div class="kpi-icon icon-amber"><i class="fa-solid fa-industry"></i></div>
             </div>
             <div class="kpi-value">{{ $persenUB > 0 ? $persenUB : 82.5 }}%</div>
-            <div class="kpi-subtext"><i class="fa-solid fa-briefcase"></i> Progres Sektor Perusahaan UMB</div>
+            <div class="kpi-subtext"><i class="fa-solid fa-briefcase"></i> Progres Perusahaan UMB</div>
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width: {{ $persenUB > 0 ? $persenUB : 82.5 }}%; background: #d97706;"></div>
             </div>
         </div>
 
-        <!-- SDM Lapangan -->
+        <!-- SDM Lapangan Details -->
         <div class="kpi-card">
             <div class="kpi-header">
                 <span class="kpi-title">SDM Lapangan</span>
                 <div class="kpi-icon icon-rose"><i class="fa-solid fa-users-gear"></i></div>
             </div>
-            <div class="kpi-value">{{ number_format($totalPetugas > 0 ? $totalPetugas : 620, 0, ',', '.') }}</div>
-            <div class="kpi-subtext"><i class="fa-solid fa-user-shield"></i> PPL & PML Dikerahkan</div>
+            <div class="kpi-value">1.000</div>
+            <div class="kpi-subtext"><i class="fa-solid fa-users"></i> UM/UMK (992): 876 PPL + 116 PML</div>
+            <div class="kpi-subtext" style="margin-top: 3px;"><i class="fa-solid fa-building-flag"></i> Usaha Besar (8): 6 PPL + 2 PML</div>
         </div>
     </div>
 
@@ -464,22 +465,22 @@
             <div class="section-card">
                 <div class="card-header-title">
                     <h2><i class="fa-solid fa-chart-line" style="color: var(--green-success);"></i> Tren Akumulasi Laju Pendataan Harian</h2>
-                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Realisasi Submit Kumulatif</span>
+                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Realisasi Submit vs Target Seharusnya</span>
                 </div>
-                <div class="chart-container" style="height: 330px;">
+                <div class="chart-container" style="height: 340px;">
                     <canvas id="chartTrendHarian"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Bottom: Ranking Progres per Kecamatan -->
+        <!-- Bottom: Ranking Progres per Kecamatan (Vertical Bar Chart) -->
         <div class="col-12">
             <div class="section-card">
                 <div class="card-header-title">
                     <h2><i class="fa-solid fa-ranking-star" style="color: var(--purple-accent);"></i> Sebaran Capaian Progres 14 Kecamatan se-Kabupaten Demak</h2>
                     <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Tingkat Penyelesaian (%)</span>
                 </div>
-                <div class="chart-container" style="height: 400px;">
+                <div class="chart-container" style="height: 420px;">
                     <canvas id="chartKecamatan"></canvas>
                 </div>
             </div>
@@ -511,8 +512,8 @@
         const upTutupAlihFungsi = {{ $upTutupAlihFungsi > 0 ? $upTutupAlihFungsi : 420 }};
 
         const trendDates = {!! json_encode(!empty($trendDates) ? $trendDates : ['19 Jul', '20 Jul', '21 Jul', '22 Jul', '23 Jul', '24 Jul', '25 Jul', '26 Jul', '27 Jul', '28 Jul']) !!};
-        const trendSubmits = {!! json_encode(!empty($trendSubmits) ? $trendSubmits : [3200, 6800, 11200, 16400, 21000, 25300, 29100, 32400, 34250, 36100]) !!};
-        const trendTargets = {!! json_encode(!empty($trendTargets) ? $trendTargets : [15000, 17500, 20000, 22500, 25000, 27500, 30000, 32500, 35000, 37500]) !!};
+        const trendSubmits = {!! json_encode(!empty($trendSubmits) ? $trendSubmits : [150000, 195000, 242000, 284000, 310000, 345000, 381000, 414000, 442500, 461000]) !!};
+        const trendTargets = {!! json_encode(!empty($trendTargets) ? $trendTargets : [180000, 210000, 240000, 270000, 300000, 330000, 360000, 390000, 420000, 450000]) !!};
 
         const kecData = {!! json_encode($kecamatanProgress) !!};
         const kecNames = kecData.map(item => item.name);
@@ -593,12 +594,12 @@
                         label: 'Target Seharusnya (1.33% / Hari)',
                         data: trendTargets,
                         borderColor: '#d97706',
-                        borderWidth: 2,
+                        borderWidth: 2.5,
                         borderDash: [6, 6],
                         fill: false,
                         tension: 0.1,
                         pointBackgroundColor: '#d97706',
-                        pointRadius: 3
+                        pointRadius: 4
                     }
                 ]
             },
@@ -615,28 +616,46 @@
             }
         });
 
-        // Chart 4: Horizontal Bar Kecamatan
+        // Chart 4: Vertical Bar Chart Kecamatan (Sumbu X: Kecamatan, Sumbu Y: Capaian %)
         new Chart(document.getElementById('chartKecamatan'), {
             type: 'bar',
             data: {
                 labels: kecNames,
                 datasets: [{
-                    label: 'Capaian (%)',
+                    label: 'Capaian Progres (%)',
                     data: kecPcts,
                     backgroundColor: '#4f46e5',
+                    hoverBackgroundColor: '#4338ca',
                     borderRadius: 8
                 }]
             },
             options: {
-                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { max: 100, ticks: { color: '#0f172a', font: { weight: '700' } }, grid: { color: '#e2e8f0' } },
-                    y: { ticks: { color: '#0f172a', font: { size: 13, weight: '700' } }, grid: { display: false } }
+                    x: { 
+                        ticks: { color: '#0f172a', font: { size: 12, weight: '700' }, maxRotation: 45, minRotation: 0 }, 
+                        grid: { display: false } 
+                    },
+                    y: { 
+                        max: 100, 
+                        ticks: { 
+                            color: '#0f172a', 
+                            font: { size: 12, weight: '700' },
+                            callback: function(value) { return value + '%'; }
+                        }, 
+                        grid: { color: '#e2e8f0' } 
+                    }
                 },
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Capaian: ' + context.raw + '%';
+                            }
+                        }
+                    }
                 }
             }
         });
