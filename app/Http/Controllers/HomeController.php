@@ -23,12 +23,16 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $totalSurveys = \App\Models\Survey::count();
-        $totalTeams = \App\Models\Team::count();
-        $activeSurveys = \App\Models\Survey::whereDate('start_periode', '<=', now())
-            ->whereDate('end_periode', '>=', now())
-            ->count();
-        $recentSurveys = \App\Models\Survey::with('team')->latest()->take(5)->get();
+        $totalSurveys = \Illuminate\Support\Facades\Schema::hasTable('surveys') ? \App\Models\Survey::count() : 0;
+        $totalTeams = \Illuminate\Support\Facades\Schema::hasTable('teams') ? \App\Models\Team::count() : 0;
+        $activeSurveys = \Illuminate\Support\Facades\Schema::hasTable('surveys') 
+            ? \App\Models\Survey::whereDate('start_periode', '<=', now())
+                ->whereDate('end_periode', '>=', now())
+                ->count()
+            : 0;
+        $recentSurveys = \Illuminate\Support\Facades\Schema::hasTable('surveys') 
+            ? \App\Models\Survey::with('team')->latest()->take(5)->get()
+            : collect();
 
         return view('home', compact('totalSurveys', 'totalTeams', 'activeSurveys', 'recentSurveys'));
     }
