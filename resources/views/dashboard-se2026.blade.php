@@ -487,7 +487,7 @@
             <div class="section-card">
                 <div class="card-header-title">
                     <h2><i class="fa-solid fa-city" style="color: var(--orange-primary);"></i> Keberadaan Bangunan Usaha Perusahaan</h2>
-                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Sektor Komersial & Industri</span>
+                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">Bangunan Khusus Usaha dan Usaha Besar</span>
                 </div>
                 <div class="chart-container">
                     <canvas id="chartUsahaPerusahaan"></canvas>
