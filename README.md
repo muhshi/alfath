@@ -92,5 +92,5 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Penyesuaian Pagination Tabel Survei (5 Data per Halaman): Mengubah batasan pagination menjadi 5 survei per halaman (`paginate(5)`) serta membuat bilah footer navigasi pagination dan indikator jumlah data selalu tampil konsisten di bagian bawah tabel.
   - Menampilkan Status **Terakhir Diperbarui**: Mengambil nilai `MAX(updated_at)` dari tabel `monitoring_se2026` dan memunculkannya pada header badge utama dashboard (contoh: `Terakhir Diperbarui: 29 Jul 2026 | 09:20 WIB`).
   - Orientasi Chart Kecamatan (Vertical Bar Chart): Menampilkan 14 Kecamatan di **Sumbu X** dan Persentase Capaian (%) di **Sumbu Y**.
-  - Pembaruan Skrip Rilis `deploy.sh`: Menambahkan penanganan otomatis konflik Git (`git stash` & `git reset --hard origin/main`) serta deteksi otomatis lingkungan eksekusi PHP (native host vs container Docker FrankenPHP `alfath-franken`) untuk deployment tanpa error.
+  - Penambahan `.pnpm-store` pada `.gitignore`: Mengabaikan berkas cache pnpm agar tidak terdeteksi oleh Git dan menghilangkan peringatan *CRLF/LF line endings* saat proses rilis di server Linux.
 
