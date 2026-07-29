@@ -3,9 +3,17 @@
 @section('content')
     <!-- Page header -->
     <x-page-header title="Home">
-        <!-- Optional: tombol aksi -->
+        <!-- Tombol Akses Dashboard SE2026 -->
         <div class="col-12 col-md-auto ms-auto d-print-none">
-            <x-create-button />
+            <a href="{{ route('dashboard.se2026') }}" target="_blank" class="btn btn-primary shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path>
+                    <path d="M12 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path>
+                    <path d="M4 20l14 0"></path>
+                </svg>
+                Dashboard Executive SE2026
+            </a>
         </div>
     </x-page-header>
     <!-- BEGIN PAGE BODY -->
@@ -19,9 +27,12 @@
                                 <div class="col-12 col-sm d-flex flex-column">
                                     <h3 class="h2">Welcome to ALFATH</h3>
                                     <p class="text-muted">ALFATH (Aplikasi FASIH Monitoring Harian)</p>
-                                    <div class="row g-3 mt-auto">
-
+                                    <div class="mt-3">
+                                        <a href="{{ route('dashboard.se2026') }}" target="_blank" class="btn btn-outline-primary btn-pill">
+                                            📊 Buka Dashboard Paparan SE2026
+                                        </a>
                                     </div>
+                                    <div class="row g-3 mt-auto"></div>
                                 </div>
                                 <div class="col-12 col-sm-auto d-flex justify-content-center">
                                     <a href="./illustrations.html">
