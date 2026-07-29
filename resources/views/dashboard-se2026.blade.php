@@ -322,28 +322,33 @@
             color: var(--text-muted);
             font-size: 0.9rem;
             font-weight: 600;
+            border-top: 1px solid var(--border-card);
+            margin-top: 2rem;
+        }
+
+        /* Button Kembali ke Beranda ALFATH */
         .btn-home-back {
-            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            background: #1d4ed8 !important;
             color: #ffffff !important;
-            padding: 0.65rem 1.35rem;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: 800;
+            padding: 0.65rem 1.25rem !important;
+            border-radius: 10px !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
             text-decoration: none !important;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.65rem;
-            box-shadow: 0 4px 14px rgba(29, 78, 216, 0.35);
-            border: 1px solid #1e40af;
-            transition: all 0.25s ease-in-out;
-            cursor: pointer;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.55rem !important;
+            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3) !important;
+            border: 1px solid #1e40af !important;
+            transition: all 0.2s ease-in-out !important;
+            cursor: pointer !important;
         }
 
         .btn-home-back:hover {
-            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(29, 78, 216, 0.5);
+            background: #1e40af !important;
             color: #ffffff !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 16px rgba(29, 78, 216, 0.45) !important;
         }
 
         .clock-display {
