@@ -51,7 +51,7 @@ class ExecutiveDashboardController extends Controller
         $trendTargets = [];
         
         $kecamatanProgress = [];
-        $totalSLS = 8270; // Sub SLS
+        $totalSLS = 8270; // Total Sub SLS Kab. Demak
         $slsTersentuh = 5160;
         $slsSelesai = 4120;
         
@@ -155,16 +155,22 @@ class ExecutiveDashboardController extends Controller
                         $trendTargets[] = (int) $targetVal;
                     }
                 }
-            }
 
-            // 3. SLS Coverage Metrics (monitoring_sls_se2026)
-            if ($schema->hasTable('monitoring_sls_se2026')) {
-                $countSLS = $db->table('monitoring_sls_se2026')->count();
-                if ($countSLS > 0) $totalSLS = $countSLS;
-                
+                // 3. Sub SLS Coverage Metrics using Metabase logic:
+                // Sub SLS tersentuh = region_code (Sub SLS) where (total_beban - status_open) > 0
+                $subSlsTersentuhCount = $db->table('monitoring_se2026')
+                    ->when($latestDate, function ($query, $latestDate) {
+                        return $query->where('tanggal_tarik', $latestDate);
+                    })
+                    ->whereRaw('(IFNULL(total_beban, 0) - IFNULL(status_open, 0)) > 0')
+                    ->count();
+
+                if ($subSlsTersentuhCount > 0) {
+                    $slsTersentuh = $subSlsTersentuhCount;
+                }
+            } elseif ($schema->hasTable('monitoring_sls_se2026')) {
                 if ($schema->hasColumn('monitoring_sls_se2026', 'status_sls')) {
                     $slsTersentuh = $db->table('monitoring_sls_se2026')->where('status_sls', '!=', 'OPEN')->count();
-                    $slsSelesai = $db->table('monitoring_sls_se2026')->whereIn('status_sls', ['APPROVED', 'COMPLETE'])->count();
                 }
             }
 
