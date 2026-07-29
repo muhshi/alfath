@@ -289,32 +289,33 @@
             height: 290px;
         }
 
-        /* Sektor Stat Items High-Contrast */
+        /* Sektor Stat Items High-Contrast (5 Status Columns) */
         .sektor-stat-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+            gap: 0.5rem;
             margin-top: 1.25rem;
         }
 
         .sektor-item {
             background: #fafaf9;
             border: 1px solid var(--border-card);
-            border-radius: 14px;
-            padding: 1rem;
+            border-radius: 12px;
+            padding: 0.65rem 0.35rem;
             text-align: center;
         }
 
         .sektor-item .label {
-            font-size: 0.85rem;
+            font-size: 0.76rem;
             color: var(--text-muted);
             font-weight: 700;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
         }
 
         .sektor-item .val {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.5rem;
+            font-size: 1.15rem;
             font-weight: 800;
         }
 
@@ -500,12 +501,24 @@
                 </div>
                 <div class="sektor-stat-grid">
                     <div class="sektor-item">
-                        <div class="label">Ditemukan / Baru</div>
-                        <div class="val" style="color: var(--green-bps);">{{ number_format($ukDitemukan > 0 ? $ukDitemukan : 12450) }}</div>
+                        <div class="label">Ditemukan</div>
+                        <div class="val" style="color: #059669;">{{ number_format($ukDitemukan) }}</div>
                     </div>
                     <div class="sektor-item">
-                        <div class="label">Tutup / Ganda / Tidak Ditemukan</div>
-                        <div class="val" style="color: var(--rose-bps);">{{ number_format($ukTidakDitemukan > 0 ? $ukTidakDitemukan : 1050) }}</div>
+                        <div class="label">Baru</div>
+                        <div class="val" style="color: #0284c7;">{{ number_format($ukBaru) }}</div>
+                    </div>
+                    <div class="sektor-item">
+                        <div class="label">Tid. Ditemukan</div>
+                        <div class="val" style="color: #d97706;">{{ number_format($ukTidakDitemukan) }}</div>
+                    </div>
+                    <div class="sektor-item">
+                        <div class="label">Ganda</div>
+                        <div class="val" style="color: #7c3aed;">{{ number_format($ukGanda) }}</div>
+                    </div>
+                    <div class="sektor-item">
+                        <div class="label">Tutup</div>
+                        <div class="val" style="color: #e11d48;">{{ number_format($ukTutup) }}</div>
                     </div>
                 </div>
             </div>
@@ -523,12 +536,24 @@
                 </div>
                 <div class="sektor-stat-grid">
                     <div class="sektor-item">
-                        <div class="label">Ditemukan / Baru</div>
-                        <div class="val" style="color: var(--orange-primary);">{{ number_format($upDitemukan > 0 ? $upDitemukan : 3850) }}</div>
+                        <div class="label">Ditemukan</div>
+                        <div class="val" style="color: #059669;">{{ number_format($upDitemukan) }}</div>
                     </div>
                     <div class="sektor-item">
-                        <div class="label">Tutup / Ganda / Tidak Ditemukan</div>
-                        <div class="val" style="color: var(--blue-bps);">{{ number_format($upTutupAlihFungsi > 0 ? $upTutupAlihFungsi : 420) }}</div>
+                        <div class="label">Baru</div>
+                        <div class="val" style="color: #0284c7;">{{ number_format($upBaru) }}</div>
+                    </div>
+                    <div class="sektor-item">
+                        <div class="label">Tid. Ditemukan</div>
+                        <div class="val" style="color: #d97706;">{{ number_format($upTidakDitemukan) }}</div>
+                    </div>
+                    <div class="sektor-item">
+                        <div class="label">Ganda</div>
+                        <div class="val" style="color: #7c3aed;">{{ number_format($upGanda) }}</div>
+                    </div>
+                    <div class="sektor-item">
+                        <div class="label">Tutup</div>
+                        <div class="val" style="color: #e11d48;">{{ number_format($upTutup) }}</div>
                     </div>
                 </div>
             </div>
@@ -578,12 +603,22 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Data from Controller
-        const ukDitemukan = {{ $ukDitemukan > 0 ? $ukDitemukan : 12450 }};
-        const ukTidakDitemukan = {{ $ukTidakDitemukan > 0 ? $ukTidakDitemukan : 1050 }};
+        // Data from Controller (Usaha Keluarga 5 Categories)
+        const ukDitemukan = {{ $ukDitemukan }};
+        const ukBaru = {{ $ukBaru }};
+        const ukTidakDitemukan = {{ $ukTidakDitemukan }};
+        const ukGanda = {{ $ukGanda }};
+        const ukTutup = {{ $ukTutup }};
 
-        const upDitemukan = {{ $upDitemukan > 0 ? $upDitemukan : 3850 }};
-        const upTutupAlihFungsi = {{ $upTutupAlihFungsi > 0 ? $upTutupAlihFungsi : 420 }};
+        // Data from Controller (Usaha Perusahaan 5 Categories)
+        const upDitemukan = {{ $upDitemukan }};
+        const upBaru = {{ $upBaru }};
+        const upTidakDitemukan = {{ $upTidakDitemukan }};
+        const upGanda = {{ $upGanda }};
+        const upTutup = {{ $upTutup }};
+
+        const statusLabels = ['Ditemukan', 'Baru', 'Tidak Ditemukan', 'Ganda', 'Tutup'];
+        const statusColors = ['#059669', '#0284c7', '#d97706', '#7c3aed', '#e11d48'];
 
         const trendDates = {!! json_encode(!empty($trendDates) ? $trendDates : ['19 Jul', '20 Jul', '21 Jul', '22 Jul', '23 Jul', '24 Jul', '25 Jul', '26 Jul', '27 Jul', '28 Jul']) !!};
         const trendSubmits = {!! json_encode(!empty($trendSubmits) ? $trendSubmits : [150000, 195000, 242000, 284000, 310000, 345000, 381000, 414000, 442500, 461000]) !!};
@@ -604,14 +639,14 @@
         Chart.defaults.font.weight = '600';
         Chart.defaults.color = '#1c1917';
 
-        // Chart 1: Usaha Keluarga (BPS Green & Red)
+        // Chart 1: Usaha Keluarga (5 Statuses)
         new Chart(document.getElementById('chartUsahaKeluarga'), {
             type: 'doughnut',
             data: {
-                labels: ['Ditemukan / Baru', 'Tutup / Ganda / Tidak Ditemukan'],
+                labels: statusLabels,
                 datasets: [{
-                    data: [ukDitemukan, ukTidakDitemukan],
-                    backgroundColor: ['#059669', '#e11d48'],
+                    data: [ukDitemukan, ukBaru, ukTidakDitemukan, ukGanda, ukTutup],
+                    backgroundColor: statusColors,
                     borderWidth: 2,
                     borderColor: '#ffffff',
                     hoverOffset: 6
@@ -621,28 +656,30 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } },
+                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 12, weight: '700' } } },
                     datalabels: {
                         color: '#ffffff',
-                        font: { size: 13, weight: '800' },
+                        font: { size: 11, weight: '800' },
                         formatter: (value, ctx) => {
                             const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            return total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                            if (!total) return '';
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return pct > 2 ? pct + '%' : '';
                         }
                     }
                 },
-                cutout: '65%'
+                cutout: '60%'
             }
         });
 
-        // Chart 2: Usaha Perusahaan (BPS SE Orange & BPS Blue)
+        // Chart 2: Usaha Perusahaan (5 Statuses)
         new Chart(document.getElementById('chartUsahaPerusahaan'), {
             type: 'doughnut',
             data: {
-                labels: ['Ditemukan / Baru', 'Tutup / Ganda / Tidak Ditemukan'],
+                labels: statusLabels,
                 datasets: [{
-                    data: [upDitemukan, upTutupAlihFungsi],
-                    backgroundColor: ['#ea580c', '#1d4ed8'],
+                    data: [upDitemukan, upBaru, upTidakDitemukan, upGanda, upTutup],
+                    backgroundColor: statusColors,
                     borderWidth: 2,
                     borderColor: '#ffffff',
                     hoverOffset: 6
@@ -652,17 +689,19 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } },
+                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 12, weight: '700' } } },
                     datalabels: {
                         color: '#ffffff',
-                        font: { size: 13, weight: '800' },
+                        font: { size: 11, weight: '800' },
                         formatter: (value, ctx) => {
                             const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            return total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                            if (!total) return '';
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return pct > 2 ? pct + '%' : '';
                         }
                     }
                 },
-                cutout: '65%'
+                cutout: '60%'
             }
         });
 

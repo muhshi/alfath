@@ -58,13 +58,19 @@ class ExecutiveDashboardController extends Controller
         $totalUBTarget = 250;
         $totalUBTerdata = 206;
         
-        $ukTotal = 13500;
-        $ukDitemukan = 12450;
-        $ukTidakDitemukan = 1050;
+        $ukDitemukan = 11800;
+        $ukBaru = 650;
+        $ukTidakDitemukan = 450;
+        $ukGanda = 200;
+        $ukTutup = 400;
+        $ukTotal = $ukDitemukan + $ukBaru + $ukTidakDitemukan + $ukGanda + $ukTutup;
         
-        $upTotal = 4270;
-        $upDitemukan = 3850;
-        $upTutupAlihFungsi = 420;
+        $upDitemukan = 3550;
+        $upBaru = 300;
+        $upTidakDitemukan = 180;
+        $upGanda = 90;
+        $upTutup = 150;
+        $upTotal = $upDitemukan + $upBaru + $upTidakDitemukan + $upGanda + $upTutup;
 
         $petugasUnder50 = 142;
         $petugas50To70 = 275;
@@ -254,7 +260,7 @@ class ExecutiveDashboardController extends Controller
                 }
             }
 
-            // 5. Usaha Keluarga Metrics (usaha_keluarga)
+            // 5. Usaha Keluarga Metrics (usaha_keluarga) - 5 Distinct Statuses
             if ($schema->hasTable('usaha_keluarga')) {
                 $latestUkDate = $db->table('usaha_keluarga')
                     ->whereRaw('LENGTH(kode) = 16')
@@ -268,24 +274,23 @@ class ExecutiveDashboardController extends Controller
                     ->select(DB::raw("
                         SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka, 0)) as total_ditemukan,
                         SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru, 0)) as total_baru,
-                        SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup, 0)) as total_tutup,
+                        SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di, 0)) as total_tidak_ditemukan,
                         SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ganda, 0)) as total_ganda,
-                        SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di, 0)) as total_tidak_ditemukan
+                        SUM(IFNULL(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup, 0)) as total_tutup
                     "))
                     ->first();
 
-                if ($ukRaw && ($ukRaw->total_ditemukan || $ukRaw->total_baru || $ukRaw->total_tutup || $ukRaw->total_ganda || $ukRaw->total_tidak_ditemukan)) {
-                    $ukDitemukan = (int) ($ukRaw->total_ditemukan + $ukRaw->total_baru);
-                    $ukTidakDitemukan = (int) ($ukRaw->total_tutup + $ukRaw->total_ganda + $ukRaw->total_tidak_ditemukan);
-                    $ukTotal = $ukDitemukan + $ukTidakDitemukan;
-                } elseif ($schema->hasColumn('usaha_keluarga', 'status_keberadaan')) {
-                    $ukDitemukan = $db->table('usaha_keluarga')->whereRaw('LENGTH(kode) = 16')->where('status_keberadaan', 'DITEMUKAN')->count();
-                    $ukTidakDitemukan = $db->table('usaha_keluarga')->whereRaw('LENGTH(kode) = 16')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
-                    $ukTotal = $ukDitemukan + $ukTidakDitemukan;
+                if ($ukRaw && ($ukRaw->total_ditemukan || $ukRaw->total_baru || $ukRaw->total_tidak_ditemukan || $ukRaw->total_ganda || $ukRaw->total_tutup)) {
+                    $ukDitemukan = (int) $ukRaw->total_ditemukan;
+                    $ukBaru = (int) $ukRaw->total_baru;
+                    $ukTidakDitemukan = (int) $ukRaw->total_tidak_ditemukan;
+                    $ukGanda = (int) $ukRaw->total_ganda;
+                    $ukTutup = (int) $ukRaw->total_tutup;
+                    $ukTotal = $ukDitemukan + $ukBaru + $ukTidakDitemukan + $ukGanda + $ukTutup;
                 }
             }
 
-            // 6. Usaha Perusahaan Metrics (usaha_perusahaan)
+            // 6. Usaha Perusahaan Metrics (usaha_perusahaan) - 5 Distinct Statuses
             if ($schema->hasTable('usaha_perusahaan')) {
                 $latestUpDate = $db->table('usaha_perusahaan')
                     ->whereRaw('LENGTH(kode) = 16')
@@ -299,20 +304,19 @@ class ExecutiveDashboardController extends Controller
                     ->select(DB::raw("
                         SUM(IFNULL(status___ditemukan, 0)) as total_ditemukan,
                         SUM(IFNULL(status___baru, 0)) as total_baru,
-                        SUM(IFNULL(status___tutup, 0)) as total_tutup,
+                        SUM(IFNULL(status___tidak_ditemukan, 0)) as total_tidak_ditemukan,
                         SUM(IFNULL(status___ganda, 0)) as total_ganda,
-                        SUM(IFNULL(status___tidak_ditemukan, 0)) as total_tidak_ditemukan
+                        SUM(IFNULL(status___tutup, 0)) as total_tutup
                     "))
                     ->first();
 
-                if ($upRaw && ($upRaw->total_ditemukan || $upRaw->total_baru || $upRaw->total_tutup || $upRaw->total_ganda || $upRaw->total_tidak_ditemukan)) {
-                    $upDitemukan = (int) ($upRaw->total_ditemukan + $upRaw->total_baru);
-                    $upTutupAlihFungsi = (int) ($upRaw->total_tutup + $upRaw->total_ganda + $upRaw->total_tidak_ditemukan);
-                    $upTotal = $upDitemukan + $upTutupAlihFungsi;
-                } elseif ($schema->hasColumn('usaha_perusahaan', 'status_keberadaan')) {
-                    $upDitemukan = $db->table('usaha_perusahaan')->whereRaw('LENGTH(kode) = 16')->where('status_keberadaan', 'DITEMUKAN')->count();
-                    $upTutupAlihFungsi = $db->table('usaha_perusahaan')->whereRaw('LENGTH(kode) = 16')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
-                    $upTotal = $upDitemukan + $upTutupAlihFungsi;
+                if ($upRaw && ($upRaw->total_ditemukan || $upRaw->total_baru || $upRaw->total_tidak_ditemukan || $upRaw->total_ganda || $upRaw->total_tutup)) {
+                    $upDitemukan = (int) $upRaw->total_ditemukan;
+                    $upBaru = (int) $upRaw->total_baru;
+                    $upTidakDitemukan = (int) $upRaw->total_tidak_ditemukan;
+                    $upGanda = (int) $upRaw->total_ganda;
+                    $upTutup = (int) $upRaw->total_tutup;
+                    $upTotal = $upDitemukan + $upBaru + $upTidakDitemukan + $upGanda + $upTutup;
                 }
             }
         } catch (\Throwable $e) {
@@ -366,10 +370,16 @@ class ExecutiveDashboardController extends Controller
             'persenUB',
             'ukTotal',
             'ukDitemukan',
+            'ukBaru',
             'ukTidakDitemukan',
+            'ukGanda',
+            'ukTutup',
             'upTotal',
             'upDitemukan',
-            'upTutupAlihFungsi',
+            'upBaru',
+            'upTidakDitemukan',
+            'upGanda',
+            'upTutup',
             'petugasUnder50',
             'petugas50To70',
             'petugasAbove70',
