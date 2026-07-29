@@ -66,13 +66,16 @@ fi
 if [ "$FORCE_BUILD" = true ] || [ "$IS_DOCKER_RUNNING" = false ]; then
     echo -e "${YELLOW}🐳 Starting / Refreshing Docker Container (FrankenPHP)...${NC}"
     
-    # Remove any stuck old container if KeyError/ContainerConfig occurred
-    docker rm -f alfath-franken 2>/dev/null || true
+    # Remove any stuck old/orphaned containers matching name alfath-franken
+    if command -v docker &> /dev/null; then
+        docker ps -a --filter "name=alfath-franken" -q | xargs -r docker rm -f 2>/dev/null || true
+        docker rm -f alfath-franken 2>/dev/null || true
+    fi
 
     if [ "$FORCE_BUILD" = true ]; then
-        run_docker_compose up -d --build
+        run_docker_compose up -d --build --remove-orphans
     else
-        run_docker_compose up -d
+        run_docker_compose up -d --remove-orphans
     fi
     
     # Re-assign execution commands after container start
@@ -89,7 +92,7 @@ if [ -n "$COMPOSER_EXEC" ]; then
 fi
 
 echo -e "${GREEN}🎨 Building Frontend Assets (Vite)...${NC}"
-if [ "$IS_DOCKER_RUNNING" = true ] || [ -f "/.dockerenv" ] || docker ps | grep -q "alfath-franken"; then
+if [ "$IS_DOCKER_RUNNING" = true ] || [ -f "/.dockerenv" ] || (command -v docker &> /dev/null && docker ps | grep -q "alfath-franken"); then
     docker exec -i alfath-franken pnpm install --frozen-lockfile || true
     docker exec -i alfath-franken pnpm run build || true
 elif command -v pnpm &> /dev/null; then
