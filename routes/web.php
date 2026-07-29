@@ -24,6 +24,7 @@ Auth::routes();
 Route::get('/', [\App\Http\Controllers\HomeController::class , 'index'])->name('dashboard');
 
 Route::get('/home', [\App\Http\Controllers\HomeController::class , 'index'])->name('home');
+Route::get('/dashboard-se2026', [\App\Http\Controllers\ExecutiveDashboardController::class , 'index'])->name('dashboard.se2026');
 Route::get('/debug-db', function () {
     try {
         return 'Conn: ' . (new \App\Models\ScraperCookie)->getConnectionName();

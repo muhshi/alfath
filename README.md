@@ -59,3 +59,12 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Changelog
+
+### 2026-07-29
+- **Executive Public Dashboard Sensus Ekonomi 2026**:
+  - Menambahkan controller `ExecutiveDashboardController` untuk agregasi data 8 tabel (`alokasi_pengawas`, `master_petugas`, `monitoring_se2026`, `monitoring_sls_se2026`, `ub_pencacah`, `ub_pengawas`, `usaha_keluarga`, `usaha_perusahaan`).
+  - Menambahkan rute publik `/dashboard-se2026` di `routes/web.php`.
+  - Menambahkan view standalone `resources/views/dashboard-se2026.blade.php` berdesain Executive Mode (Clean Dark/Light Theme, High-contrast Stat Cards, Donut Chart Usaha Keluarga & Perusahaan, Line Chart Tren Harian, Horizontal Bar Chart Ranking 14 Kecamatan).
+
