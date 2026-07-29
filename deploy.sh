@@ -3,7 +3,7 @@
 # ==============================================================================
 # ALFATH - Sensus Ekonomi 2026 Production Deployment Script
 # ==============================================================================
-# Usage: ./deploy.sh
+# Smart Auto-Detector for Git Stash, Native PHP, & Docker FrankenPHP Containers
 # ==============================================================================
 
 set -e
@@ -19,61 +19,102 @@ echo -e "${BLUE}=====================================================${NC}"
 echo -e "${BLUE}🚀 Starting ALFATH SE2026 Deployment Process...${NC}"
 echo -e "${BLUE}=====================================================${NC}"
 
-# 1. Enable Maintenance Mode
-echo -e "${YELLOW}🔒 Entering Maintenance Mode...${NC}"
-php artisan down --retry=60 || true
+# 1. Resolve Unstaged Changes on Server & Fetch Latest Code
+echo -e "${YELLOW}🧹 Stashing local unstaged changes on server to prevent git pull conflicts...${NC}"
+git stash --include-untracked || true
 
-# 2. Fetch Latest Changes from Git
-echo -e "${GREEN}📥 Pulling latest code from GitHub (main)...${NC}"
-git pull origin main
+echo -e "${GREEN}📥 Fetching & Syncing latest code from GitHub (main)...${NC}"
+git fetch origin main
+git reset --hard origin/main
 
-# 3. Install/Update PHP Dependencies
-echo -e "${GREEN}📦 Installing Composer Dependencies (Production)...${NC}"
-composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+# 2. Detect PHP & Container Execution Environment
+PHP_CMD=""
+COMPOSER_CMD=""
 
-# 4. Install & Build Frontend Assets
-echo -e "${GREEN}🎨 Building Frontend Assets (Vite)...${NC}"
-if command -v pnpm &> /dev/null; then
-    pnpm install --frozen-lockfile
-    pnpm run build
-elif command -v npm &> /dev/null; then
-    npm install
-    npm run build
+if command -v php &> /dev/null; then
+    PHP_CMD="php"
+elif command -v docker &> /dev/null && docker ps | grep -q "alfath-franken"; then
+    PHP_CMD="docker exec -i alfath-franken php"
+elif command -v docker-compose &> /dev/null; then
+    PHP_CMD="docker-compose exec -T alfath-franken php"
+elif command -v docker &> /dev/null && docker compose version &> /dev/null; then
+    PHP_CMD="docker compose exec -T alfath-franken php"
 fi
 
-# 5. Database Migrations (Safe Mode - No Drop/Truncate)
-echo -e "${GREEN}🗄️ Running Database Migrations...${NC}"
-php artisan migrate --force
+if command -v composer &> /dev/null; then
+    COMPOSER_CMD="composer"
+elif command -v docker &> /dev/null && docker ps | grep -q "alfath-franken"; then
+    COMPOSER_CMD="docker exec -i alfath-franken composer"
+fi
 
-# 6. Ensure Storage Link
-echo -e "${GREEN}🔗 Verifying Storage Link...${NC}"
-php artisan storage:link || true
+# 3. Enter Maintenance Mode (If PHP available before build)
+if [ -n "$PHP_CMD" ]; then
+    echo -e "${YELLOW}🔒 Entering Maintenance Mode...${NC}"
+    $PHP_CMD artisan down --retry=60 || true
+fi
 
-# 7. Clear & Optimize Application Caches
-echo -e "${GREEN}⚡ Optimizing Application Caches...${NC}"
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-php artisan cache:clear
+# 4. Check Docker Environment vs Native Environment
+if command -v docker-compose &> /dev/null || (command -v docker &> /dev/null && docker compose version &> /dev/null); then
+    echo -e "${GREEN}🐳 Rebuilding & restarting Docker containers (FrankenPHP)...${NC}"
+    if command -v docker-compose &> /dev/null; then
+        docker-compose up -d --build
+    else
+        docker compose up -d --build
+    fi
+    
+    # Update PHP_CMD for the running container after build
+    PHP_CMD="docker exec -i alfath-franken php"
+    COMPOSER_CMD="docker exec -i alfath-franken composer"
+else
+    # Native Server Environment
+    if [ -n "$COMPOSER_CMD" ]; then
+        echo -e "${GREEN}📦 Installing Composer Dependencies (Production)...${NC}"
+        $COMPOSER_CMD install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+    fi
 
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan event:cache
+    echo -e "${GREEN}🎨 Building Frontend Assets...${NC}"
+    if command -v pnpm &> /dev/null; then
+        pnpm install --frozen-lockfile
+        pnpm run build
+    elif command -v npm &> /dev/null; then
+        npm install
+        npm run build
+    fi
+fi
 
-# 8. Restart Queue Workers
-echo -e "${GREEN}🔄 Restarting Queue Workers...${NC}"
-php artisan queue:restart || true
+# 5. Execute Laravel Artisan Tasks (Migrations & Caches)
+if [ -n "$PHP_CMD" ]; then
+    echo -e "${GREEN}🗄️ Running Safe Database Migrations...${NC}"
+    $PHP_CMD artisan migrate --force
 
-# 9. Set Permissions for Storage & Bootstrap Cache (If running on Linux)
+    echo -e "${GREEN}🔗 Verifying Storage Link...${NC}"
+    $PHP_CMD artisan storage:link || true
+
+    echo -e "${GREEN}⚡ Optimizing Application Caches...${NC}"
+    $PHP_CMD artisan config:clear || true
+    $PHP_CMD artisan route:clear || true
+    $PHP_CMD artisan view:clear || true
+    $PHP_CMD artisan cache:clear || true
+
+    $PHP_CMD artisan config:cache || true
+    $PHP_CMD artisan route:cache || true
+    $PHP_CMD artisan view:cache || true
+    $PHP_CMD artisan event:cache || true
+
+    echo -e "${GREEN}🔄 Restarting Queue Workers...${NC}"
+    $PHP_CMD artisan queue:restart || true
+
+    echo -e "${GREEN}🔓 Exiting Maintenance Mode...${NC}"
+    $PHP_CMD artisan up || true
+else
+    echo -e "${RED}⚠️ Warning: PHP command could not be executed directly on host or container.${NC}"
+fi
+
+# 6. Set Directory Permissions for Linux Hosts
 if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     echo -e "${GREEN}🔑 Setting Directory Permissions...${NC}"
     chmod -R 775 storage bootstrap/cache database || true
 fi
-
-# 10. Exit Maintenance Mode
-echo -e "${GREEN}🔓 Exiting Maintenance Mode...${NC}"
-php artisan up
 
 echo -e "${BLUE}=====================================================${NC}"
 echo -e "${GREEN}✅ ALFATH SE2026 Deployment Completed Successfully!${NC}"
