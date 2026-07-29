@@ -256,9 +256,12 @@ class ExecutiveDashboardController extends Controller
 
             // 5. Usaha Keluarga Metrics (usaha_keluarga)
             if ($schema->hasTable('usaha_keluarga')) {
-                $latestUkDate = $db->table('usaha_keluarga')->max('tanggal_data');
+                $latestUkDate = $db->table('usaha_keluarga')
+                    ->whereRaw('LENGTH(kode) = 16')
+                    ->max('tanggal_data');
 
                 $ukRaw = $db->table('usaha_keluarga')
+                    ->whereRaw('LENGTH(kode) = 16')
                     ->when($latestUkDate, function ($query, $latestUkDate) {
                         return $query->where('tanggal_data', $latestUkDate);
                     })
@@ -276,17 +279,20 @@ class ExecutiveDashboardController extends Controller
                     $ukTidakDitemukan = (int) ($ukRaw->total_tutup + $ukRaw->total_ganda + $ukRaw->total_tidak_ditemukan);
                     $ukTotal = $ukDitemukan + $ukTidakDitemukan;
                 } elseif ($schema->hasColumn('usaha_keluarga', 'status_keberadaan')) {
-                    $ukDitemukan = $db->table('usaha_keluarga')->where('status_keberadaan', 'DITEMUKAN')->count();
-                    $ukTidakDitemukan = $db->table('usaha_keluarga')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
+                    $ukDitemukan = $db->table('usaha_keluarga')->whereRaw('LENGTH(kode) = 16')->where('status_keberadaan', 'DITEMUKAN')->count();
+                    $ukTidakDitemukan = $db->table('usaha_keluarga')->whereRaw('LENGTH(kode) = 16')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
                     $ukTotal = $ukDitemukan + $ukTidakDitemukan;
                 }
             }
 
             // 6. Usaha Perusahaan Metrics (usaha_perusahaan)
             if ($schema->hasTable('usaha_perusahaan')) {
-                $latestUpDate = $db->table('usaha_perusahaan')->max('tanggal_data');
+                $latestUpDate = $db->table('usaha_perusahaan')
+                    ->whereRaw('LENGTH(kode) = 16')
+                    ->max('tanggal_data');
 
                 $upRaw = $db->table('usaha_perusahaan')
+                    ->whereRaw('LENGTH(kode) = 16')
                     ->when($latestUpDate, function ($query, $latestUpDate) {
                         return $query->where('tanggal_data', $latestUpDate);
                     })
@@ -304,8 +310,8 @@ class ExecutiveDashboardController extends Controller
                     $upTutupAlihFungsi = (int) ($upRaw->total_tutup + $upRaw->total_ganda + $upRaw->total_tidak_ditemukan);
                     $upTotal = $upDitemukan + $upTutupAlihFungsi;
                 } elseif ($schema->hasColumn('usaha_perusahaan', 'status_keberadaan')) {
-                    $upDitemukan = $db->table('usaha_perusahaan')->where('status_keberadaan', 'DITEMUKAN')->count();
-                    $upTutupAlihFungsi = $db->table('usaha_perusahaan')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
+                    $upDitemukan = $db->table('usaha_perusahaan')->whereRaw('LENGTH(kode) = 16')->where('status_keberadaan', 'DITEMUKAN')->count();
+                    $upTutupAlihFungsi = $db->table('usaha_perusahaan')->whereRaw('LENGTH(kode) = 16')->where('status_keberadaan', '!=', 'DITEMUKAN')->count();
                     $upTotal = $upDitemukan + $upTutupAlihFungsi;
                 }
             }
