@@ -500,11 +500,11 @@
                 </div>
                 <div class="sektor-stat-grid">
                     <div class="sektor-item">
-                        <div class="label">Usaha Ditemukan Aktif</div>
+                        <div class="label">Ditemukan / Baru</div>
                         <div class="val" style="color: var(--green-bps);">{{ number_format($ukDitemukan > 0 ? $ukDitemukan : 12450) }}</div>
                     </div>
                     <div class="sektor-item">
-                        <div class="label">Tidak Ditemukan / Tutup</div>
+                        <div class="label">Tutup / Ganda / Tidak Ditemukan</div>
                         <div class="val" style="color: var(--rose-bps);">{{ number_format($ukTidakDitemukan > 0 ? $ukTidakDitemukan : 1050) }}</div>
                     </div>
                 </div>
@@ -523,11 +523,11 @@
                 </div>
                 <div class="sektor-stat-grid">
                     <div class="sektor-item">
-                        <div class="label">Operasional / Ditemukan</div>
+                        <div class="label">Ditemukan / Baru</div>
                         <div class="val" style="color: var(--orange-primary);">{{ number_format($upDitemukan > 0 ? $upDitemukan : 3850) }}</div>
                     </div>
                     <div class="sektor-item">
-                        <div class="label">Tutup / Alih Fungsi</div>
+                        <div class="label">Tutup / Ganda / Tidak Ditemukan</div>
                         <div class="val" style="color: var(--blue-bps);">{{ number_format($upTutupAlihFungsi > 0 ? $upTutupAlihFungsi : 420) }}</div>
                     </div>
                 </div>
@@ -608,7 +608,7 @@
         new Chart(document.getElementById('chartUsahaKeluarga'), {
             type: 'doughnut',
             data: {
-                labels: ['Ditemukan Aktif', 'Tidak Ditemukan / Ganti'],
+                labels: ['Ditemukan / Baru', 'Tutup / Ganda / Tidak Ditemukan'],
                 datasets: [{
                     data: [ukDitemukan, ukTidakDitemukan],
                     backgroundColor: ['#059669', '#e11d48'],
@@ -639,7 +639,7 @@
         new Chart(document.getElementById('chartUsahaPerusahaan'), {
             type: 'doughnut',
             data: {
-                labels: ['Operasional / Ditemukan', 'Tutup / Alih Fungsi'],
+                labels: ['Ditemukan / Baru', 'Tutup / Ganda / Tidak Ditemukan'],
                 datasets: [{
                     data: [upDitemukan, upTutupAlihFungsi],
                     backgroundColor: ['#ea580c', '#1d4ed8'],
