@@ -14,6 +14,7 @@
     
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -564,6 +565,11 @@
         const kecNames = kecData.map(item => item.name);
         const kecPcts = kecData.map(item => item.pct);
 
+        // Register ChartDataLabels plugin
+        if (typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+        }
+
         // Global Chart Defaults for High Legibility & High Contrast (Senior Friendly)
         Chart.defaults.font.family = 'Plus Jakarta Sans';
         Chart.defaults.font.size = 13;
@@ -587,7 +593,15 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } }
+                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } },
+                    datalabels: {
+                        color: '#ffffff',
+                        font: { size: 13, weight: '800' },
+                        formatter: (value, ctx) => {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            return total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                        }
+                    }
                 },
                 cutout: '65%'
             }
@@ -610,7 +624,15 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } }
+                    legend: { position: 'bottom', labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } },
+                    datalabels: {
+                        color: '#ffffff',
+                        font: { size: 13, weight: '800' },
+                        formatter: (value, ctx) => {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            return total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                        }
+                    }
                 },
                 cutout: '65%'
             }
@@ -653,10 +675,24 @@
                 maintainAspectRatio: false,
                 scales: {
                     x: { ticks: { color: '#0c0a09', font: { weight: '700' } }, grid: { color: '#e7e5e4' } },
-                    y: { ticks: { color: '#0c0a09', font: { weight: '700' } }, grid: { color: '#e7e5e4' } }
+                    y: { 
+                        ticks: { color: '#0c0a09', font: { weight: '700' } }, 
+                        grid: { color: '#e7e5e4' },
+                        grace: '10%'
+                    }
                 },
                 plugins: {
-                    legend: { labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } }
+                    legend: { labels: { color: '#0c0a09', font: { size: 13, weight: '700' } } },
+                    datalabels: {
+                        align: 'top',
+                        anchor: 'end',
+                        offset: 2,
+                        color: function(ctx) { return ctx.dataset.borderColor; },
+                        font: { size: 10, weight: '700' },
+                        formatter: function(value) {
+                            return value >= 1000 ? Math.round(value / 1000) + 'k' : value;
+                        }
+                    }
                 }
             }
         });
@@ -683,11 +719,11 @@
                         grid: { display: false } 
                     },
                     y: { 
-                        max: 100, 
+                        max: 112, 
                         ticks: { 
                             color: '#0c0a09', 
                             font: { size: 12, weight: '700' },
-                            callback: function(value) { return value + '%'; }
+                            callback: function(value) { return value <= 100 ? value + '%' : ''; }
                         }, 
                         grid: { color: '#e7e5e4' } 
                     }
@@ -699,6 +735,15 @@
                             label: function(context) {
                                 return 'Capaian: ' + context.raw + '%';
                             }
+                        }
+                    },
+                    datalabels: {
+                        align: 'end',
+                        anchor: 'end',
+                        color: '#c2410c',
+                        font: { size: 11, weight: '800' },
+                        formatter: function(value) {
+                            return value + '%';
                         }
                     }
                 }
