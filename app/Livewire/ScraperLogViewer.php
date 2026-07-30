@@ -6,7 +6,7 @@ use Filament\Widgets\Widget;
 
 class ScraperLogViewer extends Widget
 {
-    protected static string $view = 'livewire.scraper-log-viewer';
+    protected string $view = 'livewire.scraper-log-viewer';
     
     // We override getColumnSpan so it defaults to taking full width
     protected int | string | array $columnSpan = 'full';
@@ -24,6 +24,6 @@ class ScraperLogViewer extends Widget
             $this->logs = 'Belum ada log dari scraper (proses belum jalan).';
         }
 
-        return view(static::$view);
+        return view($this->view);
     }
 }

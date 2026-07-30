@@ -5,9 +5,11 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TeamResource\Pages;
 use App\Filament\Resources\TeamResource\RelationManagers;
 use App\Models\Team;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,14 +19,14 @@ class TeamResource extends Resource
 {
     protected static ?string $model = Team::class;
 
-    protected static ?string $navigationGroup = 'Pengaturan';
+    protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
     protected static ?string $navigationLabel = 'Tim';
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Forms\Components\TextInput::make('name')
                     ->required(),
             ]);
@@ -49,11 +51,11 @@ class TeamResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

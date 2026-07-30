@@ -5,9 +5,11 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CategoryResource\Pages;
 use App\Filament\Resources\CategoryResource\RelationManagers;
 use App\Models\Category;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,15 +19,15 @@ class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    protected static ?string $navigationGroup = 'Pengaturan';
+    protected static string|\UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?string $navigationLabel = 'Kategori';
-    protected static ?string $navigationIcon = 'heroicon-o-inbox-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-inbox-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Forms\Components\TextInput::make('name')
                     ->required(),
             ]);
@@ -50,11 +52,11 @@ class CategoryResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

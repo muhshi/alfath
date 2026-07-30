@@ -47,7 +47,7 @@ class LandingPageTest extends TestCase
         $response->assertViewHas('totalSurveys', 2);
         $response->assertViewHas('totalTeams', 1);
         $response->assertViewHas('activeSurveys', 1);
-        $response->assertViewHas('recentSurveys');
+        $response->assertViewHas('surveys');
 
         // Assert content
         $response->assertSee('2 Total Survey');
