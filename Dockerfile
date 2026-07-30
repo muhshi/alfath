@@ -1,7 +1,7 @@
 # =========================================
 # Stage 1: Base PHP + dependency
 # =========================================
-FROM dunglas/frankenphp:php8.3 AS base
+FROM dunglas/frankenphp:php8.4 AS base
 
 ENV SERVER_NAME=":80"
 WORKDIR /app
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-enable intl gd zip pdo_mysql \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Install Node.js & pnpm
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \

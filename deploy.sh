@@ -111,11 +111,12 @@ if [ -n "$PHP_EXEC" ]; then
     echo -e "${GREEN}🔗 Verifying Storage Link...${NC}"
     $PHP_EXEC artisan storage:link || true
 
-    echo -e "${GREEN}⚡ Optimizing Application Caches...${NC}"
+    echo -e "${GREEN}⚡ Optimizing Application Caches & Filament Assets...${NC}"
     $PHP_EXEC artisan config:clear || true
     $PHP_EXEC artisan route:clear || true
     $PHP_EXEC artisan view:clear || true
     $PHP_EXEC artisan cache:clear || true
+    $PHP_EXEC artisan filament:upgrade || true
 
     $PHP_EXEC artisan config:cache || true
     $PHP_EXEC artisan route:cache || true
