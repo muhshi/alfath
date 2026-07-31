@@ -150,9 +150,10 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                             'application/octet-stream',
                             'application/zip',
                             'application/x-excel',
-                            'application/excel'
+                            'application/excel',
                         ])
-                        ->maxSize(51200) // Allow up to 50 MB
+                        ->maxSize(65536) // Allow up to 64 MB
+                        ->helperText('File format .xlsx. Maksimal ukuran 64 MB.')
                         ->required()
                         ->disk('local')
                         ->directory('uploads/excel-usaha'),
