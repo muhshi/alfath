@@ -143,7 +143,16 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                 ->form([
                     Forms\Components\FileUpload::make('excel_file')
                         ->label('File Excel Export Progres Pendataan (.xlsx)')
-                        ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
+                        ->acceptedFileTypes([
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'application/vnd.ms-excel',
+                            'application/x-zip-compressed',
+                            'application/octet-stream',
+                            'application/zip',
+                            'application/x-excel',
+                            'application/excel'
+                        ])
+                        ->maxSize(51200) // Allow up to 50 MB
                         ->required()
                         ->disk('local')
                         ->directory('uploads/excel-usaha'),
