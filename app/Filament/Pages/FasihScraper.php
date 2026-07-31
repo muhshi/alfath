@@ -135,6 +135,70 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                         ->success()
                         ->send();
                 }),
+
+            Actions\Action::make('upload-excel-usaha')
+                ->label('Upload Excel Usaha')
+                ->icon('heroicon-o-document-arrow-up')
+                ->color('success')
+                ->form([
+                    Forms\Components\FileUpload::make('excel_file')
+                        ->label('File Excel Export Progres Pendataan (.xlsx)')
+                        ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
+                        ->required()
+                        ->disk('local')
+                        ->directory('uploads/excel-usaha'),
+                ])
+                ->action(function (array $data) {
+                    $relativeFilePath = $data['excel_file'];
+                    $fullPath = storage_path('app/' . $relativeFilePath);
+
+                    if (!file_exists($fullPath)) {
+                        Notification::make()
+                            ->title('Gagal')
+                            ->body("File Excel tidak ditemukan pada server di: {$fullPath}")
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    $scriptPath = storage_path('app/python-scripts/process_usaha_excel.py');
+                    $pythonBin = 'python';
+
+                    $process = new \Symfony\Component\Process\Process([$pythonBin, $scriptPath, $fullPath]);
+                    $process->setTimeout(300);
+                    $process->run();
+
+                    if (!$process->isSuccessful()) {
+                        Notification::make()
+                            ->title('Proses Gagal')
+                            ->body($process->getErrorOutput())
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    $output = trim($process->getOutput());
+                    $res = json_decode($output, true);
+
+                    if ($res && isset($res['success']) && $res['success']) {
+                        $tgl = $res['tanggal_data'] ?? '-';
+                        $upCount = number_format($res['count_perusahaan'] ?? 0);
+                        $ukCount = number_format($res['count_keluarga'] ?? 0);
+
+                        Notification::make()
+                            ->title('Import Excel Berhasil!')
+                            ->body("Tanggal Data: {$tgl}\n• Usaha Perusahaan: {$upCount} baris\n• Usaha Keluarga: {$ukCount} baris")
+                            ->success()
+                            ->send();
+                    } else {
+                        $err = $res['error'] ?? $output;
+                        Notification::make()
+                            ->title('Gagal Mengolah Excel')
+                            ->body($err)
+                            ->danger()
+                            ->send();
+                    }
+                }),
         ];
     }
 }

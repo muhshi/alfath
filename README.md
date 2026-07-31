@@ -99,3 +99,10 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Perbaikan Agregasi Keberadaan Usaha: Memperbarui logika query pada `ExecutiveDashboardController` untuk menghitung akumulasi status `Ditemukan` (`Ditemukan` + `Baru`) dan `Tidak Ditemukan / Tutup` (`Tutup` + `Ganda` + `Tidak Ditemukan`) pada tabel `usaha_keluarga` dan `usaha_perusahaan` secara presisi mengikuti kueri agregasi Metabase dengan membatasi kriteria tingkat Sub-SLS (`LENGTH(kode) = 16`) agar terhindar dari penggandaan hitung data ringkasan.
   - Pemisahan 5 Status Keberadaan Usaha: Memecah tampilan legenda grafik doughnut dan stat grid pada kartu **Temuan Usaha Keluarga** dan **Keberadaan Bangunan Usaha Perusahaan** menjadi 5 kategori status terpisah (**Ditemukan**, **Baru**, **Tidak Ditemukan**, **Ganda**, dan **Tutup**) lengkap dengan skema warna beriklim eksekutif.
 
+### 2026-07-31
+- **Fitur Upload & Pengolahan Data Excel Usaha (FASIH DB)**:
+  - Ekstraksi Khusus Sheet Usaha: Mengekstrak hanya sheet `USAHA PERUSAHAAN` dan `USAHA KELUARGA` dari file Excel Export Progres Pendataan Sub-SLS dan mengabaikan sheet lainnya.
+  - Dukungan Metabase Historical Snapshot Date Filter: Memperbarui unique index database `fasih` pada tabel `usaha_perusahaan` dan `usaha_keluarga` menjadi komposit `UNIQUE (kode, tanggal_data)`. Menjaga kelengkapan snapshot historis per tanggal agar query Metabase dapat melakukan filtering tanggal secara presisi tanpa menimpa data lama.
+  - Performa Engine Python (Pandas 2-Stage Multi-Row Batch): Mengimplementasikan parser Python decoupling 2-stage yang sangat cepat (~9,6 detik untuk 33.409 baris data) menggunakan batch multi-row single query values.
+  - Eloquent Models `UsahaPerusahaan` & `UsahaKeluarga`: Menambahkan model Eloquent `App\Models\UsahaPerusahaan` dan `App\Models\UsahaKeluarga` pada koneksi DB `fasih`.
+  - Filament Upload Action & Artisan Command: Menambahkan tombol header action `Upload Excel Usaha` di halaman Filament Fasih Scraper dan perintah Artisan `php artisan usaha:import-excel {filepath}`.
