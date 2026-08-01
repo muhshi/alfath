@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Survey;
 use App\Models\Team;
+use App\Models\Visit;
 use Illuminate\Http\Request;
 
 class SurveyController extends Controller
@@ -13,6 +14,13 @@ class SurveyController extends Controller
      */
     public function index(Request $request)
     {
+        Visit::create([
+            'survey_id' => null,
+            'ip_address' => $request->ip(),
+            'path' => $request->path(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
         $categorySlug = $request->get('category');
 
         $categoryId = null;
@@ -40,6 +48,13 @@ class SurveyController extends Controller
 
     public function embed(Survey $survey)
     {
+        Visit::create([
+            'survey_id' => $survey->id,
+            'ip_address' => request()->ip(),
+            'path' => request()->path(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
         $url = \App\Support\WilkerstatMetabase::dashboard(
             $survey->metabase_dashboard_id
         );

@@ -50,9 +50,9 @@ class LandingPageTest extends TestCase
         $response->assertViewHas('surveys');
 
         // Assert content
-        $response->assertSee('2 Total Survey');
-        $response->assertSee('1 Tim Kerja');
-        $response->assertSee('1 Survey Aktif');
+        $response->assertSee('Total Survei Terdaftar');
+        $response->assertSee('Tim Kerja Aktif');
+        $response->assertSee('Survei Berjalan (Aktif)');
         $response->assertSee('Survey Aktif');
         $response->assertSee('Tim Test');
     }

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use App\Models\Survey;
 use App\Models\Team;
+use App\Models\Visit;
 
 class HomeController extends Controller
 {
@@ -24,8 +25,17 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Contracts\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
+        if (Schema::hasTable('visits')) {
+            Visit::create([
+                'survey_id' => null,
+                'ip_address' => $request->ip(),
+                'path' => $request->path(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        }
+
         $now = now();
 
         $totalSurveys = Schema::hasTable('surveys') ? Survey::count() : 0;

@@ -34,4 +34,9 @@ class Survey extends Model
         return $this->belongsTo(Team::class);
     }
 
+    public function visits()
+    {
+        return $this->hasMany(Visit::class);
+    }
 }
+
