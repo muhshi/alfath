@@ -8,7 +8,7 @@ use Illuminate\Support\Carbon;
 
 class DailyVisitorsChartWidget extends ChartWidget
 {
-    protected ?string $heading = 'Grafik Pengunjung Harian (14 Hari Terakhir)';
+    protected static ?string $heading = 'Grafik Pengunjung Harian (14 Hari Terakhir)';
 
     protected static ?int $sort = 2;
 

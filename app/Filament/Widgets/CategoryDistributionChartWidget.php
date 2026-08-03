@@ -7,7 +7,7 @@ use Filament\Widgets\ChartWidget;
 
 class CategoryDistributionChartWidget extends ChartWidget
 {
-    protected ?string $heading = 'Distribusi Survey per Kategori';
+    protected static ?string $heading = 'Distribusi Survey per Kategori';
 
     protected static ?int $sort = 4;
 

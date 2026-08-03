@@ -111,3 +111,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Pembaruan Aset Frontend Filament (Fix Livewire Intercept Error): Mempublikasikan ulang aset JS/CSS Filament 3.3 (`php artisan filament:assets`) untuk mengganti berkas aset publik yang Using method lama (seperti `Livewire.interceptMessage`), serta memastikan konfigurasi `$middleware->trustProxies(at: '*')` di `bootstrap/app.php`.
   - Perbaikan Properti Widget Filament (`ScraperLogViewer`): Mengubah deklarasi properti `$view` pada `App\Livewire\ScraperLogViewer` menjadi `protected static string $view` agar kompatibel penuh dengan kelas induk `Filament\Widgets\Widget`.
   - Penyesuaian Batas Ukuran Upload Livewire & Mime Types Excel: Menyesuaikan batas `maxSize(65536)` (64 MB) pada komponen `FileUpload` Filament dan aturan `config/livewire.php` (`temporary_file_upload.rules`), menghapus pembatasan `acceptedFileTypes` agar tidak terjadi error "file type invalid" pada browser, serta menambahkan berkas `.user.ini` (`upload_max_filesize = 64M`, `post_max_size = 64M`) untuk menaikkan batas upload PHP bawaan (2M).
+
+### 2026-08-03
+- **Perbaikan Deklarasi Properti Filament v3 Resources & Widgets**:
+  - Memperbaiki tipe deklarasi `$navigationGroup`, `$navigationIcon`, dan `$heading` pada `CategoryResource`, `TeamResource`, `SurveyResource`, `FasihScraper`, `CategoryDistributionChartWidget`, dan `DailyVisitorsChartWidget` menjadi `protected static ?string` agar kompatibel penuh dengan kelas induk Filament v3 dan PHP 8.2+.
