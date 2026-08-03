@@ -116,3 +116,4 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 - **Perbaikan Deklarasi Properti Filament v3 Resources & Widgets**:
   - Memperbaiki tipe deklarasi `$navigationGroup`, `$navigationIcon`, dan `$heading` pada `CategoryResource`, `TeamResource`, `SurveyResource`, `FasihScraper`, `CategoryDistributionChartWidget`, dan `DailyVisitorsChartWidget` menjadi `protected static ?string` agar kompatibel penuh dengan kelas induk Filament v3 dan PHP 8.2+.
   - Mempublikasikan ulang aset JavaScript Filament 3.3 (`php artisan filament:assets`) ke direktori `public/js/filament/` untuk menghilangkan error `Livewire.interceptMessage` pada browser pasca-pull.
+  - Memperbaiki properti `$view` pada `App\Livewire\ScraperLogViewer` menjadi `protected static string $view` agar sesuai dengan spesifikasi widget Filament.
