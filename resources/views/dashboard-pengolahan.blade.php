@@ -240,7 +240,18 @@
                                     </a>
                                 </th>
 
-                                <th>Nama Pengawas</th>
+                                <!-- Sortable Column: Nama Pengawas -->
+                                <th>
+                                    @php $nextDir = ($sortBy == 'nama_pengawas' && $sortDir == 'asc') ? 'desc' : 'asc'; @endphp
+                                    <a href="{{ route('dashboard.pengolahan', array_merge(request()->query(), ['sort' => 'nama_pengawas', 'dir' => $nextDir])) }}" class="text-dark text-decoration-none">
+                                        Nama Pengawas
+                                        @if($sortBy == 'nama_pengawas')
+                                            <span class="text-primary font-weight-bold">{{ $sortDir == 'asc' ? '▲' : '▼' }}</span>
+                                        @else
+                                            <span class="text-muted small">↕</span>
+                                        @endif
+                                    </a>
+                                </th>
 
                                 <!-- Sortable Column: Muatan Murni (Kolom Pertama Metrics) -->
                                 <th class="text-end bg-teal-lt text-teal font-weight-bold">
