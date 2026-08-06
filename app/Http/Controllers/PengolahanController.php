@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class PengolahanController extends Controller
 {
@@ -29,7 +34,7 @@ class PengolahanController extends Controller
     ];
 
     /**
-     * Build the filtered query for SE2026 Data Pengolahan.
+     * Build the filtered query for SE2026 Data Pengolahan / Petugas.
      */
     protected function getFilteredQuery(Request $request): array
     {
@@ -165,7 +170,7 @@ class PengolahanController extends Controller
     }
 
     /**
-     * Display the SE2026 Data Pengolahan Dashboard Table.
+     * Display the SE2026 Data Petugas Dashboard Table.
      */
     public function index(Request $request)
     {
@@ -206,7 +211,7 @@ class PengolahanController extends Controller
     }
 
     /**
-     * Export the filtered SE2026 Data Pengolahan to Excel (CSV with UTF-8 BOM).
+     * Export the filtered SE2026 Data Petugas to native Excel (.xlsx).
      */
     public function export(Request $request)
     {
@@ -214,101 +219,169 @@ class PengolahanController extends Controller
         $records = $filtered['query']->get();
 
         $dateSuffix = !empty($filtered['selectedDate']) ? '_' . str_replace('-', '', $filtered['selectedDate']) : '_' . date('Ymd');
-        $filename = "Export_Data_Pengolahan_SE2026{$dateSuffix}.csv";
+        $filename = "Export_Data_Petugas_SE2026{$dateSuffix}.xlsx";
 
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data Petugas SE2026');
+
+        // Title Banner in Excel
+        $sheet->mergeCells('A1:N1');
+        $sheet->setCellValue('A1', 'DATA PETUGAS SE2026 - BPS KABUPATEN DEMAK');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0F172A'));
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+        $subTitle = 'Tanggal Data: ' . (!empty($filtered['selectedDate']) ? date('d M Y', strtotime($filtered['selectedDate'])) : 'Semua Tanggal');
+        if (!empty($filtered['kodekec'])) {
+            $subTitle .= ' | Kecamatan: ' . ($this->kecNameMap[$filtered['kodekec']] ?? $filtered['kodekec']);
+        }
+        if (!empty($filtered['search'])) {
+            $subTitle .= ' | Pencarian: ' . $filtered['search'];
+        }
+        $sheet->mergeCells('A2:N2');
+        $sheet->setCellValue('A2', $subTitle);
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('64748B'));
+
+        // Headers
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0',
+            'No',
+            'Kode Kec',
+            'Nama Kecamatan',
+            'Nama Pencacah',
+            'Email Pencacah',
+            'Nama Pengawas',
+            'Muatan Murni ⭐',
+            'Beban Saat Ini',
+            'Total Submit',
+            'Capaian Submit (%)',
+            'Usaha Ditemukan',
+            'Usaha Tdk Ditemukan',
+            'Keluarga Ditemukan',
+            'Keluarga Tdk Ditemukan',
         ];
 
-        $kecNameMap = $this->kecNameMap;
+        $startRow = 4;
+        foreach ($headers as $colIdx => $header) {
+            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . $startRow;
+            $sheet->setCellValue($cell, $header);
+        }
 
-        $callback = function () use ($records, $kecNameMap) {
-            $file = fopen('php://output', 'w');
-            // Write UTF-8 BOM for Excel to open properly with unicode text
-            fputs($file, "\xEF\BB\xBF");
+        // Header styling
+        $headerRange = 'A' . $startRow . ':N' . $startRow;
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+                'size' => 11,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0284C7'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getRowDimension($startRow)->setRowHeight(28);
 
-            // Header columns
-            fputcsv($file, [
-                'No',
-                'Kode Kec',
-                'Nama Kecamatan',
-                'Nama Pencacah',
-                'Email Pencacah',
-                'Nama Pengawas',
-                'Muatan Murni Saat Ini',
-                'Beban Saat Ini',
-                'Total Submit',
-                'Capaian Submit (%)',
-                'Usaha Ditemukan',
-                'Usaha Tidak Ditemukan',
-                'Keluarga Ditemukan',
-                'Keluarga Tidak Ditemukan',
+        // Fill Data Rows
+        $rowIdx = $startRow + 1;
+        $no = 1;
+        $sumBeban = 0;
+        $sumSubmit = 0;
+        $sumUsahaDitemukan = 0;
+        $sumUsahaTdk = 0;
+        $sumKeluargaDitemukan = 0;
+        $sumKeluargaTdk = 0;
+        $sumMuatanMurni = 0;
+
+        foreach ($records as $row) {
+            $namaKec = $this->kecNameMap[$row->kode_kec] ?? $row->kode_kec;
+
+            $sumBeban += (int) $row->beban_saat_ini;
+            $sumSubmit += (int) $row->total_submit;
+            $sumUsahaDitemukan += (int) $row->jumlah_usaha_ditemukan;
+            $sumUsahaTdk += (int) $row->usaha_tidak_ditemukan;
+            $sumKeluargaDitemukan += (int) $row->jumlah_keluarga_ditemukan;
+            $sumKeluargaTdk += (int) $row->keluarga_tidak_ditemukan;
+            $sumMuatanMurni += (int) $row->muatan_murni;
+
+            $sheet->setCellValue('A' . $rowIdx, $no++);
+            $sheet->setCellValueExplicit('B' . $rowIdx, $row->kode_kec, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('C' . $rowIdx, $namaKec);
+            $sheet->setCellValue('D' . $rowIdx, $row->nama_pencacah);
+            $sheet->setCellValue('E' . $rowIdx, $row->email_pencacah);
+            $sheet->setCellValue('F' . $rowIdx, $row->nama_pengawas ?: '-');
+            $sheet->setCellValue('G' . $rowIdx, (int) $row->muatan_murni);
+            $sheet->setCellValue('H' . $rowIdx, (int) $row->beban_saat_ini);
+            $sheet->setCellValue('I' . $rowIdx, (int) $row->total_submit);
+            $sheet->setCellValue('J' . $rowIdx, (float) $row->pct_submit / 100);
+            $sheet->setCellValue('K' . $rowIdx, (int) $row->jumlah_usaha_ditemukan);
+            $sheet->setCellValue('L' . $rowIdx, (int) $row->usaha_tidak_ditemukan);
+            $sheet->setCellValue('M' . $rowIdx, (int) $row->jumlah_keluarga_ditemukan);
+            $sheet->setCellValue('N' . $rowIdx, (int) $row->keluarga_tidak_ditemukan);
+
+            // Alignment and Number Formats
+            $sheet->getStyle('A' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('G' . $rowIdx . ':N' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            $sheet->getStyle('G' . $rowIdx . ':I' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('J' . $rowIdx)->getNumberFormat()->setFormatCode('0.00%');
+            $sheet->getStyle('K' . $rowIdx . ':N' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+
+            // Highlight Muatan Murni Column
+            $sheet->getStyle('G' . $rowIdx)->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['rgb' => '0D9488']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'CCFBF1']],
             ]);
 
-            $no = 1;
-            $sumBeban = 0;
-            $sumSubmit = 0;
-            $sumUsahaDitemukan = 0;
-            $sumUsahaTdk = 0;
-            $sumKeluargaDitemukan = 0;
-            $sumKeluargaTdk = 0;
-            $sumMuatanMurni = 0;
+            $rowIdx++;
+        }
 
-            foreach ($records as $row) {
-                $namaKec = $kecNameMap[$row->kode_kec] ?? $row->kode_kec;
+        // Summary Total Row
+        $overallPct = $sumBeban > 0 ? ($sumSubmit / $sumBeban) : 0;
 
-                $sumBeban += (int) $row->beban_saat_ini;
-                $sumSubmit += (int) $row->total_submit;
-                $sumUsahaDitemukan += (int) $row->jumlah_usaha_ditemukan;
-                $sumUsahaTdk += (int) $row->usaha_tidak_ditemukan;
-                $sumKeluargaDitemukan += (int) $row->jumlah_keluarga_ditemukan;
-                $sumKeluargaTdk += (int) $row->keluarga_tidak_ditemukan;
-                $sumMuatanMurni += (int) $row->muatan_murni;
+        $sheet->setCellValue('A' . $rowIdx, 'TOTAL');
+        $sheet->mergeCells('A' . $rowIdx . ':F' . $rowIdx);
+        $sheet->setCellValue('G' . $rowIdx, $sumMuatanMurni);
+        $sheet->setCellValue('H' . $rowIdx, $sumBeban);
+        $sheet->setCellValue('I' . $rowIdx, $sumSubmit);
+        $sheet->setCellValue('J' . $rowIdx, $overallPct);
+        $sheet->setCellValue('K' . $rowIdx, $sumUsahaDitemukan);
+        $sheet->setCellValue('L' . $rowIdx, $sumUsahaTdk);
+        $sheet->setCellValue('M' . $rowIdx, $sumKeluargaDitemukan);
+        $sheet->setCellValue('N' . $rowIdx, $sumKeluargaTdk);
 
-                fputcsv($file, [
-                    $no++,
-                    $row->kode_kec,
-                    $namaKec,
-                    $row->nama_pencacah,
-                    $row->email_pencacah,
-                    $row->nama_pengawas ?: '-',
-                    $row->muatan_murni,
-                    $row->beban_saat_ini,
-                    $row->total_submit,
-                    $row->pct_submit,
-                    $row->jumlah_usaha_ditemukan,
-                    $row->usaha_tidak_ditemukan,
-                    $row->jumlah_keluarga_ditemukan,
-                    $row->keluarga_tidak_ditemukan,
-                ]);
-            }
+        $totalRange = 'A' . $rowIdx . ':N' . $rowIdx;
+        $sheet->getStyle($totalRange)->applyFromArray([
+            'font' => ['bold' => true, 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2E8F0']],
+            'borders' => [
+                'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '94A3B8']],
+                'bottom' => ['borderStyle' => Border::BORDER_DOUBLE, 'color' => ['rgb' => '475569']],
+            ],
+        ]);
 
-            // Summary row at the bottom
-            $overallPct = $sumBeban > 0 ? round(($sumSubmit / $sumBeban) * 100, 2) : 0;
-            fputcsv($file, [
-                'TOTAL',
-                '-',
-                '-',
-                '-',
-                '-',
-                '-',
-                $sumMuatanMurni,
-                $sumBeban,
-                $sumSubmit,
-                $overallPct,
-                $sumUsahaDitemukan,
-                $sumUsahaTdk,
-                $sumKeluargaDitemukan,
-                $sumKeluargaTdk,
-            ]);
+        $sheet->getStyle('A' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('G' . $rowIdx . ':N' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getStyle('G' . $rowIdx . ':I' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('J' . $rowIdx)->getNumberFormat()->setFormatCode('0.00%');
+        $sheet->getStyle('K' . $rowIdx . ':N' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
 
-            fclose($file);
-        };
+        // Auto-fit Column Widths
+        foreach (range('A', 'N') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
 
-        return response()->stream($callback, 200, $headers);
+        $writer = new Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 }

@@ -2,7 +2,7 @@
 
 @section('content')
     <!-- Page header -->
-    <x-page-header title="Tabel Pengolahan SE2026">
+    <x-page-header title="Tabel Petugas SE2026">
         <div class="col-12 col-md-auto ms-auto d-print-none flex-wrap gap-2 d-flex">
             <a href="{{ route('home') }}" class="btn btn-outline-secondary font-weight-bold shadow-sm" style="border-radius: 10px;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
@@ -32,7 +32,7 @@
                                 <div class="col-md-9">
                                     <div class="d-flex align-items-center gap-2 mb-2">
                                         <span class="badge bg-light text-primary font-weight-bold px-3 py-1.5 rounded-pill border">
-                                            <span class="status-dot status-dot-animated bg-primary me-1"></span> SE2026 MONITORING & PENGOLAHAN
+                                            <span class="status-dot status-dot-animated bg-primary me-1"></span> SE2026 MONITORING & PETUGAS
                                         </span>
                                         @if($selectedDate)
                                             <span class="badge bg-info-lt text-dark px-3 py-1.5 rounded-pill">
@@ -41,7 +41,7 @@
                                         @endif
                                     </div>
                                     <h2 class="font-weight-extrabold text-dark mb-1" style="font-family: 'Outfit', sans-serif; color: #0f172a;">
-                                        Tabel Pengolahan Pendataan SE2026
+                                        Tabel Petugas SE2026
                                     </h2>
                                     <p class="text-muted mb-0" style="font-size: 0.95rem;">
                                         Integrasi agregasi data harian dari Monitoring FASIH, Pemutakhiran Usaha (Perusahaan & Keluarga), serta Pemutakhiran Keluarga per Petugas dan Kecamatan.

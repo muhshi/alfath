@@ -52,7 +52,7 @@
                                         </a>
                                         <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-primary font-weight-bold px-4 py-2 shadow-sm" style="border-radius: 10px;">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M3 10h18"/><path d="M10 3v18"/></svg>
-                                            Tabel Pengolahan SE2026
+                                            Tabel Petugas SE2026
                                         </a>
                                     </div>
                                 </div>
