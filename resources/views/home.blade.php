@@ -3,7 +3,11 @@
 @section('content')
     <!-- Page header -->
     <x-page-header title="Beranda ALFATH">
-        <div class="col-12 col-md-auto ms-auto d-print-none">
+        <div class="col-12 col-md-auto ms-auto d-print-none flex-wrap gap-2 d-flex">
+            <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-primary font-weight-bold shadow-sm" style="border-radius: 10px; padding: 0.6rem 1.2rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M3 10h18"/><path d="M10 3v18"/></svg>
+                Tabel Pengolahan SE2026
+            </a>
             <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px; padding: 0.6rem 1.4rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -45,6 +49,10 @@
                                         <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px;">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                                             Buka Executive Dashboard SE2026
+                                        </a>
+                                        <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-primary font-weight-bold px-4 py-2 shadow-sm" style="border-radius: 10px;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M3 10h18"/><path d="M10 3v18"/></svg>
+                                            Tabel Pengolahan SE2026
                                         </a>
                                     </div>
                                 </div>
