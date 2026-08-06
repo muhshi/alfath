@@ -34,7 +34,7 @@ class PengolahanController extends Controller
     ];
 
     /**
-     * Build the filtered query for SE2026 Data Pengolahan / Petugas.
+     * Build the filtered query for SE2026 Data Petugas.
      */
     protected function getFilteredQuery(Request $request): array
     {
@@ -75,6 +75,14 @@ class PengolahanController extends Controller
             )
             ->groupBy('kode');
 
+        // Subquery for Usaha Keluarga (Information Only)
+        $ukSubquery = $db->table('se2026_usaha_keluarga')
+            ->select(
+                'kode',
+                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED)) AS uk_ditemukan')
+            )
+            ->groupBy('kode');
+
         // Subquery for Pemutakhiran Keluarga
         $pkSubquery = $db->table('se2026_pemutakhiran_keluarga')
             ->select(
@@ -90,6 +98,7 @@ class PengolahanController extends Controller
             ->leftJoin('master_petugas as p_cacah', 'm.email_pencacah', '=', 'p_cacah.email')
             ->leftJoin('master_petugas as p_awas', 'a.email_pengawas', '=', 'p_awas.email')
             ->leftJoinSub($upSubquery, 'up', 'm.region_code', '=', 'up.kode')
+            ->leftJoinSub($ukSubquery, 'uk', 'm.region_code', '=', 'uk.kode')
             ->leftJoinSub($pkSubquery, 'pk', 'm.region_code', '=', 'pk.kode')
             ->select([
                 'm.tanggal_tarik as tanggal_data',
@@ -99,9 +108,13 @@ class PengolahanController extends Controller
                 DB::raw('GROUP_CONCAT(DISTINCT p_awas.nama_lengkap SEPARATOR ", ") as nama_pengawas'),
                 DB::raw('SUM(m.total_beban) as beban_saat_ini'),
                 DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as total_submit'),
+                // Belum Dikerjakan = Beban Saat Ini - Total Submit (Status Open + Draft)
+                DB::raw('(IFNULL(SUM(m.status_open), 0) + IFNULL(SUM(m.status_draft), 0)) as belum_dikerjakan'),
                 DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit'),
                 DB::raw('IFNULL(SUM(up.up_ditemukan), 0) as jumlah_usaha_ditemukan'),
                 DB::raw('IFNULL(SUM(up.up_tdk), 0) as usaha_tidak_ditemukan'),
+                // Usaha Keluarga (Informasi Tambahan)
+                DB::raw('IFNULL(SUM(uk.uk_ditemukan), 0) as jumlah_usaha_keluarga'),
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as jumlah_keluarga_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as keluarga_tidak_ditemukan'),
                 // Muatan Murni = Usaha Perusahaan Ditemukan/Baru + Keluarga Ditemukan/Baru
@@ -140,8 +153,10 @@ class PengolahanController extends Controller
             'nama_pengawas' => DB::raw('GROUP_CONCAT(DISTINCT p_awas.nama_lengkap SEPARATOR ", ")'),
             'beban_saat_ini' => DB::raw('SUM(m.total_beban)'),
             'total_submit' => DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))'),
+            'belum_dikerjakan' => DB::raw('(IFNULL(SUM(m.status_open), 0) + IFNULL(SUM(m.status_draft), 0))'),
             'pct_submit' => DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END'),
             'jumlah_usaha_ditemukan' => DB::raw('IFNULL(SUM(up.up_ditemukan), 0)'),
+            'jumlah_usaha_keluarga' => DB::raw('IFNULL(SUM(uk.uk_ditemukan), 0)'),
             'jumlah_keluarga_ditemukan' => DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0)'),
             'muatan_murni' => DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0))'),
         ];
@@ -180,7 +195,9 @@ class PengolahanController extends Controller
             'total_petugas' => $allRecords->count(),
             'total_beban' => $allRecords->sum('beban_saat_ini'),
             'total_submit' => $allRecords->sum('total_submit'),
+            'total_belum_dikerjakan' => $allRecords->sum('belum_dikerjakan'),
             'total_usaha_ditemukan' => $allRecords->sum('jumlah_usaha_ditemukan'),
+            'total_usaha_keluarga' => $allRecords->sum('jumlah_usaha_keluarga'),
             'total_keluarga_ditemukan' => $allRecords->sum('jumlah_keluarga_ditemukan'),
             'total_muatan_murni' => $allRecords->sum('muatan_murni'),
             'pct_overall_submit' => $allRecords->sum('beban_saat_ini') > 0
@@ -218,7 +235,7 @@ class PengolahanController extends Controller
         $sheet->setTitle('Data Petugas SE2026');
 
         // Title Banner in Excel
-        $sheet->mergeCells('A1:N1');
+        $sheet->mergeCells('A1:P1');
         $sheet->setCellValue('A1', 'DATA PETUGAS SE2026 - BPS KABUPATEN DEMAK');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0F172A'));
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
@@ -230,7 +247,7 @@ class PengolahanController extends Controller
         if (!empty($filtered['search'])) {
             $subTitle .= ' | Pencarian: ' . $filtered['search'];
         }
-        $sheet->mergeCells('A2:N2');
+        $sheet->mergeCells('A2:P2');
         $sheet->setCellValue('A2', $subTitle);
         $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('64748B'));
 
@@ -243,11 +260,13 @@ class PengolahanController extends Controller
             'Email Pencacah',
             'Nama Pengawas',
             'Muatan Murni ⭐',
+            'Belum Dikerjakan',
             'Beban Saat Ini',
             'Total Submit',
             'Capaian Submit (%)',
-            'Usaha Ditemukan',
-            'Usaha Tdk Ditemukan',
+            'Usaha Perusahaan Ditemukan',
+            'Usaha Perusahaan Tdk Ditemukan',
+            'Usaha Keluarga (Ditemukan)',
             'Keluarga Ditemukan',
             'Keluarga Tdk Ditemukan',
         ];
@@ -259,7 +278,7 @@ class PengolahanController extends Controller
         }
 
         // Header styling
-        $headerRange = 'A' . $startRow . ':N' . $startRow;
+        $headerRange = 'A' . $startRow . ':P' . $startRow;
         $sheet->getStyle($headerRange)->applyFromArray([
             'font' => [
                 'bold' => true,
@@ -282,8 +301,10 @@ class PengolahanController extends Controller
         $no = 1;
         $sumBeban = 0;
         $sumSubmit = 0;
+        $sumBelum = 0;
         $sumUsahaDitemukan = 0;
         $sumUsahaTdk = 0;
+        $sumUsahaKeluarga = 0;
         $sumKeluargaDitemukan = 0;
         $sumKeluargaTdk = 0;
         $sumMuatanMurni = 0;
@@ -293,8 +314,10 @@ class PengolahanController extends Controller
 
             $sumBeban += (int) $row->beban_saat_ini;
             $sumSubmit += (int) $row->total_submit;
+            $sumBelum += (int) $row->belum_dikerjakan;
             $sumUsahaDitemukan += (int) $row->jumlah_usaha_ditemukan;
             $sumUsahaTdk += (int) $row->usaha_tidak_ditemukan;
+            $sumUsahaKeluarga += (int) $row->jumlah_usaha_keluarga;
             $sumKeluargaDitemukan += (int) $row->jumlah_keluarga_ditemukan;
             $sumKeluargaTdk += (int) $row->keluarga_tidak_ditemukan;
             $sumMuatanMurni += (int) $row->muatan_murni;
@@ -306,27 +329,35 @@ class PengolahanController extends Controller
             $sheet->setCellValue('E' . $rowIdx, $row->email_pencacah);
             $sheet->setCellValue('F' . $rowIdx, $row->nama_pengawas ?: '-');
             $sheet->setCellValue('G' . $rowIdx, (int) $row->muatan_murni);
-            $sheet->setCellValue('H' . $rowIdx, (int) $row->beban_saat_ini);
-            $sheet->setCellValue('I' . $rowIdx, (int) $row->total_submit);
-            $sheet->setCellValue('J' . $rowIdx, (float) $row->pct_submit / 100);
-            $sheet->setCellValue('K' . $rowIdx, (int) $row->jumlah_usaha_ditemukan);
-            $sheet->setCellValue('L' . $rowIdx, (int) $row->usaha_tidak_ditemukan);
-            $sheet->setCellValue('M' . $rowIdx, (int) $row->jumlah_keluarga_ditemukan);
-            $sheet->setCellValue('N' . $rowIdx, (int) $row->keluarga_tidak_ditemukan);
+            $sheet->setCellValue('H' . $rowIdx, (int) $row->belum_dikerjakan);
+            $sheet->setCellValue('I' . $rowIdx, (int) $row->beban_saat_ini);
+            $sheet->setCellValue('J' . $rowIdx, (int) $row->total_submit);
+            $sheet->setCellValue('K' . $rowIdx, (float) $row->pct_submit / 100);
+            $sheet->setCellValue('L' . $rowIdx, (int) $row->jumlah_usaha_ditemukan);
+            $sheet->setCellValue('M' . $rowIdx, (int) $row->usaha_tidak_ditemukan);
+            $sheet->setCellValue('N' . $rowIdx, (int) $row->jumlah_usaha_keluarga);
+            $sheet->setCellValue('O' . $rowIdx, (int) $row->jumlah_keluarga_ditemukan);
+            $sheet->setCellValue('P' . $rowIdx, (int) $row->keluarga_tidak_ditemukan);
 
             // Alignment and Number Formats
             $sheet->getStyle('A' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle('B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle('G' . $rowIdx . ':N' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle('G' . $rowIdx . ':P' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-            $sheet->getStyle('G' . $rowIdx . ':I' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
-            $sheet->getStyle('J' . $rowIdx)->getNumberFormat()->setFormatCode('0.00%');
-            $sheet->getStyle('K' . $rowIdx . ':N' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('G' . $rowIdx . ':J' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('K' . $rowIdx)->getNumberFormat()->setFormatCode('0.00%');
+            $sheet->getStyle('L' . $rowIdx . ':P' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
 
             // Highlight Muatan Murni Column
             $sheet->getStyle('G' . $rowIdx)->applyFromArray([
                 'font' => ['bold' => true, 'color' => ['rgb' => '0D9488']],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'CCFBF1']],
+            ]);
+
+            // Highlight Belum Dikerjakan Column
+            $sheet->getStyle('H' . $rowIdx)->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['rgb' => 'B91C1C']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEE2E2']],
             ]);
 
             $rowIdx++;
@@ -338,15 +369,17 @@ class PengolahanController extends Controller
         $sheet->setCellValue('A' . $rowIdx, 'TOTAL');
         $sheet->mergeCells('A' . $rowIdx . ':F' . $rowIdx);
         $sheet->setCellValue('G' . $rowIdx, $sumMuatanMurni);
-        $sheet->setCellValue('H' . $rowIdx, $sumBeban);
-        $sheet->setCellValue('I' . $rowIdx, $sumSubmit);
-        $sheet->setCellValue('J' . $rowIdx, $overallPct);
-        $sheet->setCellValue('K' . $rowIdx, $sumUsahaDitemukan);
-        $sheet->setCellValue('L' . $rowIdx, $sumUsahaTdk);
-        $sheet->setCellValue('M' . $rowIdx, $sumKeluargaDitemukan);
-        $sheet->setCellValue('N' . $rowIdx, $sumKeluargaTdk);
+        $sheet->setCellValue('H' . $rowIdx, $sumBelum);
+        $sheet->setCellValue('I' . $rowIdx, $sumBeban);
+        $sheet->setCellValue('J' . $rowIdx, $sumSubmit);
+        $sheet->setCellValue('K' . $rowIdx, $overallPct);
+        $sheet->setCellValue('L' . $rowIdx, $sumUsahaDitemukan);
+        $sheet->setCellValue('M' . $rowIdx, $sumUsahaTdk);
+        $sheet->setCellValue('N' . $rowIdx, $sumUsahaKeluarga);
+        $sheet->setCellValue('O' . $rowIdx, $sumKeluargaDitemukan);
+        $sheet->setCellValue('P' . $rowIdx, $sumKeluargaTdk);
 
-        $totalRange = 'A' . $rowIdx . ':N' . $rowIdx;
+        $totalRange = 'A' . $rowIdx . ':P' . $rowIdx;
         $sheet->getStyle($totalRange)->applyFromArray([
             'font' => ['bold' => true, 'size' => 11],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2E8F0']],
@@ -357,13 +390,13 @@ class PengolahanController extends Controller
         ]);
 
         $sheet->getStyle('A' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('G' . $rowIdx . ':N' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        $sheet->getStyle('G' . $rowIdx . ':I' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle('J' . $rowIdx)->getNumberFormat()->setFormatCode('0.00%');
-        $sheet->getStyle('K' . $rowIdx . ':N' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('G' . $rowIdx . ':P' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getStyle('G' . $rowIdx . ':J' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('K' . $rowIdx)->getNumberFormat()->setFormatCode('0.00%');
+        $sheet->getStyle('L' . $rowIdx . ':P' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
 
         // Auto-fit Column Widths
-        foreach (range('A', 'N') as $col) {
+        foreach (range('A', 'P') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

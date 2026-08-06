@@ -266,6 +266,19 @@
                                     </a>
                                 </th>
 
+                                <!-- Sortable Column: Belum Dikerjakan -->
+                                <th class="text-end bg-danger-lt text-danger font-weight-bold">
+                                    @php $nextDir = ($sortBy == 'belum_dikerjakan' && $sortDir == 'asc') ? 'desc' : 'asc'; @endphp
+                                    <a href="{{ route('dashboard.pengolahan', array_merge(request()->query(), ['sort' => 'belum_dikerjakan', 'dir' => $nextDir])) }}" class="text-danger text-decoration-none font-weight-bold">
+                                        Belum Dikerjakan
+                                        @if($sortBy == 'belum_dikerjakan')
+                                            <span class="font-weight-bold">{{ $sortDir == 'asc' ? '▲' : '▼' }}</span>
+                                        @else
+                                            <span class="small opacity-50">↕</span>
+                                        @endif
+                                    </a>
+                                </th>
+
                                 <!-- Sortable Column: Beban Saat Ini -->
                                 <th class="text-end">
                                     @php $nextDir = ($sortBy == 'beban_saat_ini' && $sortDir == 'asc') ? 'desc' : 'asc'; @endphp
@@ -305,11 +318,11 @@
                                     </a>
                                 </th>
 
-                                <!-- Sortable Column: Jumlah Usaha -->
+                                <!-- Sortable Column: Usaha Perusahaan -->
                                 <th class="text-end">
                                     @php $nextDir = ($sortBy == 'jumlah_usaha_ditemukan' && $sortDir == 'asc') ? 'desc' : 'asc'; @endphp
                                     <a href="{{ route('dashboard.pengolahan', array_merge(request()->query(), ['sort' => 'jumlah_usaha_ditemukan', 'dir' => $nextDir])) }}" class="text-dark text-decoration-none">
-                                        Usaha (Ditemukan+Baru)
+                                        Usaha Perusahaan
                                         @if($sortBy == 'jumlah_usaha_ditemukan')
                                             <span class="text-primary font-weight-bold">{{ $sortDir == 'asc' ? '▲' : '▼' }}</span>
                                         @else
@@ -318,7 +331,20 @@
                                     </a>
                                 </th>
 
-                                <th class="text-end">Usaha Tdk Ditemukan</th>
+                                <th class="text-end">Usaha Perusahaan Tdk Ditemukan</th>
+
+                                <!-- Sortable Column: Usaha Keluarga (Informasi Tambahan) -->
+                                <th class="text-end">
+                                    @php $nextDir = ($sortBy == 'jumlah_usaha_keluarga' && $sortDir == 'asc') ? 'desc' : 'asc'; @endphp
+                                    <a href="{{ route('dashboard.pengolahan', array_merge(request()->query(), ['sort' => 'jumlah_usaha_keluarga', 'dir' => $nextDir])) }}" class="text-dark text-decoration-none">
+                                        Usaha Keluarga (Ditemukan)
+                                        @if($sortBy == 'jumlah_usaha_keluarga')
+                                            <span class="text-primary font-weight-bold">{{ $sortDir == 'asc' ? '▲' : '▼' }}</span>
+                                        @else
+                                            <span class="text-muted small">↕</span>
+                                        @endif
+                                    </a>
+                                </th>
 
                                 <!-- Sortable Column: Jumlah Keluarga -->
                                 <th class="text-end">
@@ -354,6 +380,9 @@
                                     <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3">
                                         {{ number_format($row->muatan_murni) }}
                                     </td>
+                                    <td class="text-end font-weight-bold text-danger bg-danger-lt fs-3">
+                                        {{ number_format($row->belum_dikerjakan) }}
+                                    </td>
                                     <td class="text-end font-weight-bold">{{ number_format($row->beban_saat_ini) }}</td>
                                     <td class="text-end font-weight-bold text-success">{{ number_format($row->total_submit) }}</td>
                                     <td class="text-end">
@@ -363,12 +392,13 @@
                                     </td>
                                     <td class="text-end font-weight-bold text-info">{{ number_format($row->jumlah_usaha_ditemukan) }}</td>
                                     <td class="text-end text-muted">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
+                                    <td class="text-end font-weight-bold text-purple">{{ number_format($row->jumlah_usaha_keluarga) }}</td>
                                     <td class="text-end font-weight-bold text-warning">{{ number_format($row->jumlah_keluarga_ditemukan) }}</td>
                                     <td class="text-end text-muted">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="12" class="text-center py-5 text-muted">
+                                    <td colspan="14" class="text-center py-5 text-muted">
                                         <div class="mb-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
                                         </div>
