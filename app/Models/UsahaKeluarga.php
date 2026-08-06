@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class UsahaKeluarga extends Model
 {
     protected $connection = 'fasih';
-    protected $table = 'usaha_keluarga';
+    protected $table = 'se2026_usaha_keluarga';
 
     public $timestamps = true;
 

@@ -117,3 +117,13 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Memperbaiki tipe deklarasi `$navigationGroup`, `$navigationIcon`, dan `$heading` pada `CategoryResource`, `TeamResource`, `SurveyResource`, `FasihScraper`, `CategoryDistributionChartWidget`, dan `DailyVisitorsChartWidget` menjadi `protected static ?string` agar kompatibel penuh dengan kelas induk Filament v3 dan PHP 8.2+.
   - Mempublikasikan ulang aset JavaScript Filament 3.3 (`php artisan filament:assets`) ke direktori `public/js/filament/` untuk menghilangkan error `Livewire.interceptMessage` pada browser pasca-pull.
   - Memperbaiki properti `$view` pada `App\Livewire\ScraperLogViewer` menjadi `protected static string $view` agar sesuai dengan spesifikasi widget Filament.
+
+### 2026-08-06
+- **Integrasi Import Data Progres Pemutakhiran Keluarga SE2026 (`se2026_pemutakhiran_keluarga`) & Penataan Tabel SE2026**:
+  - Penataan Prefix Nama Tabel SE2026: Merename tabel fisik `usaha_perusahaan` menjadi `se2026_usaha_perusahaan` dan `usaha_keluarga` menjadi `se2026_usaha_keluarga` pada database `fasih`.
+  - Kompatibilitas Metabase (SQL View Layer): Membuat Database View `usaha_perusahaan` dan `usaha_keluarga` yang merujuk ke tabel fisik `se2026_...` agar dashboard dan query Metabase tetap berjalan 100% lancar tanpa breaking change.
+  - Skema Tabel `se2026_pemutakhiran_keluarga`: Membuat migrasi tabel baru `se2026_pemutakhiran_keluarga` pada koneksi DB `fasih` untuk menampung 14 indikator progres pemutakhiran keluarga per Sub-SLS 16 digit beserta `tanggal_data`.
+  - Eloquent Model `Se2026PemutakhiranKeluarga`: Menambahkan model Eloquent `App\Models\Se2026PemutakhiranKeluarga` serta memperbarui model `UsahaPerusahaan` & `UsahaKeluarga` ke nama tabel ber-prefix `se2026_`.
+  - Importer Python Performa Tinggi (`process_pemutakhiran_keluarga_excel.py`): Mengembangkan script Python parser Excel fast-bulk upsert (`ON DUPLICATE KEY UPDATE`) yang mampu mengolah >8.200 baris data Sub-SLS 16 digit hanya dalam 4-5 detik.
+  - Perintah Artisan `php artisan import:pemutakhiran-keluarga`: Menambahkan command Laravel `import:pemutakhiran-keluarga {file}` untuk pengolahan import Excel dari terminal maupun background job.
+
