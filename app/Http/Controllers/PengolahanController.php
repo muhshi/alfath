@@ -75,15 +75,6 @@ class PengolahanController extends Controller
             )
             ->groupBy('kode');
 
-        // Subquery for Usaha Keluarga
-        $ukSubquery = $db->table('se2026_usaha_keluarga')
-            ->select(
-                'kode',
-                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED)) AS uk_ditemukan'),
-                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di AS SIGNED)) AS uk_tdk')
-            )
-            ->groupBy('kode');
-
         // Subquery for Pemutakhiran Keluarga
         $pkSubquery = $db->table('se2026_pemutakhiran_keluarga')
             ->select(
@@ -99,7 +90,6 @@ class PengolahanController extends Controller
             ->leftJoin('master_petugas as p_cacah', 'm.email_pencacah', '=', 'p_cacah.email')
             ->leftJoin('master_petugas as p_awas', 'a.email_pengawas', '=', 'p_awas.email')
             ->leftJoinSub($upSubquery, 'up', 'm.region_code', '=', 'up.kode')
-            ->leftJoinSub($ukSubquery, 'uk', 'm.region_code', '=', 'uk.kode')
             ->leftJoinSub($pkSubquery, 'pk', 'm.region_code', '=', 'pk.kode')
             ->select([
                 'm.tanggal_tarik as tanggal_data',
@@ -110,11 +100,12 @@ class PengolahanController extends Controller
                 DB::raw('SUM(m.total_beban) as beban_saat_ini'),
                 DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as total_submit'),
                 DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit'),
-                DB::raw('IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0) as jumlah_usaha_ditemukan'),
-                DB::raw('IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) as usaha_tidak_ditemukan'),
+                DB::raw('IFNULL(SUM(up.up_ditemukan), 0) as jumlah_usaha_ditemukan'),
+                DB::raw('IFNULL(SUM(up.up_tdk), 0) as usaha_tidak_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as jumlah_keluarga_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as keluarga_tidak_ditemukan'),
-                DB::raw('(IFNULL(SUM(m.total_beban), 0) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) as muatan_murni'),
+                // Muatan Murni = Usaha Perusahaan Ditemukan/Baru + Keluarga Ditemukan/Baru
+                DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni'),
             ])
             ->groupBy([
                 'm.tanggal_tarik',
@@ -149,9 +140,9 @@ class PengolahanController extends Controller
             'beban_saat_ini' => DB::raw('SUM(m.total_beban)'),
             'total_submit' => DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))'),
             'pct_submit' => DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END'),
-            'jumlah_usaha_ditemukan' => DB::raw('IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)'),
+            'jumlah_usaha_ditemukan' => DB::raw('IFNULL(SUM(up.up_ditemukan), 0)'),
             'jumlah_keluarga_ditemukan' => DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0)'),
-            'muatan_murni' => DB::raw('(IFNULL(SUM(m.total_beban), 0) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0)))'),
+            'muatan_murni' => DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0))'),
         ];
 
         $sortColumn = $allowedSorts[$sortBy] ?? DB::raw('LEFT(m.region_code, 7)');
