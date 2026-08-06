@@ -126,4 +126,11 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Eloquent Model `Se2026PemutakhiranKeluarga`: Menambahkan model Eloquent `App\Models\Se2026PemutakhiranKeluarga` serta memperbarui model `UsahaPerusahaan` & `UsahaKeluarga` ke nama tabel ber-prefix `se2026_`.
   - Importer Python Performa Tinggi (`process_pemutakhiran_keluarga_excel.py`): Mengembangkan script Python parser Excel fast-bulk upsert (`ON DUPLICATE KEY UPDATE`) yang mampu mengolah >8.200 baris data Sub-SLS 16 digit hanya dalam 4-5 detik.
   - Perintah Artisan `php artisan import:pemutakhiran-keluarga`: Menambahkan command Laravel `import:pemutakhiran-keluarga {file}` untuk pengolahan import Excel dari terminal maupun background job.
+- **Dashboard Tabel Pengolahan SE2026 (`/dashboard-pengolahan`)**:
+  - Halaman Dashboard & Rute Baru: Menambahkan rute `/dashboard-pengolahan` (`dashboard.pengolahan`) dan controller `PengolahanController@index`.
+  - Agregasi Multi-Tabel SE2026: Menggabungkan data dari `monitoring_se2026`, `alokasi_pengawas`, `master_petugas`, `se2026_usaha_perusahaan`, `se2026_usaha_keluarga`, dan `se2026_pemutakhiran_keluarga` per Petugas (Pencacah) & Kecamatan.
+  - Kolom Baru **Muatan Murni**: Menambahkan perhitungan otomatis `Muatan Murni` (`Total Submit - (Usaha Tidak Ditemukan + Keluarga Tidak Ditemukan)`) pada kartu KPI dan tabel data.
+  - Pencarian & Filter Lengkap: Menyediakan form pencarian real-time (Nama/Email Petugas & Pengawas), filter 14 Kecamatan BPS Demak, serta filter tanggal data snapshot.
+  - Interactive Column Sorting: Menyediakan pengurutan interaktif (Ascending/Descending ▲/▼) pada header tabel untuk kolom Kecamatan, Nama Petugas, Beban Saat Ini, Total Submit, % Progres, Jumlah Usaha, Jumlah Keluarga, dan Muatan Murni.
+
 
