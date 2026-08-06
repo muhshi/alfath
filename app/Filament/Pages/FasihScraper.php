@@ -17,9 +17,9 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament.pages.fasih-scraper';
+    protected string $view = 'filament.pages.fasih-scraper';
 
     protected static ?string $title = 'Fasih Scraper';
 

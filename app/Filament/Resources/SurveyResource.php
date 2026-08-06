@@ -5,8 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SurveyResource\Pages;
 use App\Models\Survey;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -15,11 +15,11 @@ class SurveyResource extends Resource
     protected static ?string $model = Survey::class;
 
     protected static ?string $navigationLabel = 'Survei';
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\Select::make('category_id')
                     ->label('Kategori')

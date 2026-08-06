@@ -134,6 +134,11 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Interactive Column Sorting: Menyediakan pengurutan interaktif (Ascending/Descending ▲/▼) pada header tabel untuk kolom Kecamatan, Nama Petugas, Beban Saat Ini, Total Submit, % Progres, Jumlah Usaha, Jumlah Keluarga, dan Muatan Murni.
   - **Fitur Export Excel Hasil Filter**: Menambahkan rute `/dashboard-pengolahan/export` (`dashboard.pengolahan.export`) untuk mengunduh data hasil pengolahan sesuai filter & pengurutan yang sedang aktif dalam format Excel (CSV UTF-8 BOM) lengkap dengan baris ringkasan `TOTAL` di bagian bawah.
   - **Penataan Posisi Kolom Muatan Murni & Kerapian Pagination**: Memindahkan kolom **Muatan Murni ⭐** menjadi kolom pertama kategori metrik perhitungan (tepat setelah nama pengawas) baik pada tabel dashboard maupun pada file ekspor Excel. Serta merapikan tampilan footer pagination menggunakan `pagination::bootstrap-5` tanpa duplikasi teks penjelas.
-  - **Integrasi Navigasi Beranda ALFATH (`home.blade.php`)**: Menambahkan tombol link pintasan **Tabel Pengolahan SE2026** pada header aksi atas dan banner hero kartu utama Beranda ALFATH untuk kemudahan akses pengguna.
+  - **Kompatibilitas Upgrade Filament v5 (Fix Deployment `deploy.sh` Error)**:
+    - Memperbarui tipe deklarasi properti `$navigationGroup` (menjadi `\UnitEnum|string|null`) dan `$navigationIcon` (menjadi `\BackedEnum|string|null`) pada `CategoryResource`, `TeamResource`, `SurveyResource`, dan `FasihScraper` agar kompatibel penuh dengan kelas induk Filament v5 (`Filament\Resources\Resource` dan `Filament\Pages\Page`).
+    - Memperbarui signature method `form(Schema $schema): Schema` pada `CategoryResource`, `TeamResource`, dan `SurveyResource` menggunakan `Filament\Schemas\Schema` sesuai standar Filament v5.
+    - Memperbarui properti `$view` pada `App\Filament\Pages\FasihScraper` menjadi instance property (`protected string $view`) sesuai kelas induk `Filament\Pages\Page`.
+    - Memperbarui properti `$heading` pada `CategoryDistributionChartWidget` dan `DailyVisitorsChartWidget` menjadi instance property (`protected ?string $heading`) sesuai kelas induk `Filament\Widgets\ChartWidget`.
+    - Menyelesaikan error `artisan package:discover` (code 255) yang terjadi saat script `deploy.sh` dijalankan di server.
 
 
