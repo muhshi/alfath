@@ -133,5 +133,6 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Pencarian & Filter Lengkap: Menyediakan form pencarian real-time (Nama/Email Petugas & Pengawas), filter 14 Kecamatan BPS Demak, serta filter tanggal data snapshot.
   - Interactive Column Sorting: Menyediakan pengurutan interaktif (Ascending/Descending ▲/▼) pada header tabel untuk kolom Kecamatan, Nama Petugas, Beban Saat Ini, Total Submit, % Progres, Jumlah Usaha, Jumlah Keluarga, dan Muatan Murni.
   - **Fitur Export Excel Hasil Filter**: Menambahkan rute `/dashboard-pengolahan/export` (`dashboard.pengolahan.export`) untuk mengunduh data hasil pengolahan sesuai filter & pengurutan yang sedang aktif dalam format Excel (CSV UTF-8 BOM) lengkap dengan baris ringkasan `TOTAL` di bagian bawah.
+  - **Penataan Posisi Kolom Muatan Murni & Kerapian Pagination**: Memindahkan kolom **Muatan Murni ⭐** menjadi kolom pertama kategori metrik perhitungan (tepat setelah nama pengawas) baik pada tabel dashboard maupun pada file ekspor Excel. Serta merapikan tampilan footer pagination menggunakan `pagination::bootstrap-5` tanpa duplikasi teks penjelas.
 
 

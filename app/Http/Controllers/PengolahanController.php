@@ -239,6 +239,7 @@ class PengolahanController extends Controller
                 'Nama Pencacah',
                 'Email Pencacah',
                 'Nama Pengawas',
+                'Muatan Murni Saat Ini',
                 'Beban Saat Ini',
                 'Total Submit',
                 'Capaian Submit (%)',
@@ -246,7 +247,6 @@ class PengolahanController extends Controller
                 'Usaha Tidak Ditemukan',
                 'Keluarga Ditemukan',
                 'Keluarga Tidak Ditemukan',
-                'Muatan Murni Saat Ini',
             ]);
 
             $no = 1;
@@ -276,6 +276,7 @@ class PengolahanController extends Controller
                     $row->nama_pencacah,
                     $row->email_pencacah,
                     $row->nama_pengawas ?: '-',
+                    $row->muatan_murni,
                     $row->beban_saat_ini,
                     $row->total_submit,
                     $row->pct_submit,
@@ -283,7 +284,6 @@ class PengolahanController extends Controller
                     $row->usaha_tidak_ditemukan,
                     $row->jumlah_keluarga_ditemukan,
                     $row->keluarga_tidak_ditemukan,
-                    $row->muatan_murni,
                 ]);
             }
 
@@ -296,6 +296,7 @@ class PengolahanController extends Controller
                 '-',
                 '-',
                 '-',
+                $sumMuatanMurni,
                 $sumBeban,
                 $sumSubmit,
                 $overallPct,
@@ -303,7 +304,6 @@ class PengolahanController extends Controller
                 $sumUsahaTdk,
                 $sumKeluargaDitemukan,
                 $sumKeluargaTdk,
-                $sumMuatanMurni,
             ]);
 
             fclose($file);

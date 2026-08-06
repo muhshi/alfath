@@ -242,6 +242,19 @@
 
                                 <th>Nama Pengawas</th>
 
+                                <!-- Sortable Column: Muatan Murni (Kolom Pertama Metrics) -->
+                                <th class="text-end bg-teal-lt text-teal font-weight-bold">
+                                    @php $nextDir = ($sortBy == 'muatan_murni' && $sortDir == 'asc') ? 'desc' : 'asc'; @endphp
+                                    <a href="{{ route('dashboard.pengolahan', array_merge(request()->query(), ['sort' => 'muatan_murni', 'dir' => $nextDir])) }}" class="text-teal text-decoration-none font-weight-bold">
+                                        Muatan Murni ⭐
+                                        @if($sortBy == 'muatan_murni')
+                                            <span class="font-weight-bold">{{ $sortDir == 'asc' ? '▲' : '▼' }}</span>
+                                        @else
+                                            <span class="small opacity-50">↕</span>
+                                        @endif
+                                    </a>
+                                </th>
+
                                 <!-- Sortable Column: Beban Saat Ini -->
                                 <th class="text-end">
                                     @php $nextDir = ($sortBy == 'beban_saat_ini' && $sortDir == 'asc') ? 'desc' : 'asc'; @endphp
@@ -310,19 +323,6 @@
                                 </th>
 
                                 <th class="text-end">Keluarga Tdk Ditemukan</th>
-
-                                <!-- Sortable Column: Muatan Murni -->
-                                <th class="text-end bg-teal-lt text-teal font-weight-bold">
-                                    @php $nextDir = ($sortBy == 'muatan_murni' && $sortDir == 'asc') ? 'desc' : 'asc'; @endphp
-                                    <a href="{{ route('dashboard.pengolahan', array_merge(request()->query(), ['sort' => 'muatan_murni', 'dir' => $nextDir])) }}" class="text-teal text-decoration-none font-weight-bold">
-                                        Muatan Murni ⭐
-                                        @if($sortBy == 'muatan_murni')
-                                            <span class="font-weight-bold">{{ $sortDir == 'asc' ? '▲' : '▼' }}</span>
-                                        @else
-                                            <span class="small opacity-50">↕</span>
-                                        @endif
-                                    </a>
-                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -340,6 +340,9 @@
                                     <td>
                                         <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
                                     </td>
+                                    <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3">
+                                        {{ number_format($row->muatan_murni) }}
+                                    </td>
                                     <td class="text-end font-weight-bold">{{ number_format($row->beban_saat_ini) }}</td>
                                     <td class="text-end font-weight-bold text-success">{{ number_format($row->total_submit) }}</td>
                                     <td class="text-end">
@@ -351,9 +354,6 @@
                                     <td class="text-end text-muted">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
                                     <td class="text-end font-weight-bold text-warning">{{ number_format($row->jumlah_keluarga_ditemukan) }}</td>
                                     <td class="text-end text-muted">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
-                                    <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3">
-                                        {{ number_format($row->muatan_murni) }}
-                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -376,8 +376,8 @@
                         <div class="text-muted small">
                             Menampilkan <strong>{{ $paginatedData->firstItem() ?? 0 }}</strong> s/d <strong>{{ $paginatedData->lastItem() ?? 0 }}</strong> dari total <strong>{{ number_format($paginatedData->total()) }}</strong> petugas/records.
                         </div>
-                        <div>
-                            {{ $paginatedData->links() }}
+                        <div class="pagination-wrapper">
+                            {{ $paginatedData->links('pagination::bootstrap-5') }}
                         </div>
                     </div>
                 @endif
