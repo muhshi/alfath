@@ -129,8 +129,9 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 - **Dashboard Tabel Pengolahan SE2026 (`/dashboard-pengolahan`)**:
   - Halaman Dashboard & Rute Baru: Menambahkan rute `/dashboard-pengolahan` (`dashboard.pengolahan`) dan controller `PengolahanController@index`.
   - Agregasi Multi-Tabel SE2026: Menggabungkan data dari `monitoring_se2026`, `alokasi_pengawas`, `master_petugas`, `se2026_usaha_perusahaan`, `se2026_usaha_keluarga`, dan `se2026_pemutakhiran_keluarga` per Petugas (Pencacah) & Kecamatan.
-  - Kolom Baru **Muatan Murni**: Menambahkan perhitungan otomatis `Muatan Murni` (`Total Submit - (Usaha Tidak Ditemukan + Keluarga Tidak Ditemukan)`) pada kartu KPI dan tabel data.
+  - Koreksi Perhitungan **Muatan Murni**: Memperbarui formula `Muatan Murni` menjadi `Beban Total - (Usaha Tidak Ditemukan + Keluarga Tidak Ditemukan)` serta mengecualikan kolom persentase pada `se2026_usaha_keluarga` agar kalkulasi angka murni presisi.
   - Pencarian & Filter Lengkap: Menyediakan form pencarian real-time (Nama/Email Petugas & Pengawas), filter 14 Kecamatan BPS Demak, serta filter tanggal data snapshot.
   - Interactive Column Sorting: Menyediakan pengurutan interaktif (Ascending/Descending ▲/▼) pada header tabel untuk kolom Kecamatan, Nama Petugas, Beban Saat Ini, Total Submit, % Progres, Jumlah Usaha, Jumlah Keluarga, dan Muatan Murni.
+  - **Fitur Export Excel Hasil Filter**: Menambahkan rute `/dashboard-pengolahan/export` (`dashboard.pengolahan.export`) untuk mengunduh data hasil pengolahan sesuai filter & pengurutan yang sedang aktif dalam format Excel (CSV UTF-8 BOM) lengkap dengan baris ringkasan `TOTAL` di bagian bawah.
 
 

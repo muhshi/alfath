@@ -12,6 +12,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M12 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M4 20l14 0"/></svg>
                 Executive Dashboard
             </a>
+            <a href="{{ route('dashboard.pengolahan.export', request()->query()) }}" class="btn btn-success font-weight-bold shadow-sm" style="border-radius: 10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-spreadsheet me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M8 11h8" /><path d="M8 15h8" /><path d="M11 11v8" /></svg>
+                Export Excel
+            </a>
         </div>
     </x-page-header>
 
@@ -183,7 +187,11 @@
                         <span class="text-muted small">Klik header kolom berpanah (▲/▼) untuk mengurutkan data.</span>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <span class="text-muted small">Tampilkan:</span>
+                        <a href="{{ route('dashboard.pengolahan.export', request()->query()) }}" class="btn btn-sm btn-success font-weight-bold" style="border-radius: 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-spreadsheet me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M8 11h8" /><path d="M8 15h8" /><path d="M11 11v8" /></svg>
+                            Export Excel
+                        </a>
+                        <span class="text-muted small ms-2">Tampilkan:</span>
                         <form method="GET" action="{{ route('dashboard.pengolahan') }}" class="d-inline">
                             <input type="hidden" name="search" value="{{ $search }}">
                             <input type="hidden" name="kodekec" value="{{ $kodekec }}">

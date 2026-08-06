@@ -26,6 +26,7 @@ Route::get('/', [\App\Http\Controllers\HomeController::class , 'index'])->name('
 Route::get('/home', [\App\Http\Controllers\HomeController::class , 'index'])->name('home');
 Route::get('/dashboard-se2026', [\App\Http\Controllers\ExecutiveDashboardController::class , 'index'])->name('dashboard.se2026');
 Route::get('/dashboard-pengolahan', [\App\Http\Controllers\PengolahanController::class , 'index'])->name('dashboard.pengolahan');
+Route::get('/dashboard-pengolahan/export', [\App\Http\Controllers\PengolahanController::class , 'export'])->name('dashboard.pengolahan.export');
 Route::get('/debug-db', function () {
     try {
         return 'Conn: ' . (new \App\Models\ScraperCookie)->getConnectionName();

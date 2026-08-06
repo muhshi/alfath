@@ -9,32 +9,33 @@ use Illuminate\Support\Facades\Schema;
 class PengolahanController extends Controller
 {
     /**
-     * Display the SE2026 Data Pengolahan Dashboard Table.
+     * Master Kecamatan Map (Demak BPS Codes)
      */
-    public function index(Request $request)
+    protected array $kecNameMap = [
+        '3321010' => 'Mranggen',
+        '3321020' => 'Karangawen',
+        '3321030' => 'Guntur',
+        '3321040' => 'Sayung',
+        '3321050' => 'Karangtengah',
+        '3321060' => 'Bonang',
+        '3321070' => 'Demak',
+        '3321080' => 'Wonosalam',
+        '3321090' => 'Dempet',
+        '3321091' => 'Kebonagung',
+        '3321100' => 'Gajah',
+        '3321110' => 'Karanganyar',
+        '3321120' => 'Mijen',
+        '3321130' => 'Wedung',
+    ];
+
+    /**
+     * Build the filtered query for SE2026 Data Pengolahan.
+     */
+    protected function getFilteredQuery(Request $request): array
     {
         $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
         $db = $connName ? DB::connection($connName) : DB::connection();
 
-        // 14 Kecamatan Master Map (Demak BPS Codes)
-        $kecNameMap = [
-            '3321010' => 'Mranggen',
-            '3321020' => 'Karangawen',
-            '3321030' => 'Guntur',
-            '3321040' => 'Sayung',
-            '3321050' => 'Karangtengah',
-            '3321060' => 'Bonang',
-            '3321070' => 'Demak',
-            '3321080' => 'Wonosalam',
-            '3321090' => 'Dempet',
-            '3321091' => 'Kebonagung',
-            '3321100' => 'Gajah',
-            '3321110' => 'Karanganyar',
-            '3321120' => 'Mijen',
-            '3321130' => 'Wedung',
-        ];
-
-        // Available dates in monitoring_se2026
         $availableDates = [];
         $selectedDate = $request->get('tanggal_data');
 
@@ -64,8 +65,8 @@ class PengolahanController extends Controller
         $upSubquery = $db->table('se2026_usaha_perusahaan')
             ->select(
                 'kode',
-                DB::raw('SUM(status___ditemukan + status___baru) AS up_ditemukan'),
-                DB::raw('SUM(status___tutup + status___ganda + status___tidak_ditemukan) AS up_tdk')
+                DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'),
+                DB::raw('SUM(CAST(status___tutup AS SIGNED) + CAST(status___ganda AS SIGNED) + CAST(status___tidak_ditemukan AS SIGNED)) AS up_tdk')
             )
             ->groupBy('kode');
 
@@ -73,8 +74,8 @@ class PengolahanController extends Controller
         $ukSubquery = $db->table('se2026_usaha_keluarga')
             ->select(
                 'kode',
-                DB::raw('SUM(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka + jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru) AS uk_ditemukan'),
-                DB::raw('SUM(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup + jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ganda + jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di) AS uk_tdk')
+                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED)) AS uk_ditemukan'),
+                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di AS SIGNED)) AS uk_tdk')
             )
             ->groupBy('kode');
 
@@ -108,7 +109,7 @@ class PengolahanController extends Controller
                 DB::raw('IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) as usaha_tidak_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as jumlah_keluarga_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as keluarga_tidak_ditemukan'),
-                DB::raw('((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) as muatan_murni'),
+                DB::raw('(IFNULL(SUM(m.total_beban), 0) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) as muatan_murni'),
             ])
             ->groupBy([
                 'm.tanggal_tarik',
@@ -127,7 +128,7 @@ class PengolahanController extends Controller
             $query->where('m.region_code', 'LIKE', $kodekec . '%');
         }
 
-        // Filter: Search Keyword (Pencacah / Email / Pengawas)
+        // Filter: Search Keyword
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('p_cacah.nama_lengkap', 'LIKE', "%{$search}%")
@@ -145,18 +146,37 @@ class PengolahanController extends Controller
             'pct_submit' => DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END'),
             'jumlah_usaha_ditemukan' => DB::raw('IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)'),
             'jumlah_keluarga_ditemukan' => DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0)'),
-            'muatan_murni' => DB::raw('((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0)))'),
+            'muatan_murni' => DB::raw('(IFNULL(SUM(m.total_beban), 0) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0)))'),
         ];
 
         $sortColumn = $allowedSorts[$sortBy] ?? DB::raw('LEFT(m.region_code, 7)');
         $query->orderBy($sortColumn, $sortDir);
 
+        return [
+            'query' => $query,
+            'selectedDate' => $selectedDate,
+            'availableDates' => $availableDates,
+            'search' => $search,
+            'kodekec' => $kodekec,
+            'sortBy' => $sortBy,
+            'sortDir' => $sortDir,
+            'perPage' => $perPage,
+        ];
+    }
+
+    /**
+     * Display the SE2026 Data Pengolahan Dashboard Table.
+     */
+    public function index(Request $request)
+    {
+        $data = $this->getFilteredQuery($request);
+        $query = $data['query'];
+
         // Paginate results
-        $paginatedData = $query->paginate($perPage)->withQueryString();
+        $paginatedData = $query->paginate($data['perPage'])->withQueryString();
 
         // Summary KPI Metrics across current filtered query
         $summaryQuery = clone $query;
-        // Unset limit/offset and order by for summary calculations
         $allRecords = $summaryQuery->get();
 
         $kpiSummary = [
@@ -172,16 +192,123 @@ class PengolahanController extends Controller
         ];
 
         return view('dashboard-pengolahan', [
-            'kecNameMap' => $kecNameMap,
-            'availableDates' => $availableDates,
-            'selectedDate' => $selectedDate,
-            'search' => $search,
-            'kodekec' => $kodekec,
-            'sortBy' => $sortBy,
-            'sortDir' => $sortDir,
-            'perPage' => $perPage,
+            'kecNameMap' => $this->kecNameMap,
+            'availableDates' => $data['availableDates'],
+            'selectedDate' => $data['selectedDate'],
+            'search' => $data['search'],
+            'kodekec' => $data['kodekec'],
+            'sortBy' => $data['sortBy'],
+            'sortDir' => $data['sortDir'],
+            'perPage' => $data['perPage'],
             'paginatedData' => $paginatedData,
             'kpiSummary' => $kpiSummary,
         ]);
+    }
+
+    /**
+     * Export the filtered SE2026 Data Pengolahan to Excel (CSV with UTF-8 BOM).
+     */
+    public function export(Request $request)
+    {
+        $filtered = $this->getFilteredQuery($request);
+        $records = $filtered['query']->get();
+
+        $dateSuffix = !empty($filtered['selectedDate']) ? '_' . str_replace('-', '', $filtered['selectedDate']) : '_' . date('Ymd');
+        $filename = "Export_Data_Pengolahan_SE2026{$dateSuffix}.csv";
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $kecNameMap = $this->kecNameMap;
+
+        $callback = function () use ($records, $kecNameMap) {
+            $file = fopen('php://output', 'w');
+            // Write UTF-8 BOM for Excel to open properly with unicode text
+            fputs($file, "\xEF\BB\xBF");
+
+            // Header columns
+            fputcsv($file, [
+                'No',
+                'Kode Kec',
+                'Nama Kecamatan',
+                'Nama Pencacah',
+                'Email Pencacah',
+                'Nama Pengawas',
+                'Beban Saat Ini',
+                'Total Submit',
+                'Capaian Submit (%)',
+                'Usaha Ditemukan',
+                'Usaha Tidak Ditemukan',
+                'Keluarga Ditemukan',
+                'Keluarga Tidak Ditemukan',
+                'Muatan Murni Saat Ini',
+            ]);
+
+            $no = 1;
+            $sumBeban = 0;
+            $sumSubmit = 0;
+            $sumUsahaDitemukan = 0;
+            $sumUsahaTdk = 0;
+            $sumKeluargaDitemukan = 0;
+            $sumKeluargaTdk = 0;
+            $sumMuatanMurni = 0;
+
+            foreach ($records as $row) {
+                $namaKec = $kecNameMap[$row->kode_kec] ?? $row->kode_kec;
+
+                $sumBeban += (int) $row->beban_saat_ini;
+                $sumSubmit += (int) $row->total_submit;
+                $sumUsahaDitemukan += (int) $row->jumlah_usaha_ditemukan;
+                $sumUsahaTdk += (int) $row->usaha_tidak_ditemukan;
+                $sumKeluargaDitemukan += (int) $row->jumlah_keluarga_ditemukan;
+                $sumKeluargaTdk += (int) $row->keluarga_tidak_ditemukan;
+                $sumMuatanMurni += (int) $row->muatan_murni;
+
+                fputcsv($file, [
+                    $no++,
+                    $row->kode_kec,
+                    $namaKec,
+                    $row->nama_pencacah,
+                    $row->email_pencacah,
+                    $row->nama_pengawas ?: '-',
+                    $row->beban_saat_ini,
+                    $row->total_submit,
+                    $row->pct_submit,
+                    $row->jumlah_usaha_ditemukan,
+                    $row->usaha_tidak_ditemukan,
+                    $row->jumlah_keluarga_ditemukan,
+                    $row->keluarga_tidak_ditemukan,
+                    $row->muatan_murni,
+                ]);
+            }
+
+            // Summary row at the bottom
+            $overallPct = $sumBeban > 0 ? round(($sumSubmit / $sumBeban) * 100, 2) : 0;
+            fputcsv($file, [
+                'TOTAL',
+                '-',
+                '-',
+                '-',
+                '-',
+                '-',
+                $sumBeban,
+                $sumSubmit,
+                $overallPct,
+                $sumUsahaDitemukan,
+                $sumUsahaTdk,
+                $sumKeluargaDitemukan,
+                $sumKeluargaTdk,
+                $sumMuatanMurni,
+            ]);
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
