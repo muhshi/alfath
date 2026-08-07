@@ -47,16 +47,20 @@
         table.dataTable thead th {
             border-bottom: 2px solid #e2e8f0 !important;
             font-weight: 700;
-            font-size: 0.8rem;
-            letter-spacing: 0.03em;
+            font-size: 0.75rem;
+            letter-spacing: 0.02em;
             color: #334155;
             background-color: #f8fafc;
             vertical-align: middle;
-            padding: 0.85rem 0.75rem;
+            padding: 0.65rem 0.45rem !important;
+            white-space: normal !important;
+            line-height: 1.25;
+            text-wrap: balance;
         }
         table.dataTable tbody td {
             vertical-align: middle;
-            padding: 0.75rem 0.85rem;
+            padding: 0.5rem 0.5rem !important;
+            font-size: 0.825rem;
         }
         table.dataTable tbody tr:hover {
             background-color: #f1f5f9 !important;
@@ -273,18 +277,18 @@
                             <tr class="bg-light text-uppercase small font-weight-bold">
                                 <th class="w-1 text-center">No</th>
                                 <th>Kecamatan</th>
-                                <th>Nama Petugas / Pencacah</th>
-                                <th>Nama Pengawas</th>
-                                <th class="text-end bg-teal-lt text-teal font-weight-bold">Muatan Murni ⭐</th>
-                                <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum Dikerjakan</th>
-                                <th class="text-end">Beban Saat Ini</th>
-                                <th class="text-end">Total Submit</th>
+                                <th>Nama Petugas<br><span class="text-muted font-weight-normal small">/ Pencacah</span></th>
+                                <th>Nama<br>Pengawas</th>
+                                <th class="text-end bg-teal-lt text-teal font-weight-bold">Muatan<br>Murni ⭐</th>
+                                <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum<br>Dikerjakan</th>
+                                <th class="text-end">Beban<br>Saat Ini</th>
+                                <th class="text-end">Total<br>Submit</th>
                                 <th class="text-end">% Progres</th>
-                                <th class="text-end">Usaha Perusahaan</th>
-                                <th class="text-end">Usaha Perusahaan Tdk Ditemukan</th>
-                                <th class="text-end">Usaha Keluarga (Ditemukan)</th>
-                                <th class="text-end">Keluarga (Ditemukan+Baru)</th>
-                                <th class="text-end">Keluarga Tdk Ditemukan</th>
+                                <th class="text-end">Usaha<br>Perusahaan</th>
+                                <th class="text-end">Usaha Perusahaan<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
+                                <th class="text-end">Keluarga<br><span class="text-warning font-weight-normal small">(Ditemukan+Baru)</span></th>
+                                <th class="text-end">Keluarga<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
                             </tr>
                         </thead>
                         <tbody>

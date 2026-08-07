@@ -142,8 +142,9 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Memperbarui properti `$heading` pada `CategoryDistributionChartWidget` dan `DailyVisitorsChartWidget` menjadi instance property (`protected ?string $heading`) sesuai kelas induk `Filament\Widgets\ChartWidget`.
     - Menyelesaikan error `artisan package:discover` (code 255) yang terjadi saat script `deploy.sh` dijalankan di server.
 ### 2026-08-07
-- **Tabel Petugas SE2026 (DataTables Integration)**:
+- **Tabel Petugas SE2026 (DataTables Integration & Compact Header Layout)**:
   - Mengintegrasikan DataTables Bootstrap 5 secara penuh pada halaman `dashboard-pengolahan.blade.php`.
+  - Penataan Header Tabel Ringkas & Compact: Mempersempit lebar kolom tabel dan menyusun judul header yang panjang menjadi berbaris ke bawah (`white-space: normal`, `<br>`, dan padding `0.65rem 0.45rem`) agar tampilan tabel lebih rapat, proporsional, dan nyaman dilihat di berbagai resolusi layar.
   - Penanganan Error AMD `define` & jQuery Collision: Memuat instance jQuery terisolasi dengan `jQuery.noConflict(true)` dan IIFE wrapper untuk menjamin fungsi `$.fn.DataTable` selalu siap tanpa terganggu oleh bundling scripts lain.
   - Mengoptimalkan kueri backend di `PengolahanController.php` dengan pengambilan koleksi data presisi untuk diproses instan oleh DataTables client-side.
   - Menambahkan fitur pencarian cepat live (*live searching*), pengurutan instan (*instant sorting*) pada semua kolom numerik dan teks dengan atribut `data-order`, serta pagination interaktif tanpa reload halaman.
