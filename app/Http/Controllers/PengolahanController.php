@@ -258,6 +258,94 @@ class PengolahanController extends Controller
     }
 
     /**
+     * Build query for Agregasi Per PML (Pengawas).
+     */
+    protected function getPmlQuery(Request $request, $selectedDate)
+    {
+        $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
+        $db = $connName ? DB::connection($connName) : DB::connection();
+
+        $search = trim((string) $request->get('search', ''));
+        $kodekec = trim((string) $request->get('kodekec', ''));
+
+        // Subquery for Usaha Perusahaan
+        $upSubquery = $db->table('se2026_usaha_perusahaan')
+            ->select(
+                'kode',
+                DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'),
+                DB::raw('SUM(CAST(status___tutup AS SIGNED) + CAST(status___ganda AS SIGNED) + CAST(status___tidak_ditemukan AS SIGNED)) AS up_tdk')
+            )
+            ->groupBy('kode');
+
+        // Subquery for Usaha Keluarga
+        $ukSubquery = $db->table('se2026_usaha_keluarga')
+            ->select(
+                'kode',
+                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED)) AS uk_ditemukan')
+            )
+            ->groupBy('kode');
+
+        // Subquery for Pemutakhiran Keluarga
+        $pkSubquery = $db->table('se2026_pemutakhiran_keluarga')
+            ->select(
+                'kode',
+                DB::raw('SUM(ditemukan + keluarga_baru) AS pk_ditemukan'),
+                DB::raw('SUM(meninggal + tidak_eligible + tidak_dapat_ditemui + tidak_ditemukan) AS pk_tdk')
+            )
+            ->groupBy('kode');
+
+        $query = $db->table('monitoring_se2026 as m')
+            ->leftJoin('alokasi_pengawas as a', 'm.region_code', '=', 'a.region_code')
+            ->leftJoin('master_petugas as p_cacah', 'm.email_pencacah', '=', 'p_cacah.email')
+            ->leftJoin('master_petugas as p_awas', 'a.email_pengawas', '=', 'p_awas.email')
+            ->leftJoinSub($upSubquery, 'up', 'm.region_code', '=', 'up.kode')
+            ->leftJoinSub($ukSubquery, 'uk', 'm.region_code', '=', 'uk.kode')
+            ->leftJoinSub($pkSubquery, 'pk', 'm.region_code', '=', 'pk.kode')
+            ->select([
+                'm.tanggal_tarik as tanggal_data',
+                DB::raw('LEFT(m.region_code, 7) as kode_kec'),
+                'a.email_pengawas',
+                DB::raw('IFNULL(p_awas.nama_lengkap, IFNULL(a.email_pengawas, "Belum Dialokasikan")) as nama_pengawas'),
+                DB::raw('COUNT(DISTINCT m.email_pencacah) as total_ppl'),
+                DB::raw('COUNT(DISTINCT m.region_code) as total_sls'),
+                DB::raw('SUM(m.total_beban) as beban_saat_ini'),
+                DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as total_submit'),
+                DB::raw('(IFNULL(SUM(m.status_open), 0) + IFNULL(SUM(m.status_draft), 0)) as belum_dikerjakan'),
+                DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit'),
+                DB::raw('IFNULL(SUM(up.up_ditemukan), 0) as jumlah_usaha_ditemukan'),
+                DB::raw('IFNULL(SUM(up.up_tdk), 0) as usaha_tidak_ditemukan'),
+                DB::raw('IFNULL(SUM(uk.uk_ditemukan), 0) as jumlah_usaha_keluarga'),
+                DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as jumlah_keluarga_ditemukan'),
+                DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as keluarga_tidak_ditemukan'),
+                DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni'),
+            ])
+            ->groupBy([
+                'm.tanggal_tarik',
+                DB::raw('LEFT(m.region_code, 7)'),
+                'a.email_pengawas',
+                'p_awas.nama_lengkap',
+            ]);
+
+        if (!empty($selectedDate)) {
+            $query->where('m.tanggal_tarik', '=', $selectedDate);
+        }
+
+        if (!empty($kodekec)) {
+            $query->where('m.region_code', 'LIKE', $kodekec . '%');
+        }
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('p_awas.nama_lengkap', 'LIKE', "%{$search}%")
+                  ->orWhere('a.email_pengawas', 'LIKE', "%{$search}%")
+                  ->orWhere('p_cacah.nama_lengkap', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $query->get();
+    }
+
+    /**
      * Display the SE2026 Data Petugas Dashboard Table.
      */
     public function index(Request $request)
@@ -265,13 +353,15 @@ class PengolahanController extends Controller
         $data = $this->getFilteredQuery($request);
         $query = $data['query'];
 
-        // Retrieve records for Tab 1 (Petugas summary) and Tab 2 (SLS detail)
+        // Retrieve records for Tab 1 (PPL), Tab 2 (PML), and Tab 3 (SLS detail)
         $records = $query->get();
+        $pmlRecords = $this->getPmlQuery($request, $data['selectedDate']);
         $slsRecords = $this->getSlsQuery($request, $data['selectedDate']);
 
         // Summary KPI Metrics across current filtered query
         $kpiSummary = [
             'total_petugas' => $records->count(),
+            'total_pml' => $pmlRecords->count(),
             'total_beban' => $records->sum('beban_saat_ini'),
             'total_submit' => $records->sum('total_submit'),
             'total_belum_dikerjakan' => $records->sum('belum_dikerjakan'),
@@ -295,6 +385,7 @@ class PengolahanController extends Controller
             'sortDir' => $data['sortDir'],
             'perPage' => $data['perPage'],
             'records' => $records,
+            'pmlRecords' => $pmlRecords,
             'slsRecords' => $slsRecords,
             'kpiSummary' => $kpiSummary,
         ]);
@@ -481,24 +572,102 @@ class PengolahanController extends Controller
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        // Set active sheet to 0
-        $spreadsheet->setActiveSheetIndex(0);
-
-        // SHEET 2: Rincian Alokasi Per SLS
-        $slsRecords = $this->getSlsQuery($request, $filtered['selectedDate']);
-
+        // SHEET 2: Ringkasan Per PML (Pengawas)
+        $pmlRecords = $this->getPmlQuery($request, $filtered['selectedDate']);
         $sheet2 = $spreadsheet->createSheet();
-        $sheet2->setTitle('Rincian Alokasi Per SLS');
+        $sheet2->setTitle('Ringkasan PML (Pengawas)');
 
-        // Title Banner in Sheet 2
-        $sheet2->mergeCells('A1:K1');
-        $sheet2->setCellValue('A1', 'RINCIAN ALOKASI & PROGRESS PER SLS - BPS KABUPATEN DEMAK');
+        $sheet2->mergeCells('A1:Q1');
+        $sheet2->setCellValue('A1', 'DATA AGREGASI PER PML (PENGAWAS) SE2026 - BPS KABUPATEN DEMAK');
         $sheet2->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0F172A'));
         $sheet2->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-        $sheet2->mergeCells('A2:K2');
+        $sheet2->mergeCells('A2:Q2');
         $sheet2->setCellValue('A2', $subTitle);
         $sheet2->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('64748B'));
+
+        $headersPml = [
+            'No',
+            'Kode Kec',
+            'Nama Kecamatan',
+            'Nama Pengawas (PML)',
+            'Email Pengawas',
+            'Jumlah PPL',
+            'Jumlah SLS',
+            'Muatan Murni ⭐',
+            'Belum Dikerjakan',
+            'Beban Saat Ini',
+            'Total Submit',
+            'Capaian Submit (%)',
+            'Usaha Perusahaan Ditemukan',
+            'Usaha Perusahaan Tdk Ditemukan',
+            'Usaha Keluarga (Ditemukan)',
+            'Keluarga Ditemukan',
+            'Keluarga Tdk Ditemukan',
+        ];
+
+        foreach ($headersPml as $colIdx => $header) {
+            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . '4';
+            $sheet2->setCellValue($cell, $header);
+        }
+
+        $sheet2->getStyle('A4:Q4')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0284C7']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+        ]);
+        $sheet2->getRowDimension(4)->setRowHeight(28);
+
+        $rowIdx2 = 5;
+        $no2 = 1;
+        foreach ($pmlRecords as $row) {
+            $namaKec = $this->kecNameMap[$row->kode_kec] ?? $row->kode_kec;
+            $sheet2->setCellValue('A' . $rowIdx2, $no2++);
+            $sheet2->setCellValueExplicit('B' . $rowIdx2, $row->kode_kec, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet2->setCellValue('C' . $rowIdx2, $namaKec);
+            $sheet2->setCellValue('D' . $rowIdx2, $row->nama_pengawas);
+            $sheet2->setCellValue('E' . $rowIdx2, $row->email_pengawas ?: '-');
+            $sheet2->setCellValue('F' . $rowIdx2, (int) $row->total_ppl);
+            $sheet2->setCellValue('G' . $rowIdx2, (int) $row->total_sls);
+            $sheet2->setCellValue('H' . $rowIdx2, (int) $row->muatan_murni);
+            $sheet2->setCellValue('I' . $rowIdx2, (int) $row->belum_dikerjakan);
+            $sheet2->setCellValue('J' . $rowIdx2, (int) $row->beban_saat_ini);
+            $sheet2->setCellValue('K' . $rowIdx2, (int) $row->total_submit);
+            $sheet2->setCellValue('L' . $rowIdx2, (float) $row->pct_submit / 100);
+            $sheet2->setCellValue('M' . $rowIdx2, (int) $row->jumlah_usaha_ditemukan);
+            $sheet2->setCellValue('N' . $rowIdx2, (int) $row->usaha_tidak_ditemukan);
+            $sheet2->setCellValue('O' . $rowIdx2, (int) $row->jumlah_usaha_keluarga);
+            $sheet2->setCellValue('P' . $rowIdx2, (int) $row->jumlah_keluarga_ditemukan);
+            $sheet2->setCellValue('Q' . $rowIdx2, (int) $row->keluarga_tidak_ditemukan);
+
+            $sheet2->getStyle('A' . $rowIdx2 . ':B' . $rowIdx2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet2->getStyle('F' . $rowIdx2 . ':Q' . $rowIdx2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet2->getStyle('F' . $rowIdx2 . ':K' . $rowIdx2)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet2->getStyle('L' . $rowIdx2)->getNumberFormat()->setFormatCode('0.00%');
+            $sheet2->getStyle('M' . $rowIdx2 . ':Q' . $rowIdx2)->getNumberFormat()->setFormatCode('#,##0');
+
+            $rowIdx2++;
+        }
+
+        foreach (range('A', 'Q') as $col) {
+            $sheet2->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // SHEET 3: Rincian Alokasi Per SLS
+        $slsRecords = $this->getSlsQuery($request, $filtered['selectedDate']);
+
+        $sheet3 = $spreadsheet->createSheet();
+        $sheet3->setTitle('Rincian Alokasi Per SLS');
+
+        // Title Banner in Sheet 3
+        $sheet3->mergeCells('A1:K1');
+        $sheet3->setCellValue('A1', 'RINCIAN ALOKASI & PROGRESS PER SLS - BPS KABUPATEN DEMAK');
+        $sheet3->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0F172A'));
+        $sheet3->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+        $sheet3->mergeCells('A2:K2');
+        $sheet3->setCellValue('A2', $subTitle);
+        $sheet3->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('64748B'));
 
         $headersSls = [
             'No',
@@ -516,10 +685,10 @@ class PengolahanController extends Controller
 
         foreach ($headersSls as $colIdx => $header) {
             $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . '4';
-            $sheet2->setCellValue($cell, $header);
+            $sheet3->setCellValue($cell, $header);
         }
 
-        $sheet2->getStyle('A4:K4')->applyFromArray([
+        $sheet3->getStyle('A4:K4')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -534,36 +703,36 @@ class PengolahanController extends Controller
                 'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
-        $sheet2->getRowDimension(4)->setRowHeight(28);
+        $sheet3->getRowDimension(4)->setRowHeight(28);
 
-        $rowIdx2 = 5;
-        $no2 = 1;
+        $rowIdx3 = 5;
+        $no3 = 1;
         foreach ($slsRecords as $row) {
             $namaKec = $this->kecNameMap[$row->kode_kec] ?? $row->kode_kec;
-            $sheet2->setCellValue('A' . $rowIdx2, $no2++);
-            $sheet2->setCellValueExplicit('B' . $rowIdx2, $row->kode_kec, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet2->setCellValue('C' . $rowIdx2, $namaKec);
-            $sheet2->setCellValueExplicit('D' . $rowIdx2, $row->region_code, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet2->setCellValue('E' . $rowIdx2, $row->nama_sls);
-            $sheet2->setCellValue('F' . $rowIdx2, $row->nama_pencacah);
-            $sheet2->setCellValue('G' . $rowIdx2, $row->nama_pengawas ?: '-');
-            $sheet2->setCellValue('H' . $rowIdx2, (int) $row->beban_saat_ini);
-            $sheet2->setCellValue('I' . $rowIdx2, (int) $row->total_submit);
-            $sheet2->setCellValue('J' . $rowIdx2, (int) $row->status_open);
-            $sheet2->setCellValue('K' . $rowIdx2, (float) $row->pct_submit / 100);
+            $sheet3->setCellValue('A' . $rowIdx3, $no3++);
+            $sheet3->setCellValueExplicit('B' . $rowIdx3, $row->kode_kec, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet3->setCellValue('C' . $rowIdx3, $namaKec);
+            $sheet3->setCellValueExplicit('D' . $rowIdx3, $row->region_code, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet3->setCellValue('E' . $rowIdx3, $row->nama_sls);
+            $sheet3->setCellValue('F' . $rowIdx3, $row->nama_pencacah);
+            $sheet3->setCellValue('G' . $rowIdx3, $row->nama_pengawas ?: '-');
+            $sheet3->setCellValue('H' . $rowIdx3, (int) $row->beban_saat_ini);
+            $sheet3->setCellValue('I' . $rowIdx3, (int) $row->total_submit);
+            $sheet3->setCellValue('J' . $rowIdx3, (int) $row->status_open);
+            $sheet3->setCellValue('K' . $rowIdx3, (float) $row->pct_submit / 100);
 
-            $sheet2->getStyle('A' . $rowIdx2 . ':D' . $rowIdx2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheet2->getStyle('H' . $rowIdx2 . ':J' . $rowIdx2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-            $sheet2->getStyle('K' . $rowIdx2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet3->getStyle('A' . $rowIdx3 . ':D' . $rowIdx3)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet3->getStyle('H' . $rowIdx3 . ':J' . $rowIdx3)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet3->getStyle('K' . $rowIdx3)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-            $sheet2->getStyle('H' . $rowIdx2 . ':J' . $rowIdx2)->getNumberFormat()->setFormatCode('#,##0');
-            $sheet2->getStyle('K' . $rowIdx2)->getNumberFormat()->setFormatCode('0.00%');
+            $sheet3->getStyle('H' . $rowIdx3 . ':J' . $rowIdx3)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet3->getStyle('K' . $rowIdx3)->getNumberFormat()->setFormatCode('0.00%');
 
-            $rowIdx2++;
+            $rowIdx3++;
         }
 
         foreach (range('A', 'K') as $col) {
-            $sheet2->getColumnDimension($col)->setAutoSize(true);
+            $sheet3->getColumnDimension($col)->setAutoSize(true);
         }
 
         $writer = new Xlsx($spreadsheet);

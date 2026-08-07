@@ -298,14 +298,20 @@
                     <ul class="nav nav-tabs card-header-tabs font-weight-bold" id="dashboard-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="petugas-tab" data-bs-toggle="tab" data-bs-target="#tab-petugas" type="button" role="tab" aria-controls="tab-petugas" aria-selected="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-check me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4"/><path d="M16 19l2 2l4 -4"/></svg>
+                                Ringkasan Per PPL ({{ number_format($records->count()) }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-indigo" id="pml-tab" data-bs-toggle="tab" data-bs-target="#tab-pml" type="button" role="tab" aria-controls="tab-pml" aria-selected="false">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-users me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg>
-                                Ringkasan Per Petugas ({{ number_format($records->count()) }})
+                                Ringkasan Per PML ({{ number_format($pmlRecords->count()) }})
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link text-primary" id="sls-tab" data-bs-toggle="tab" data-bs-target="#tab-sls" type="button" role="tab" aria-controls="tab-sls" aria-selected="false">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-pin me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"/></svg>
-                                Alokasi & Progress Per SLS / Sub-SLS ({{ number_format($slsRecords->count()) }})
+                                Alokasi Per SLS ({{ number_format($slsRecords->count()) }})
                             </button>
                         </li>
                     </ul>
@@ -320,7 +326,7 @@
                 <div class="card-body p-0">
                     <div class="tab-content" id="dashboard-tabs-content">
                         
-                        <!-- TAB 1: RINGKASAN PER PETUGAS -->
+                        <!-- TAB 1: RINGKASAN PER PPL (PENCACAH) -->
                         <div class="tab-pane fade show active" id="tab-petugas" role="tabpanel" aria-labelledby="petugas-tab">
                             <table id="pengolahan-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
                                 <thead>
@@ -390,7 +396,79 @@
                             </table>
                         </div>
 
-                        <!-- TAB 2: ALOKASI & PROGRESS PER SLS / SUB-SLS -->
+                        <!-- TAB 2: RINGKASAN PER PML (PENGAWAS) -->
+                        <div class="tab-pane fade" id="tab-pml" role="tabpanel" aria-labelledby="pml-tab">
+                            <table id="pml-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
+                                <thead>
+                                    <tr class="bg-light text-uppercase small font-weight-bold">
+                                        <th class="w-1 text-center">No</th>
+                                        <th>Kecamatan</th>
+                                        <th>Nama Pengawas<br><span class="text-muted font-weight-normal small">/ PML</span></th>
+                                        <th class="text-center">Jml PPL<br><span class="text-muted font-weight-normal small">Didampingi</span></th>
+                                        <th class="text-center">Jml SLS<br><span class="text-muted font-weight-normal small">Didampingi</span></th>
+                                        <th class="text-end bg-teal-lt text-teal font-weight-bold">Muatan<br>Murni ⭐</th>
+                                        <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum<br>Dikerjakan</th>
+                                        <th class="text-end">Beban<br>Saat Ini</th>
+                                        <th class="text-end">Total<br>Submit</th>
+                                        <th class="text-end">% Progres</th>
+                                        <th class="text-end">Usaha<br>Perusahaan</th>
+                                        <th class="text-end">Usaha Perusahaan<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                        <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
+                                        <th class="text-end">Keluarga<br><span class="text-warning font-weight-normal small">(Ditemukan+Baru)</span></th>
+                                        <th class="text-end">Keluarga<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($pmlRecords as $index => $row)
+                                        <tr>
+                                            <td class="text-muted small text-center">{{ $index + 1 }}</td>
+                                            <td>
+                                                <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
+                                                <div class="small text-muted">Kode: {{ $row->kode_kec }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="font-weight-bold text-dark">{{ $row->nama_pengawas }}</div>
+                                                <div class="small text-muted">{{ $row->email_pengawas ?: '-' }}</div>
+                                            </td>
+                                            <td class="text-center font-weight-bold" data-order="{{ $row->total_ppl }}">
+                                                <span class="badge bg-blue-lt text-blue px-2 py-1 fs-4">{{ number_format($row->total_ppl) }} PPL</span>
+                                            </td>
+                                            <td class="text-center font-weight-bold" data-order="{{ $row->total_sls }}">
+                                                <span class="badge bg-indigo-lt text-indigo px-2 py-1 fs-4">{{ number_format($row->total_sls) }} SLS</span>
+                                            </td>
+                                            <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">
+                                                {{ number_format($row->muatan_murni) }}
+                                            </td>
+                                            <td class="text-end font-weight-bold text-danger bg-danger-lt fs-3" data-order="{{ $row->belum_dikerjakan }}">
+                                                {{ number_format($row->belum_dikerjakan) }}
+                                            </td>
+                                            <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
+                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
+                                            <td class="text-end" data-order="{{ $row->pct_submit }}">
+                                                <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
+                                                    {{ number_format($row->pct_submit, 1) }}%
+                                                </span>
+                                            </td>
+                                            <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">{{ number_format($row->jumlah_usaha_ditemukan) }}</td>
+                                            <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
+                                            <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">{{ number_format($row->jumlah_usaha_keluarga) }}</td>
+                                            <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">{{ number_format($row->jumlah_keluarga_ditemukan) }}</td>
+                                            <td class="text-end text-muted" data-order="{{ $row->keluarga_tidak_ditemukan }}">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="15" class="text-center py-5 text-muted">
+                                                <div class="mb-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
+                                                </div>
+                                                <div class="font-weight-bold fs-3">Tidak Ada Data PML Ditemukan</div>
+                                                <div class="small">Coba ubah kata kunci pencarian atau filter kecamatan yang dipilih.</div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                        </div>
+
+                        <!-- TAB 3: ALOKASI & PROGRESS PER SLS / SUB-SLS -->
                         <div class="tab-pane fade" id="tab-sls" role="tabpanel" aria-labelledby="sls-tab">
                             <table id="sls-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
                                 <thead>
@@ -514,7 +592,42 @@
                         }
                     });
 
-                    // Table 2: SLS Allocation
+                    // Table 2: PML Summary
+                    var tablePml = $('#pml-table').DataTable({
+                        language: {
+                            search: "_INPUT_",
+                            searchPlaceholder: "🔍 Cari nama pengawas/PML, email, kec...",
+                            lengthMenu: "Tampilkan _MENU_ data",
+                            info: "Menampilkan <strong>_START_</strong> s.d. <strong>_END_</strong> dari total <strong>_TOTAL_</strong> PML",
+                            infoEmpty: "Menampilkan 0 s.d. 0 dari 0 PML",
+                            infoFiltered: "(disaring dari _MAX_ total data)",
+                            zeroRecords: "Tidak ada data PML yang cocok dengan pencarian",
+                            paginate: {
+                                first: "Pertama",
+                                previous: "← Sebelum",
+                                next: "Lanjut →",
+                                last: "Terakhir"
+                            }
+                        },
+                        pageLength: 25,
+                        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+                        order: [[5, 'desc']], // Default sort: Muatan Murni (Index 5) Descending
+                        columnDefs: [
+                            { orderable: false, targets: [0] } // Disable sorting for 'No' column
+                        ],
+                        dom: "<'row p-3 align-items-center'<'col-md-6 d-flex align-items-center gap-2'l><'col-md-6 d-flex justify-content-md-end mt-2 mt-md-0'f>>" +
+                             "<'table-responsive'tr>" +
+                             "<'row p-3 border-top align-items-center'<'col-md-5 text-muted small'i><'col-md-7 d-flex justify-content-md-end mt-2 mt-md-0'p>>",
+                        drawCallback: function(settings) {
+                            var api = this.api();
+                            var startIndex = api.context[0]._iDisplayStart;
+                            api.column(0, {search:'applied', order:'applied'}).nodes().each(function(cell, i) {
+                                cell.innerHTML = startIndex + i + 1;
+                            });
+                        }
+                    });
+
+                    // Table 3: SLS Allocation
                     var tableSls = $('#sls-table').DataTable({
                         language: {
                             search: "_INPUT_",
@@ -551,6 +664,7 @@
 
                     @if($search)
                         tablePetugas.search("{{ $search }}").draw();
+                        tablePml.search("{{ $search }}").draw();
                         tableSls.search("{{ $search }}").draw();
                     @endif
 
@@ -562,14 +676,14 @@
                     // Smoothly hide loading overlay and reveal DataTables once ready
                     function revealDataTables() {
                         $('#table-loading-overlay').addClass('hidden');
-                        $('#pengolahan-table, #sls-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
+                        $('#pengolahan-table, #pml-table, #sls-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
                     }
 
                     setTimeout(revealDataTables, 150);
                 } else {
                     console.error("DataTables plugin is not available on isolated jQuery instance.");
                     $('#table-loading-overlay').addClass('hidden');
-                    $('#pengolahan-table, #sls-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
+                    $('#pengolahan-table, #pml-table, #sls-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
                 }
             });
         })(window.jqDT);
