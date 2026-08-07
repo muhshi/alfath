@@ -144,6 +144,6 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 ### 2026-08-07
 - **Tabel Petugas SE2026 (DataTables Integration)**:
   - Mengintegrasikan DataTables Bootstrap 5 secara penuh pada halaman `dashboard-pengolahan.blade.php`.
-  - Penanganan Error AMD `define` Hijacking: Menambahkan proteksi `window.define` saat pemuatan skrip CDN DataTables untuk mencegah error `TypeError: $(...).DataTable is not a function`.
+  - Penanganan Error AMD `define` & jQuery Collision: Memuat instance jQuery terisolasi dengan `jQuery.noConflict(true)` dan IIFE wrapper untuk menjamin fungsi `$.fn.DataTable` selalu siap tanpa terganggu oleh bundling scripts lain.
   - Mengoptimalkan kueri backend di `PengolahanController.php` dengan pengambilan koleksi data presisi untuk diproses instan oleh DataTables client-side.
   - Menambahkan fitur pencarian cepat live (*live searching*), pengurutan instan (*instant sorting*) pada semua kolom numerik dan teks dengan atribut `data-order`, serta pagination interaktif tanpa reload halaman.
