@@ -117,6 +117,66 @@
         .datatable-initialized {
             opacity: 1 !important;
         }
+        /* Custom High-Contrast Modern Pill Tabs */
+        .custom-pill-tabs {
+            background-color: #f1f5f9;
+            padding: 5px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            display: inline-flex;
+            gap: 6px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .custom-pill-tabs .nav-item {
+            margin-bottom: 0;
+        }
+        .custom-pill-tabs .nav-link {
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 0.55rem 1.15rem !important;
+            font-weight: 700 !important;
+            font-size: 0.875rem !important;
+            color: #475569 !important;
+            background: transparent;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .custom-pill-tabs .nav-link:hover {
+            color: #0f172a !important;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        /* Active States with Distinct High Contrast Colors */
+        .custom-pill-tabs .nav-link.active#petugas-tab {
+            background-color: #0284c7 !important; /* Sky Blue */
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+        }
+        .custom-pill-tabs .nav-link.active#pml-tab {
+            background-color: #4f46e5 !important; /* Indigo */
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        }
+        .custom-pill-tabs .nav-link.active#sls-tab {
+            background-color: #059669 !important; /* Emerald Green */
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+        }
+        .custom-pill-tabs .nav-link .badge-tab-count {
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            background-color: #e2e8f0;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+        .custom-pill-tabs .nav-link.active .badge-tab-count {
+            background-color: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+        }
     </style>
 @endpush
 
@@ -295,23 +355,26 @@
                 </div>
 
                 <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <ul class="nav nav-tabs card-header-tabs font-weight-bold" id="dashboard-tabs" role="tablist">
+                    <ul class="nav custom-pill-tabs font-weight-bold" id="dashboard-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="petugas-tab" data-bs-toggle="tab" data-bs-target="#tab-petugas" type="button" role="tab" aria-controls="tab-petugas" aria-selected="true">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-check me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4"/><path d="M16 19l2 2l4 -4"/></svg>
-                                Ringkasan Per PPL ({{ number_format($records->count()) }})
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-check" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4"/><path d="M16 19l2 2l4 -4"/></svg>
+                                <span>Ringkasan Per PPL</span>
+                                <span class="badge-tab-count">{{ number_format($records->count()) }}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link text-indigo" id="pml-tab" data-bs-toggle="tab" data-bs-target="#tab-pml" type="button" role="tab" aria-controls="tab-pml" aria-selected="false">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-users me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg>
-                                Ringkasan Per PML ({{ number_format($pmlRecords->count()) }})
+                            <button class="nav-link" id="pml-tab" data-bs-toggle="tab" data-bs-target="#tab-pml" type="button" role="tab" aria-controls="tab-pml" aria-selected="false">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-users" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg>
+                                <span>Ringkasan Per PML</span>
+                                <span class="badge-tab-count">{{ number_format($pmlRecords->count()) }}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link text-primary" id="sls-tab" data-bs-toggle="tab" data-bs-target="#tab-sls" type="button" role="tab" aria-controls="tab-sls" aria-selected="false">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-pin me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"/></svg>
-                                Alokasi Per SLS ({{ number_format($slsRecords->count()) }})
+                            <button class="nav-link" id="sls-tab" data-bs-toggle="tab" data-bs-target="#tab-sls" type="button" role="tab" aria-controls="tab-sls" aria-selected="false">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-pin" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"/></svg>
+                                <span>Alokasi Per SLS</span>
+                                <span class="badge-tab-count">{{ number_format($slsRecords->count()) }}</span>
                             </button>
                         </li>
                     </ul>
