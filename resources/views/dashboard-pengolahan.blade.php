@@ -343,49 +343,61 @@
 
 @push('js')
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        // Prevent AMD loaders (e.g. Vite/TinyMCE) from hijacking DataTables CDN attachment
+        window._tempDefine = window.define;
+        window.define = null;
+    </script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script>
+        window.define = window._tempDefine;
+    </script>
+    <script>
         $(document).ready(function() {
-            var table = $('#pengolahan-table').DataTable({
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "🔍 Cari cepat nama, email, pengawas, kec...",
-                    lengthMenu: "Tampilkan _MENU_ data",
-                    info: "Menampilkan <strong>_START_</strong> s.d. <strong>_END_</strong> dari total <strong>_TOTAL_</strong> petugas",
-                    infoEmpty: "Menampilkan 0 s.d. 0 dari 0 petugas",
-                    infoFiltered: "(disaring dari _MAX_ total data)",
-                    zeroRecords: "Tidak ada data petugas yang cocok dengan pencarian",
-                    paginate: {
-                        first: "Pertama",
-                        previous: "← Sebelum",
-                        next: "Lanjut →",
-                        last: "Terakhir"
+            if (typeof $.fn.DataTable === 'function') {
+                var table = $('#pengolahan-table').DataTable({
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "🔍 Cari cepat nama, email, pengawas, kec...",
+                        lengthMenu: "Tampilkan _MENU_ data",
+                        info: "Menampilkan <strong>_START_</strong> s.d. <strong>_END_</strong> dari total <strong>_TOTAL_</strong> petugas",
+                        infoEmpty: "Menampilkan 0 s.d. 0 dari 0 petugas",
+                        infoFiltered: "(disaring dari _MAX_ total data)",
+                        zeroRecords: "Tidak ada data petugas yang cocok dengan pencarian",
+                        paginate: {
+                            first: "Pertama",
+                            previous: "← Sebelum",
+                            next: "Lanjut →",
+                            last: "Terakhir"
+                        }
+                    },
+                    pageLength: 25,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+                    order: [[4, 'desc']], // Default sort: Muatan Murni (Index 4) Descending
+                    columnDefs: [
+                        { orderable: false, targets: [0] } // Disable sorting for 'No' column
+                    ],
+                    dom: "<'row p-3 align-items-center'<'col-md-6 d-flex align-items-center gap-2'l><'col-md-6 d-flex justify-content-md-end mt-2 mt-md-0'f>>" +
+                         "<'table-responsive'tr>" +
+                         "<'row p-3 border-top align-items-center'<'col-md-5 text-muted small'i><'col-md-7 d-flex justify-content-md-end mt-2 mt-md-0'p>>",
+                    drawCallback: function(settings) {
+                        var api = this.api();
+                        var startIndex = api.context[0]._iDisplayStart;
+                        api.column(0, {search:'applied', order:'applied'}).nodes().each(function(cell, i) {
+                            cell.innerHTML = startIndex + i + 1;
+                        });
                     }
-                },
-                pageLength: 25,
-                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
-                order: [[4, 'desc']], // Default sort: Muatan Murni (Index 4) Descending
-                columnDefs: [
-                    { orderable: false, targets: [0] } // Disable sorting for 'No' column
-                ],
-                dom: "<'row p-3 align-items-center'<'col-md-6 d-flex align-items-center gap-2'l><'col-md-6 d-flex justify-content-md-end mt-2 mt-md-0'f>>" +
-                     "<'table-responsive'tr>" +
-                     "<'row p-3 border-top align-items-center'<'col-md-5 text-muted small'i><'col-md-7 d-flex justify-content-md-end mt-2 mt-md-0'p>>",
-                drawCallback: function(settings) {
-                    var api = this.api();
-                    var startIndex = api.context[0]._iDisplayStart;
-                    api.column(0, {search:'applied', order:'applied'}).nodes().each(function(cell, i) {
-                        cell.innerHTML = startIndex + i + 1;
-                    });
-                }
-            });
+                });
 
-            @if($search)
-                table.search("{{ $search }}").draw();
-            @endif
+                @if($search)
+                    table.search("{{ $search }}").draw();
+                @endif
+            } else {
+                console.error("DataTables plugin is not available on jQuery.");
+            }
         });
     </script>
 @endpush
