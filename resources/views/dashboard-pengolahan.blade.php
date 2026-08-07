@@ -89,6 +89,34 @@
             background-color: #f8fafc;
             border-color: #f1f5f9;
         }
+        .table-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(4px);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.25s ease-out, visibility 0.25s ease-out;
+            border-radius: 16px;
+        }
+        .table-loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .datatable-pre-init {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .datatable-initialized {
+            opacity: 1 !important;
+        }
     </style>
 @endpush
 
@@ -258,7 +286,14 @@
             </div>
 
             <!-- Table Data Section (DataTables Enabled with Tabs) -->
-            <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card border-0 shadow-sm position-relative" style="border-radius: 16px; min-height: 380px;">
+                <!-- Animated Loading Overlay during DataTables Initialization -->
+                <div id="table-loading-overlay" class="table-loading-overlay">
+                    <div class="spinner-border text-primary me-2" role="status" style="width: 2.25rem; height: 2.25rem;"></div>
+                    <div class="mt-3 font-weight-bold text-dark fs-3">Memuat Data & DataTables SE2026...</div>
+                    <div class="text-muted small">Menyiapkan sorting instan, live search, dan tata letak tabel...</div>
+                </div>
+
                 <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <ul class="nav nav-tabs card-header-tabs font-weight-bold" id="dashboard-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -287,7 +322,7 @@
                         
                         <!-- TAB 1: RINGKASAN PER PETUGAS -->
                         <div class="tab-pane fade show active" id="tab-petugas" role="tabpanel" aria-labelledby="petugas-tab">
-                            <table id="pengolahan-table" class="table table-vcenter table-striped card-table text-nowrap w-100">
+                            <table id="pengolahan-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
                                 <thead>
                                     <tr class="bg-light text-uppercase small font-weight-bold">
                                         <th class="w-1 text-center">No</th>
@@ -357,7 +392,7 @@
 
                         <!-- TAB 2: ALOKASI & PROGRESS PER SLS / SUB-SLS -->
                         <div class="tab-pane fade" id="tab-sls" role="tabpanel" aria-labelledby="sls-tab">
-                            <table id="sls-table" class="table table-vcenter table-striped card-table text-nowrap w-100">
+                            <table id="sls-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
                                 <thead>
                                     <tr class="bg-light text-uppercase small font-weight-bold">
                                         <th class="w-1 text-center">No</th>
@@ -523,8 +558,18 @@
                     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
                         $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
                     });
+
+                    // Smoothly hide loading overlay and reveal DataTables once ready
+                    function revealDataTables() {
+                        $('#table-loading-overlay').addClass('hidden');
+                        $('#pengolahan-table, #sls-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
+                    }
+
+                    setTimeout(revealDataTables, 150);
                 } else {
                     console.error("DataTables plugin is not available on isolated jQuery instance.");
+                    $('#table-loading-overlay').addClass('hidden');
+                    $('#pengolahan-table, #sls-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
                 }
             });
         })(window.jqDT);
