@@ -164,6 +164,11 @@
             color: #ffffff !important;
             box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
         }
+        .custom-pill-tabs .nav-link.active#ranking-tab {
+            background-color: #d97706 !important; /* Amber Gold */
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+        }
         .custom-pill-tabs .nav-link .badge-tab-count {
             padding: 0.2rem 0.6rem;
             font-size: 0.75rem;
@@ -375,6 +380,13 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-pin" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"/></svg>
                                 <span>Alokasi Per SLS</span>
                                 <span class="badge-tab-count">{{ number_format($slsRecords->count()) }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ranking-tab" data-bs-toggle="tab" data-bs-target="#tab-ranking" type="button" role="tab" aria-controls="tab-ranking" aria-selected="false">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trophy me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M8 21l8 0"/><path d="M12 17l0 4"/><path d="M7 4l10 0"/><path d="M17 4v8a5 5 0 0 1 -10 0v-8"/><path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/></svg>
+                                <span>Ranking Kinerja</span>
+                                <span class="badge-tab-count" style="background-color: #f59e0b; color: #ffffff;">{{ number_format($rankingRecords->count()) }}</span>
                             </button>
                         </li>
                     </ul>
@@ -592,6 +604,179 @@
                             </table>
                         </div>
 
+                        <!-- TAB 4: RANKING KINERJA PETUGAS -->
+                        <div class="tab-pane fade" id="tab-ranking" role="tabpanel" aria-labelledby="ranking-tab">
+                            
+                            <!-- Ranking Summary Cards & Target Info -->
+                            <div class="p-3 bg-light border-bottom">
+                                <div class="row g-2 align-items-center mb-3">
+                                    <div class="col-12 col-md-7">
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+                                            <span class="badge bg-amber text-white font-weight-bold px-3 py-1.5 rounded-pill fs-4 shadow-sm">
+                                                🏆 TARGET HARIAN STANDAR: {{ number_format($dynamicTargetPct, 1) }}%
+                                            </span>
+                                            <span class="text-muted small">
+                                                (Laju 1.333%/hari sejak 15 Juni 2026)
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-5 text-md-end">
+                                        <button class="btn btn-sm btn-outline-secondary font-weight-bold shadow-sm rounded-2" type="button" data-bs-toggle="collapse" data-bs-target="#methodologyCollapse" aria-expanded="false" aria-controls="methodologyCollapse">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-info-circle me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 9h.01"/><path d="M11 12h1v4h1"/></svg>
+                                            <span>Lihat Metodologi & Formulasi</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Collapsible Methodology Explanation -->
+                                <div class="collapse mb-3" id="methodologyCollapse">
+                                    <div class="card card-body bg-white border border-amber-lt shadow-sm rounded-3">
+                                        <h4 class="font-weight-extrabold text-amber mb-2">
+                                            📘 Metodologi, Target Harian Standar, & Indikator Kinerja
+                                        </h4>
+                                        <div class="row g-3 small">
+                                            <div class="col-md-4">
+                                                <div class="p-2.5 border rounded bg-light h-100">
+                                                    <div class="font-weight-bold text-primary mb-1">1. Target Harian Standar (1.333%/Hari)</div>
+                                                    <p class="text-muted mb-0">Dihitung otomatis sejak 15 Juni 2026. Setiap hari target naik 1.333% hingga 100% pada hari ke-75. Target hari ini = <strong>{{ number_format($dynamicTargetPct, 1) }}%</strong>.</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="p-2.5 border rounded bg-light h-100">
+                                                    <div class="font-weight-bold text-success mb-1">2. Skor Kinerja (Skala 0 - 100)</div>
+                                                    <ul class="ps-3 text-muted mb-0">
+                                                        <li><strong>Progress Score (Maks 45)</strong>: Rasio capaian submit vs target harian.</li>
+                                                        <li><strong>Volume Score (Maks 55)</strong>: Volume muatan murni (usaha + keluarga terdata).</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="p-2.5 border rounded bg-light h-100">
+                                                    <div class="font-weight-bold text-danger mb-1">3. Safety Rule & Warning 3-Hari</div>
+                                                    <p class="text-muted mb-0">Petugas dengan Capaian &ge; Target Harian <strong>dilarang masuk kategori Malas</strong>. Warning 🚨 3 Hari Stagnan diberikan jika submit tidak bertambah 3 snapshot berturut-turut.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Mini Metric Badges -->
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span class="badge bg-success text-white px-2.5 py-1.5 rounded-pill font-weight-bold">
+                                        🌟 Sangat Rajin: {{ number_format($rankingSummary['cnt_srajin'] ?? 0) }}
+                                    </span>
+                                    <span class="badge bg-success-lt text-success px-2.5 py-1.5 rounded-pill font-weight-bold border border-success-lt">
+                                        🟢 Rajin: {{ number_format($rankingSummary['cnt_rajin'] ?? 0) }}
+                                    </span>
+                                    <span class="badge bg-warning-lt text-warning px-2.5 py-1.5 rounded-pill font-weight-bold border border-warning-lt">
+                                        🟡 Cukup / Standar: {{ number_format($rankingSummary['cnt_cukup'] ?? 0) }}
+                                    </span>
+                                    <span class="badge bg-orange-lt text-orange px-2.5 py-1.5 rounded-pill font-weight-bold border border-orange-lt">
+                                        ⚠️ Malas: {{ number_format($rankingSummary['cnt_malas'] ?? 0) }}
+                                    </span>
+                                    <span class="badge bg-danger text-white px-2.5 py-1.5 rounded-pill font-weight-bold">
+                                        🔴 Sangat Malas: {{ number_format($rankingSummary['cnt_smalas'] ?? 0) }}
+                                    </span>
+                                    @if(($rankingSummary['cnt_stagnant'] ?? 0) > 0)
+                                        <span class="badge bg-danger-lt text-danger px-2.5 py-1.5 rounded-pill font-weight-bold border border-danger">
+                                            🚨 {{ number_format($rankingSummary['cnt_stagnant']) }} Petugas 3 Hari Stagnan
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <table id="ranking-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
+                                <thead>
+                                    <tr class="bg-light text-uppercase small font-weight-bold">
+                                        <th class="w-1 text-center">No</th>
+                                        <th class="text-center">Peringkat</th>
+                                        <th>Kecamatan</th>
+                                        <th>Nama Petugas<br><span class="text-muted font-weight-normal small">/ Pencacah</span></th>
+                                        <th>Nama Pengawas<br><span class="text-muted font-weight-normal small">/ PML</span></th>
+                                        <th class="text-end">Beban<br>Saat Ini</th>
+                                        <th class="text-end text-success font-weight-bold">Total<br>Submit</th>
+                                        <th class="text-end">% Capaian<br><span class="text-muted font-weight-normal small">vs {{ number_format($dynamicTargetPct, 1) }}%</span></th>
+                                        <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">3 Hari Last</span></th>
+                                        <th class="text-end bg-amber-lt text-amber font-weight-extrabold">Skor Kinerja<br><span class="text-muted font-weight-normal small">(0 - 100)</span></th>
+                                        <th class="text-center">Kategori Kinerja</th>
+                                        <th>Rekomendasi Tindakan PML</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($rankingRecords as $index => $row)
+                                        <tr>
+                                            <td class="text-muted small text-center">{{ $index + 1 }}</td>
+                                            <td class="text-center font-weight-extrabold" data-order="{{ $index + 1 }}">
+                                                @if($index == 0)
+                                                    <span class="badge bg-warning text-dark px-2.5 py-1 rounded-circle fs-3 shadow-sm" title="Juara 1 Kinerja">🥇 #1</span>
+                                                @elseif($index == 1)
+                                                    <span class="badge bg-secondary text-white px-2.5 py-1 rounded-circle fs-3 shadow-sm" title="Juara 2 Kinerja">🥈 #2</span>
+                                                @elseif($index == 2)
+                                                    <span class="badge bg-amber-lt text-amber px-2.5 py-1 rounded-circle fs-3 border border-amber" title="Juara 3 Kinerja">🥉 #3</span>
+                                                @else
+                                                    <span class="badge bg-light text-dark border px-2 py-1">#{{ $index + 1 }}</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
+                                                <div class="small text-muted">Kode: {{ $row->kode_kec }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="font-weight-bold text-dark">{{ $row->nama_pencacah }}</div>
+                                                <div class="small text-muted">{{ $row->email_pencacah }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
+                                            </td>
+                                            <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
+                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
+                                            <td class="text-end" data-order="{{ $row->pct_submit }}">
+                                                <span class="badge {{ $row->pct_submit >= $dynamicTargetPct ? 'bg-success-lt text-success' : ($row->pct_submit >= max(0, $dynamicTargetPct - 10) ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
+                                                    {{ number_format($row->pct_submit, 1) }}%
+                                                </span>
+                                            </td>
+                                            <td class="text-center" data-order="{{ $row->warning_status }}">
+                                                @if($row->warning_status === 'stagnant_3d')
+                                                    <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm" title="Submit tidak bertambah dalam 3 snapshot terakhir">
+                                                        🚨 3 Hari Stagnan
+                                                    </span>
+                                                @elseif($row->warning_status === 'slow_progress')
+                                                    <span class="badge bg-warning-lt text-warning font-weight-bold px-2 py-1" title="Laju harian di bawah rata-rata target">
+                                                        ⚠️ Progres Lambat
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-success-lt text-success px-2 py-1" title="Progres submit teratur">
+                                                        ✅ Lancar
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="text-end font-weight-extrabold text-amber bg-amber-lt fs-2" data-order="{{ $row->skor_kinerja }}">
+                                                {{ number_format($row->skor_kinerja, 1) }}
+                                            </td>
+                                            <td class="text-center" data-order="{{ $row->kat_code }}">
+                                                <span class="badge {{ $row->kat_badge }} px-2.5 py-1 font-weight-bold">
+                                                    {{ $row->kat_label }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="small font-weight-medium text-dark">{{ $row->rekomendasi }}</div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="12" class="text-center py-5 text-muted">
+                                                <div class="mb-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trophy-off" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M8 21l8 0"/><path d="M12 17l0 4"/><path d="M8 4h9"/><path d="M17 4v8c0 .31-.028.614-.082.909"/><path d="M5 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M19 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M3 3l18 18"/></svg>
+                                                </div>
+                                                <div class="font-weight-bold fs-3">Tidak Ada Data Ranking Kinerja</div>
+                                                <div class="small">Coba ubah kata kunci pencarian atau filter kecamatan yang dipilih.</div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -725,10 +910,46 @@
                         }
                     });
 
+                    // Table 4: Ranking Kinerja Petugas
+                    var tableRanking = $('#ranking-table').DataTable({
+                        language: {
+                            search: "_INPUT_",
+                            searchPlaceholder: "🔍 Cari nama petugas, pengawas, kec, status...",
+                            lengthMenu: "Tampilkan _MENU_ data",
+                            info: "Menampilkan <strong>_START_</strong> s.d. <strong>_END_</strong> dari total <strong>_TOTAL_</strong> petugas",
+                            infoEmpty: "Menampilkan 0 s.d. 0 dari 0 petugas",
+                            infoFiltered: "(disaring dari _MAX_ total data)",
+                            zeroRecords: "Tidak ada data petugas yang cocok dengan pencarian",
+                            paginate: {
+                                first: "Pertama",
+                                previous: "← Sebelum",
+                                next: "Lanjut →",
+                                last: "Terakhir"
+                            }
+                        },
+                        pageLength: 25,
+                        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+                        order: [[9, 'desc']], // Default sort: Skor Kinerja (Index 9) Descending
+                        columnDefs: [
+                            { orderable: false, targets: [0] } // Disable sorting for 'No' column
+                        ],
+                        dom: "<'row p-3 align-items-center'<'col-md-6 d-flex align-items-center gap-2'l><'col-md-6 d-flex justify-content-md-end mt-2 mt-md-0'f>>" +
+                             "<'table-responsive'tr>" +
+                             "<'row p-3 border-top align-items-center'<'col-md-5 text-muted small'i><'col-md-7 d-flex justify-content-md-end mt-2 mt-md-0'p>>",
+                        drawCallback: function(settings) {
+                            var api = this.api();
+                            var startIndex = api.context[0]._iDisplayStart;
+                            api.column(0, {search:'applied', order:'applied'}).nodes().each(function(cell, i) {
+                                cell.innerHTML = startIndex + i + 1;
+                            });
+                        }
+                    });
+
                     @if($search)
                         tablePetugas.search("{{ $search }}").draw();
                         tablePml.search("{{ $search }}").draw();
                         tableSls.search("{{ $search }}").draw();
+                        tableRanking.search("{{ $search }}").draw();
                     @endif
 
                     // Adjust DataTables column width when switching tabs
@@ -739,14 +960,14 @@
                     // Smoothly hide loading overlay and reveal DataTables once ready
                     function revealDataTables() {
                         $('#table-loading-overlay').addClass('hidden');
-                        $('#pengolahan-table, #pml-table, #sls-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
+                        $('#pengolahan-table, #pml-table, #sls-table, #ranking-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
                     }
 
                     setTimeout(revealDataTables, 150);
                 } else {
                     console.error("DataTables plugin is not available on isolated jQuery instance.");
                     $('#table-loading-overlay').addClass('hidden');
-                    $('#pengolahan-table, #pml-table, #sls-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
+                    $('#pengolahan-table, #pml-table, #sls-table, #ranking-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
                 }
             });
         })(window.jqDT);
