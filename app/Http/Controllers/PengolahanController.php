@@ -187,16 +187,34 @@ class PengolahanController extends Controller
         $search = trim((string) $request->get('search', ''));
         $kodekec = trim((string) $request->get('kodekec', ''));
 
+        // Subquery for SIPW (Wilkerstat) to resolve SLS names
+        $sipwSub = $db->table('sipw')
+            ->select('id_subsls', DB::raw('MAX(nama_sls) as nama_sls'))
+            ->groupBy('id_subsls');
+
+        // Subquery for Pemutakhiran Keluarga to resolve SLS names
+        $pkSub = $db->table('se2026_pemutakhiran_keluarga')
+            ->select('kode', DB::raw('MAX(sub_sls) as sub_sls'))
+            ->groupBy('kode');
+
         $query = $db->table('monitoring_se2026 as m')
             ->leftJoin('alokasi_pengawas as a', 'm.region_code', '=', 'a.region_code')
             ->leftJoin('master_petugas as p_cacah', 'm.email_pencacah', '=', 'p_cacah.email')
             ->leftJoin('master_petugas as p_awas', 'a.email_pengawas', '=', 'p_awas.email')
             ->leftJoin('monitoring_sls_se2026 as sls', 'm.region_code', '=', 'sls.level_6_full_code')
+            ->leftJoinSub($sipwSub, 'sipw', 'm.region_code', '=', 'sipw.id_subsls')
+            ->leftJoinSub($pkSub, 'pk', 'm.region_code', '=', 'pk.kode')
             ->select([
                 'm.tanggal_tarik as tanggal_data',
                 'm.region_code',
                 DB::raw('LEFT(m.region_code, 7) as kode_kec'),
-                DB::raw('IFNULL(sls.nmsls, "-") as nama_sls'),
+                DB::raw('COALESCE(
+                    NULLIF(sls.nmsls, "-"),
+                    NULLIF(sipw.nama_sls, "-"),
+                    NULLIF(pk.sub_sls, "-"),
+                    NULLIF(pk.sub_sls, "TIDAK DIKETAHUI"),
+                    CONCAT("SLS ", m.region_code)
+                ) as nama_sls'),
                 'm.email_pencacah',
                 DB::raw('IFNULL(p_cacah.nama_lengkap, m.email_pencacah) as nama_pencacah'),
                 DB::raw('GROUP_CONCAT(DISTINCT p_awas.nama_lengkap SEPARATOR ", ") as nama_pengawas'),
@@ -211,6 +229,8 @@ class PengolahanController extends Controller
                 'm.region_code',
                 DB::raw('LEFT(m.region_code, 7)'),
                 'sls.nmsls',
+                'sipw.nama_sls',
+                'pk.sub_sls',
                 'm.email_pencacah',
                 'p_cacah.nama_lengkap',
             ])
