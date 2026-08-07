@@ -177,6 +177,67 @@ class PengolahanController extends Controller
     }
 
     /**
+     * Build query for Alokasi & Progress Per SLS / Sub-SLS.
+     */
+    protected function getSlsQuery(Request $request, $selectedDate)
+    {
+        $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
+        $db = $connName ? DB::connection($connName) : DB::connection();
+
+        $search = trim((string) $request->get('search', ''));
+        $kodekec = trim((string) $request->get('kodekec', ''));
+
+        $query = $db->table('monitoring_se2026 as m')
+            ->leftJoin('alokasi_pengawas as a', 'm.region_code', '=', 'a.region_code')
+            ->leftJoin('master_petugas as p_cacah', 'm.email_pencacah', '=', 'p_cacah.email')
+            ->leftJoin('master_petugas as p_awas', 'a.email_pengawas', '=', 'p_awas.email')
+            ->leftJoin('monitoring_sls_se2026 as sls', 'm.region_code', '=', 'sls.level_6_full_code')
+            ->select([
+                'm.tanggal_tarik as tanggal_data',
+                'm.region_code',
+                DB::raw('LEFT(m.region_code, 7) as kode_kec'),
+                DB::raw('IFNULL(sls.nmsls, "-") as nama_sls'),
+                'm.email_pencacah',
+                DB::raw('IFNULL(p_cacah.nama_lengkap, m.email_pencacah) as nama_pencacah'),
+                DB::raw('GROUP_CONCAT(DISTINCT p_awas.nama_lengkap SEPARATOR ", ") as nama_pengawas'),
+                DB::raw('SUM(m.total_beban) as beban_saat_ini'),
+                DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as total_submit'),
+                DB::raw('IFNULL(SUM(m.status_open), 0) as status_open'),
+                DB::raw('IFNULL(SUM(m.status_draft), 0) as status_draft'),
+                DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit'),
+            ])
+            ->groupBy([
+                'm.tanggal_tarik',
+                'm.region_code',
+                DB::raw('LEFT(m.region_code, 7)'),
+                'sls.nmsls',
+                'm.email_pencacah',
+                'p_cacah.nama_lengkap',
+            ])
+            ->orderBy('m.region_code', 'asc');
+
+        if (!empty($selectedDate)) {
+            $query->where('m.tanggal_tarik', '=', $selectedDate);
+        }
+
+        if (!empty($kodekec)) {
+            $query->where('m.region_code', 'LIKE', $kodekec . '%');
+        }
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('p_cacah.nama_lengkap', 'LIKE', "%{$search}%")
+                  ->orWhere('m.email_pencacah', 'LIKE', "%{$search}%")
+                  ->orWhere('p_awas.nama_lengkap', 'LIKE', "%{$search}%")
+                  ->orWhere('sls.nmsls', 'LIKE', "%{$search}%")
+                  ->orWhere('m.region_code', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $query->get();
+    }
+
+    /**
      * Display the SE2026 Data Petugas Dashboard Table.
      */
     public function index(Request $request)
@@ -184,8 +245,9 @@ class PengolahanController extends Controller
         $data = $this->getFilteredQuery($request);
         $query = $data['query'];
 
-        // Retrieve all records for client-side DataTables rendering
+        // Retrieve records for Tab 1 (Petugas summary) and Tab 2 (SLS detail)
         $records = $query->get();
+        $slsRecords = $this->getSlsQuery($request, $data['selectedDate']);
 
         // Summary KPI Metrics across current filtered query
         $kpiSummary = [
@@ -197,6 +259,7 @@ class PengolahanController extends Controller
             'total_usaha_keluarga' => $records->sum('jumlah_usaha_keluarga'),
             'total_keluarga_ditemukan' => $records->sum('jumlah_keluarga_ditemukan'),
             'total_muatan_murni' => $records->sum('muatan_murni'),
+            'total_sls' => $slsRecords->count(),
             'pct_overall_submit' => $records->sum('beban_saat_ini') > 0
                 ? round(($records->sum('total_submit') / $records->sum('beban_saat_ini')) * 100, 2)
                 : 0
@@ -212,6 +275,7 @@ class PengolahanController extends Controller
             'sortDir' => $data['sortDir'],
             'perPage' => $data['perPage'],
             'records' => $records,
+            'slsRecords' => $slsRecords,
             'kpiSummary' => $kpiSummary,
         ]);
     }
@@ -395,6 +459,91 @@ class PengolahanController extends Controller
         // Auto-fit Column Widths
         foreach (range('A', 'P') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set active sheet to 0
+        $spreadsheet->setActiveSheetIndex(0);
+
+        // SHEET 2: Rincian Alokasi Per SLS
+        $slsRecords = $this->getSlsQuery($request, $filtered['selectedDate']);
+
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Rincian Alokasi Per SLS');
+
+        // Title Banner in Sheet 2
+        $sheet2->mergeCells('A1:K1');
+        $sheet2->setCellValue('A1', 'RINCIAN ALOKASI & PROGRESS PER SLS - BPS KABUPATEN DEMAK');
+        $sheet2->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0F172A'));
+        $sheet2->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+        $sheet2->mergeCells('A2:K2');
+        $sheet2->setCellValue('A2', $subTitle);
+        $sheet2->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('64748B'));
+
+        $headersSls = [
+            'No',
+            'Kode Kec',
+            'Nama Kecamatan',
+            'Kode SLS / Sub-SLS',
+            'Nama SLS',
+            'Nama Pencacah',
+            'Nama Pengawas',
+            'Beban Saat Ini',
+            'Total Submit',
+            'Belum Disentuh (Open)',
+            'Capaian Submit (%)',
+        ];
+
+        foreach ($headersSls as $colIdx => $header) {
+            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . '4';
+            $sheet2->setCellValue($cell, $header);
+        }
+
+        $sheet2->getStyle('A4:K4')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+                'size' => 11,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0284C7'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet2->getRowDimension(4)->setRowHeight(28);
+
+        $rowIdx2 = 5;
+        $no2 = 1;
+        foreach ($slsRecords as $row) {
+            $namaKec = $this->kecNameMap[$row->kode_kec] ?? $row->kode_kec;
+            $sheet2->setCellValue('A' . $rowIdx2, $no2++);
+            $sheet2->setCellValueExplicit('B' . $rowIdx2, $row->kode_kec, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet2->setCellValue('C' . $rowIdx2, $namaKec);
+            $sheet2->setCellValueExplicit('D' . $rowIdx2, $row->region_code, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet2->setCellValue('E' . $rowIdx2, $row->nama_sls);
+            $sheet2->setCellValue('F' . $rowIdx2, $row->nama_pencacah);
+            $sheet2->setCellValue('G' . $rowIdx2, $row->nama_pengawas ?: '-');
+            $sheet2->setCellValue('H' . $rowIdx2, (int) $row->beban_saat_ini);
+            $sheet2->setCellValue('I' . $rowIdx2, (int) $row->total_submit);
+            $sheet2->setCellValue('J' . $rowIdx2, (int) $row->status_open);
+            $sheet2->setCellValue('K' . $rowIdx2, (float) $row->pct_submit / 100);
+
+            $sheet2->getStyle('A' . $rowIdx2 . ':D' . $rowIdx2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet2->getStyle('H' . $rowIdx2 . ':J' . $rowIdx2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet2->getStyle('K' . $rowIdx2)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            $sheet2->getStyle('H' . $rowIdx2 . ':J' . $rowIdx2)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet2->getStyle('K' . $rowIdx2)->getNumberFormat()->setFormatCode('0.00%');
+
+            $rowIdx2++;
+        }
+
+        foreach (range('A', 'K') as $col) {
+            $sheet2->getColumnDimension($col)->setAutoSize(true);
         }
 
         $writer = new Xlsx($spreadsheet);

@@ -142,9 +142,10 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Memperbarui properti `$heading` pada `CategoryDistributionChartWidget` dan `DailyVisitorsChartWidget` menjadi instance property (`protected ?string $heading`) sesuai kelas induk `Filament\Widgets\ChartWidget`.
     - Menyelesaikan error `artisan package:discover` (code 255) yang terjadi saat script `deploy.sh` dijalankan di server.
 ### 2026-08-07
-- **Tabel Petugas SE2026 (DataTables Integration & Compact Header Layout)**:
-  - Mengintegrasikan DataTables Bootstrap 5 secara penuh pada halaman `dashboard-pengolahan.blade.php`.
-  - Penataan Header Tabel Ringkas & Compact: Mempersempit lebar kolom tabel dan menyusun judul header yang panjang menjadi berbaris ke bawah (`white-space: normal`, `<br>`, dan padding `0.65rem 0.45rem`) agar tampilan tabel lebih rapat, proporsional, dan nyaman dilihat di berbagai resolusi layar.
+- **Tabel Petugas SE2026 (DataTables Integration, Nav Tabs & Tabel Alokasi Per SLS)**:
+  - Navigasi Tab Terpadu (Tab System): Menambahkan 2 Tab utama pada halaman `/dashboard-pengolahan` yaitu **Tab 1: Ringkasan Per Petugas** dan **Tab 2: Alokasi & Progress Per SLS / Sub-SLS**.
+  - Tabel Alokasi SLS (`slsRecords`): Menghubungkan data `monitoring_se2026`, `alokasi_pengawas`, `master_petugas`, dan `monitoring_sls_se2026` (`nmsls`) untuk menampilkan rincian alokasi SLS per petugas (Kode Kec, Nama SLS, Pencacah, Pengawas, Beban Saat Ini, Total Submit, Belum Disentuh/Open, dan % Progres).
+  - Ekspor Excel Multi-Sheet (`.xlsx`): Memperbarui fitur ekspor Excel untuk menghasilkan 2 Sheet sekaligus dalam 1 workbook (`Sheet 1: Ringkasan Petugas` & `Sheet 2: Rincian Alokasi Per SLS`).
+  - Penataan Header Tabel Ringkas & Centered: Mempersempit lebar kolom tabel, merata-tengahkan judul header (`text-align: center !important`), dan menyusun judul panjang menjadi berbaris ke bawah (`white-space: normal`, `<br>`, dan padding compact) agar tampilan proporsional dan tidak stelling.
   - Penanganan Error AMD `define` & jQuery Collision: Memuat instance jQuery terisolasi dengan `jQuery.noConflict(true)` dan IIFE wrapper untuk menjamin fungsi `$.fn.DataTable` selalu siap tanpa terganggu oleh bundling scripts lain.
-  - Mengoptimalkan kueri backend di `PengolahanController.php` dengan pengambilan koleksi data presisi untuk diproses instan oleh DataTables client-side.
-  - Menambahkan fitur pencarian cepat live (*live searching*), pengurutan instan (*instant sorting*) pada semua kolom numerik dan teks dengan atribut `data-order`, serta pagination interaktif tanpa reload halaman.
+  - Interactive DataTables di Kedua Tab: Memasang DataTables Bootstrap 5 terisolasi pada Tab 1 dan Tab 2 lengkap dengan pencarian cepat (*live search*), *instant sorting*, dan *data-order* numerik.
