@@ -91,9 +91,14 @@ class PetugasPerformanceRankingService
             // Total Score
             $skorKinerja = round($progressScore + $volumeScore, 1);
 
-            // If progress has reached 100% (completed), mark warning status as completed
+            // Warning logic:
+            // 1. If progress has reached 100% (completed), status is 'completed' (🎉 Selesai 100%).
+            // 2. If progress is ON-TRACK or ahead of daily target (e.g. 90% vs target 72%), status is 'normal' (✅ On-Track/Aman). No warning needed!
+            // 3. Warning (🚨 Stagnan / ⚠️ Lambat) ONLY applies if progress is BELOW daily target ($capaianPct < $dynamicTargetPct).
             if ($capaianPct >= 100.0 || $row->belum_dikerjakan <= 0) {
                 $warning = 'completed';
+            } elseif ($capaianPct >= $dynamicTargetPct) {
+                $warning = 'normal';
             } else {
                 $warning = $warningMap[$row->email_pencacah] ?? 'normal';
             }
