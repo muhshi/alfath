@@ -2,9 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\GcPln;
-use App\Models\ScraperCookie;
-use App\Jobs\DispatchPythonScraper;
+use App\Models\UsahaPerusahaan;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -12,130 +10,67 @@ use Filament\Forms;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 
 class FasihScraper extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
-    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-document-text';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-document-arrow-up';
 
     protected string $view = 'filament.pages.fasih-scraper';
 
-    protected static ?string $title = 'Fasih Scraper';
+    protected static ?string $title = 'Import Excel Usaha';
 
-    protected function getHeaderWidgets(): array
-    {
-        return [
-            \App\Livewire\ScraperLogViewer::class,
-        ];
-    }
+    protected static ?string $navigationLabel = 'Import Excel Usaha';
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                GcPln::query()
+                UsahaPerusahaan::query()
             )
             ->columns([
-                TextColumn::make('unitup')
-                    ->label('UNITUP')
+                TextColumn::make('kode')
+                    ->label('Kode SLS')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('email_biller')
-                    ->label('Email Biller')
+                TextColumn::make('sub_sls')
+                    ->label('Wilayah / Sub SLS')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('open_count')
-                    ->label('OPEN')
+                TextColumn::make('jumlah_prelist_usaha')
+                    ->label('Prelist')
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('submitted_count')
-                    ->label('SUBMITTED')
+                TextColumn::make('status___ditemukan')
+                    ->label('Ditemukan')
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('rejected_count')
-                    ->label('REJECTED')
+                TextColumn::make('status___tutup')
+                    ->label('Tutup')
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('fetch_date')
-                    ->label('Tanggal')
+                TextColumn::make('status___baru')
+                    ->label('Baru')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('jumlah_usaha_bku')
+                    ->label('Usaha BKU')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('tanggal_data')
+                    ->label('Tanggal Data')
                     ->date('d M Y')
                     ->sortable(),
-                TextColumn::make('fetched_at')
-                    ->label('Terakhir Ditarik')
-                    ->dateTime('d M Y H:i')
-                    ->sortable(),
             ])
-            ->defaultSort('fetch_date', 'desc');
+            ->defaultSort('tanggal_data', 'desc');
     }
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('update-cookies')
-                ->label('Ubah Cookies & CSRF')
-                ->icon('heroicon-o-key')
-                ->color('warning')
-                ->form([
-                    Forms\Components\Textarea::make('cookie_string')
-                        ->label('Cookie String')
-                        ->required()
-                        ->rows(4)
-                        ->default(function () {
-                            $cookie = ScraperCookie::first();
-                            return $cookie ? $cookie->cookie_string : '';
-                        }),
-                    Forms\Components\Textarea::make('csrf_token')
-                        ->label('X-CSRFToken')
-                        ->helperText('Ambil dari header X-CSRFToken di request browser (bukan dari cookies)')
-                        ->rows(2)
-                        ->default(function () {
-                            $path = storage_path('app/python-scripts/gc-pln/csrf_token.txt');
-                            return file_exists($path) ? file_get_contents($path) : '';
-                        }),
-                ])
-                ->action(function (array $data) {
-                    $cookie = ScraperCookie::firstOrNew(['id' => 1]);
-                    $cookie->cookie_string = $data['cookie_string'];
-                    $cookie->save();
-
-                    // Update file cookies.txt
-                    $cookiePath = storage_path('app/python-scripts/gc-pln/cookies.txt');
-                    if (!is_dir(dirname($cookiePath))) {
-                        mkdir(dirname($cookiePath), 0755, true);
-                    }
-                    file_put_contents($cookiePath, $data['cookie_string']);
-
-                    // Update file csrf_token.txt
-                    if (!empty($data['csrf_token'])) {
-                        $csrfPath = storage_path('app/python-scripts/gc-pln/csrf_token.txt');
-                        file_put_contents($csrfPath, trim($data['csrf_token']));
-                    }
-
-                    Notification::make()->title('Cookies & CSRF Token berhasil diperbarui!')->success()->send();
-                }),
-                
-            Actions\Action::make('sync-fasih')
-                ->label('Tarik Data FASIH')
-                ->icon('heroicon-o-arrow-path')
-                ->color('primary')
-                ->requiresConfirmation()
-                ->modalHeading('Mulai Sinkronisasi Data?')
-                ->modalDescription('Proses ini akan menjalankan script Python untuk menarik data terbaru dari FASIH Dashboard API. Log dapat dilihat di bagian atas halaman.')
-                ->action(function () {
-                    // Clear log file if exists
-                    $logPath = storage_path('logs/scraper.log');
-                    file_put_contents($logPath, '');
-
-                    DispatchPythonScraper::dispatch();
-                    
-                    Notification::make()
-                        ->title('Sinkronisasi Dimulai')
-                        ->body('Proses penarikan data sedang berjalan di latar belakang.')
-                        ->success()
-                        ->send();
-                }),
-
             Actions\Action::make('upload-excel-usaha')
                 ->label('Upload Excel Usaha')
                 ->icon('heroicon-o-document-arrow-up')
@@ -150,8 +85,11 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                         ->directory('uploads/excel-usaha'),
                 ])
                 ->action(function (array $data) {
+                    set_time_limit(600);
+                    ini_set('memory_limit', '512M');
+
                     $relativeFilePath = $data['excel_file'];
-                    $fullPath = storage_path('app/' . $relativeFilePath);
+                    $fullPath = Storage::disk('local')->path($relativeFilePath);
 
                     if (!file_exists($fullPath)) {
                         Notification::make()
@@ -162,40 +100,30 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                         return;
                     }
 
-                    $scriptPath = storage_path('app/python-scripts/process_usaha_excel.py');
-                    $pythonBin = 'python';
+                    try {
+                        $exitCode = Artisan::call('import:usaha', [
+                            'file' => $fullPath,
+                        ]);
 
-                    $process = new \Symfony\Component\Process\Process([$pythonBin, $scriptPath, $fullPath]);
-                    $process->setTimeout(300);
-                    $process->run();
+                        $output = Artisan::output();
 
-                    if (!$process->isSuccessful()) {
-                        Notification::make()
-                            ->title('Proses Gagal')
-                            ->body($process->getErrorOutput())
-                            ->danger()
-                            ->send();
-                        return;
-                    }
-
-                    $output = trim($process->getOutput());
-                    $res = json_decode($output, true);
-
-                    if ($res && isset($res['success']) && $res['success']) {
-                        $tgl = $res['tanggal_data'] ?? '-';
-                        $upCount = number_format($res['count_perusahaan'] ?? 0);
-                        $ukCount = number_format($res['count_keluarga'] ?? 0);
-
-                        Notification::make()
-                            ->title('Import Excel Berhasil!')
-                            ->body("Tanggal Data: {$tgl}\n• Usaha Perusahaan: {$upCount} baris\n• Usaha Keluarga: {$ukCount} baris")
-                            ->success()
-                            ->send();
-                    } else {
-                        $err = $res['error'] ?? $output;
+                        if ($exitCode === 0) {
+                            Notification::make()
+                                ->title('Import Excel Berhasil!')
+                                ->body($output ?: 'Data Excel Usaha Perusahaan dan Usaha Keluarga telah berhasil diimpor.')
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Gagal Mengolah Excel')
+                                ->body($output ?: 'Terjadi kesalahan saat memproses file Excel.')
+                                ->danger()
+                                ->send();
+                        }
+                    } catch (\Throwable $e) {
                         Notification::make()
                             ->title('Gagal Mengolah Excel')
-                            ->body($err)
+                            ->body($e->getMessage())
                             ->danger()
                             ->send();
                     }

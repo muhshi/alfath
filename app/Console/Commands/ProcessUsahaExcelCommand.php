@@ -35,34 +35,16 @@ class ProcessUsahaExcelCommand extends Command
 
         $this->info("Memulai pengolahan file Excel: {$filePath}");
 
-        $scriptPath = storage_path('app/python-scripts/process_usaha_excel.py');
-        if (!file_exists($scriptPath)) {
-            $this->error("Script Python tidak ditemukan di: {$scriptPath}");
-            return 1;
-        }
+        $exitCode = \Illuminate\Support\Facades\Artisan::call('import:usaha', [
+            'file' => $filePath,
+        ]);
 
-        // System Python executable
-        $pythonBin = 'python';
-
-        $process = new Process([$pythonBin, $scriptPath, $filePath]);
-        $process->setTimeout(300); // 5 mins max
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            $this->error("Gagal menjalankan script Python: " . $process->getErrorOutput());
-            return 1;
-        }
-
-        $output = trim($process->getOutput());
-        $result = json_decode($output, true);
-
-        if ($result && isset($result['success']) && $result['success']) {
-            $this->info("SUCCESS! Data tanggal: " . ($result['tanggal_data'] ?? '-'));
-            $this->info("Usaha Perusahaan terproses: " . ($result['count_perusahaan'] ?? 0));
-            $this->info("Usaha Keluarga terproses: " . ($result['count_keluarga'] ?? 0));
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        if ($exitCode === 0) {
+            $this->info($output);
             return 0;
         } else {
-            $this->error("Error: " . ($result['error'] ?? $output));
+            $this->error($output);
             return 1;
         }
     }

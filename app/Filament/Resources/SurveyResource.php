@@ -20,7 +20,7 @@ class SurveyResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
-            ->schema([
+            ->components([
                 Forms\Components\Select::make('category_id')
                     ->label('Kategori')
                     ->native(false)

@@ -17,6 +17,9 @@ class ImportExcelUsaha extends Command
 
     public function handle(): int
     {
+        set_time_limit(600);
+        ini_set('memory_limit', '512M');
+
         $file = $this->argument('file');
 
         if (!file_exists($file)) {
@@ -86,29 +89,48 @@ class ImportExcelUsaha extends Command
             $kode = trim((string) ($cells[0] ?? ''));
             $subSls = trim((string) ($cells[1] ?? ''));
 
-            // Skip empty rows or summary rows
-            if (empty($kode) || $kode === '' || str_contains($subSls, 'INDONESIA')
-                || str_contains($subSls, 'JAWA') || str_contains($subSls, 'TOTAL')) {
+            // Clean trailing decimal (.0) if Excel exported numeric cell as float string
+            $kode = preg_replace('/\.0+$/', '', $kode);
+
+            // Strictly require exact 16-digit numeric SLS codes (e.g., 3321130020600300)
+            if (!preg_match('/^\d{16}$/', $kode)) {
                 $skipped++;
                 continue;
             }
+
+            $subSls = substr($subSls, 0, 255);
+
+            $cawiDitemukan = (int) $this->cleanNumeric($cells[3] ?? null);
+            $capiDitemukan = (int) $this->cleanNumeric($cells[17] ?? null);
+
+            $cawiTutup = (int) $this->cleanNumeric($cells[9] ?? null);
+            $capiTutup = (int) $this->cleanNumeric($cells[19] ?? null);
+
+            $cawiGanda = (int) $this->cleanNumeric($cells[11] ?? null);
+            $capiGanda = (int) $this->cleanNumeric($cells[21] ?? null);
+
+            $cawiTidakDitemukan = (int) $this->cleanNumeric($cells[13] ?? null);
+            $capiTidakDitemukan = (int) $this->cleanNumeric($cells[23] ?? null);
+
+            $capiBaru = (int) $this->cleanNumeric($cells[25] ?? null);
+            $bkuTotal = (int) $this->cleanNumeric($cells[29] ?? null);
 
             $batch[] = [
                 'kode' => $kode,
                 'sub_sls' => $subSls,
                 'jumlah_prelist_usaha' => $this->cleanNumeric($cells[2] ?? null),
-                'status___ditemukan' => $this->cleanNumeric($cells[3] ?? null),
-                'status___persentase_ditemukan' => $this->cleanNumeric($cells[4] ?? null),
-                'status___tutup' => $this->cleanNumeric($cells[5] ?? null),
-                'status___persentase_tutup' => $this->cleanNumeric($cells[6] ?? null),
-                'status___ganda' => $this->cleanNumeric($cells[7] ?? null),
-                'status___persentase_ganda' => $this->cleanNumeric($cells[8] ?? null),
-                'status___tidak_ditemukan' => $this->cleanNumeric($cells[9] ?? null),
-                'status___persentase_tidak_ditemukan' => $this->cleanNumeric($cells[10] ?? null),
-                'status___baru' => $this->cleanNumeric($cells[11] ?? null),
-                'status___persentase_baru' => $this->cleanNumeric($cells[12] ?? null),
-                'jumlah_usaha_bku' => $this->cleanNumeric($cells[13] ?? null),
-                'persentase_usaha_bku' => $this->cleanNumeric($cells[14] ?? null),
+                'status___ditemukan' => (string) ($cawiDitemukan + $capiDitemukan),
+                'status___persentase_ditemukan' => $this->cleanNumeric($cells[18] ?? $cells[4] ?? null),
+                'status___tutup' => (string) ($cawiTutup + $capiTutup),
+                'status___persentase_tutup' => $this->cleanNumeric($cells[20] ?? $cells[10] ?? null),
+                'status___ganda' => (string) ($cawiGanda + $capiGanda),
+                'status___persentase_ganda' => $this->cleanNumeric($cells[22] ?? $cells[12] ?? null),
+                'status___tidak_ditemukan' => (string) ($cawiTidakDitemukan + $capiTidakDitemukan),
+                'status___persentase_tidak_ditemukan' => $this->cleanNumeric($cells[24] ?? $cells[15] ?? null),
+                'status___baru' => (string) $capiBaru,
+                'status___persentase_baru' => $this->cleanNumeric($cells[26] ?? null),
+                'jumlah_usaha_bku' => (string) $bkuTotal,
+                'persentase_usaha_bku' => $this->cleanNumeric($cells[30] ?? null),
                 'tanggal_data' => $tanggalData,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -180,12 +202,16 @@ class ImportExcelUsaha extends Command
             $kode = trim((string) ($cells[0] ?? ''));
             $subSls = trim((string) ($cells[1] ?? ''));
 
-            // Skip empty rows or summary rows
-            if (empty($kode) || $kode === '' || str_contains($subSls, 'INDONESIA')
-                || str_contains($subSls, 'JAWA') || str_contains($subSls, 'TOTAL')) {
+            // Clean trailing decimal (.0) if Excel exported numeric cell as float string
+            $kode = preg_replace('/\.0+$/', '', $kode);
+
+            // Strictly require exact 16-digit numeric SLS codes (e.g., 3321130020600300)
+            if (!preg_match('/^\d{16}$/', $kode)) {
                 $skipped++;
                 continue;
             }
+
+            $subSls = substr($subSls, 0, 255);
 
             $batch[] = [
                 'kode' => $kode,
