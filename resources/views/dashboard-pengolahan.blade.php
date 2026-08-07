@@ -736,7 +736,11 @@
                                                 </span>
                                             </td>
                                             <td class="text-center" data-order="{{ $row->warning_status }}">
-                                                @if($row->warning_status === 'stagnant_3d')
+                                                @if($row->warning_status === 'completed')
+                                                    <span class="badge bg-success text-white font-weight-bold px-2 py-1 shadow-sm" title="Pencacahan Selesai 100%">
+                                                        🎉 Selesai 100%
+                                                    </span>
+                                                @elseif($row->warning_status === 'stagnant_3d')
                                                     <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm" title="Submit tidak bertambah dalam 3 snapshot terakhir">
                                                         🚨 3 Hari Stagnan
                                                     </span>

@@ -91,7 +91,12 @@ class PetugasPerformanceRankingService
             // Total Score
             $skorKinerja = round($progressScore + $volumeScore, 1);
 
-            $warning = $warningMap[$row->email_pencacah] ?? 'normal';
+            // If progress has reached 100% (completed), mark warning status as completed
+            if ($capaianPct >= 100.0 || $row->belum_dikerjakan <= 0) {
+                $warning = 'completed';
+            } else {
+                $warning = $warningMap[$row->email_pencacah] ?? 'normal';
+            }
 
             // Safety Rule: Capaian >= Dynamic Target cannot be Malas
             if ($capaianPct >= $dynamicTargetPct) {
