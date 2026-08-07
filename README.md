@@ -141,5 +141,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Memperbarui properti `$view` pada `App\Filament\Pages\FasihScraper` menjadi instance property (`protected string $view`) sesuai kelas induk `Filament\Pages\Page`.
     - Memperbarui properti `$heading` pada `CategoryDistributionChartWidget` dan `DailyVisitorsChartWidget` menjadi instance property (`protected ?string $heading`) sesuai kelas induk `Filament\Widgets\ChartWidget`.
     - Menyelesaikan error `artisan package:discover` (code 255) yang terjadi saat script `deploy.sh` dijalankan di server.
-
-
+### 2026-08-07
+- **Tabel Petugas SE2026 (DataTables Integration)**:
+  - Mengintegrasikan DataTables Bootstrap 5 secara penuh pada halaman `dashboard-pengolahan.blade.php`.
+  - Mengoptimalkan kueri backend di `PengolahanController.php` dengan pengambilan koleksi data presisi untuk diproses instan oleh DataTables client-side.
+  - Menambahkan fitur pencarian cepat live (*live searching*), pengurutan instan (*instant sorting*) pada semua kolom numerik dan teks dengan atribut `data-order`, serta pagination interaktif tanpa reload halaman.

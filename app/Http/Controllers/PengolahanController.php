@@ -184,24 +184,21 @@ class PengolahanController extends Controller
         $data = $this->getFilteredQuery($request);
         $query = $data['query'];
 
-        // Paginate results
-        $paginatedData = $query->paginate($data['perPage'])->withQueryString();
+        // Retrieve all records for client-side DataTables rendering
+        $records = $query->get();
 
         // Summary KPI Metrics across current filtered query
-        $summaryQuery = clone $query;
-        $allRecords = $summaryQuery->get();
-
         $kpiSummary = [
-            'total_petugas' => $allRecords->count(),
-            'total_beban' => $allRecords->sum('beban_saat_ini'),
-            'total_submit' => $allRecords->sum('total_submit'),
-            'total_belum_dikerjakan' => $allRecords->sum('belum_dikerjakan'),
-            'total_usaha_ditemukan' => $allRecords->sum('jumlah_usaha_ditemukan'),
-            'total_usaha_keluarga' => $allRecords->sum('jumlah_usaha_keluarga'),
-            'total_keluarga_ditemukan' => $allRecords->sum('jumlah_keluarga_ditemukan'),
-            'total_muatan_murni' => $allRecords->sum('muatan_murni'),
-            'pct_overall_submit' => $allRecords->sum('beban_saat_ini') > 0
-                ? round(($allRecords->sum('total_submit') / $allRecords->sum('beban_saat_ini')) * 100, 2)
+            'total_petugas' => $records->count(),
+            'total_beban' => $records->sum('beban_saat_ini'),
+            'total_submit' => $records->sum('total_submit'),
+            'total_belum_dikerjakan' => $records->sum('belum_dikerjakan'),
+            'total_usaha_ditemukan' => $records->sum('jumlah_usaha_ditemukan'),
+            'total_usaha_keluarga' => $records->sum('jumlah_usaha_keluarga'),
+            'total_keluarga_ditemukan' => $records->sum('jumlah_keluarga_ditemukan'),
+            'total_muatan_murni' => $records->sum('muatan_murni'),
+            'pct_overall_submit' => $records->sum('beban_saat_ini') > 0
+                ? round(($records->sum('total_submit') / $records->sum('beban_saat_ini')) * 100, 2)
                 : 0
         ];
 
@@ -214,7 +211,7 @@ class PengolahanController extends Controller
             'sortBy' => $data['sortBy'],
             'sortDir' => $data['sortDir'],
             'perPage' => $data['perPage'],
-            'paginatedData' => $paginatedData,
+            'records' => $records,
             'kpiSummary' => $kpiSummary,
         ]);
     }
