@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 class PetugasPerformanceRankingService
 {
     /**
-     * Calculate Petugas Performance Ranking, Target 90% to 20 Aug, SLS Low Usaha Warnings (< 7% of Muatan Murni), & 3-Day Warning Signals.
+     * Calculate Petugas Performance Ranking, Target 90% to 20 Aug, SLS Low Usaha Warnings (UP < 5% / UK < 10%), & 3-Day Warning Signals.
      */
     public function calculateRankingData(Collection $records, ?string $selectedDate): array
     {
@@ -71,7 +71,7 @@ class PetugasPerformanceRankingService
             }
         }
 
-        // 3. SLS Level Usaha vs Muatan Murni Check (< 7% Usaha dari Muatan Murni SLS)
+        // 3. SLS Level Usaha Check (Dual Thresholds: UP < 5% & UK < 10% dari Muatan Murni SLS)
         $slsAnomaliMap = [];
         if (Schema::connection($connName)->hasTable('monitoring_se2026')) {
             $sipwSub = $db->table('sipw')
@@ -110,7 +110,8 @@ class PetugasPerformanceRankingService
                     ) as nama_sls'),
                     DB::raw('SUM(m.total_beban) as beban_sls'),
                     DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as submit_sls'),
-                    DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) as usaha_sls'),
+                    DB::raw('IFNULL(SUM(up.up_ditemukan), 0) as up_sls'),
+                    DB::raw('IFNULL(SUM(uk.uk_ditemukan), 0) as uk_sls'),
                     DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni_sls'),
                 ])
                 ->when(!empty($selectedDate), function ($q) use ($selectedDate) {
@@ -122,17 +123,25 @@ class PetugasPerformanceRankingService
             foreach ($slsRows as $sr) {
                 // Ignore SLS if muatan murni is empty (0)
                 if ($sr->muatan_murni_sls > 0) {
-                    $pctUsahaDariMurni = round(($sr->usaha_sls / $sr->muatan_murni_sls) * 100, 1);
+                    $pctUp = round(($sr->up_sls / $sr->muatan_murni_sls) * 100, 1);
+                    $pctUk = round(($sr->uk_sls / $sr->muatan_murni_sls) * 100, 1);
 
-                    // Warning if Usaha < 7% of Muatan Murni
-                    if ($pctUsahaDariMurni < 7.0) {
+                    $isLowUp = $pctUp < 5.0;
+                    $isLowUk = $pctUk < 10.0;
+
+                    // Warning if Usaha Perusahaan < 5% OR Usaha Keluarga < 10% of Muatan Murni
+                    if ($isLowUp || $isLowUk) {
                         $slsAnomaliMap[$sr->email_pencacah][] = [
                             'region_code' => $sr->region_code,
                             'nama_sls' => $sr->nama_sls,
                             'submit' => $sr->submit_sls,
-                            'usaha' => $sr->usaha_sls,
                             'muatan_murni' => $sr->muatan_murni_sls,
-                            'pct_usaha' => $pctUsahaDariMurni,
+                            'up_sls' => $sr->up_sls,
+                            'uk_sls' => $sr->uk_sls,
+                            'pct_up' => $pctUp,
+                            'pct_uk' => $pctUk,
+                            'is_low_up' => $isLowUp,
+                            'is_low_uk' => $isLowUk,
                         ];
                     }
                 }
@@ -158,7 +167,7 @@ class PetugasPerformanceRankingService
                 $ketTarget90 = "🎯 +{$lajuHarian90} submit/hari s.d. 20 Agt (Sisa {$neededTo90})";
             }
 
-            // Warning Usaha List (< 7% Usaha dari Muatan Murni)
+            // Warning Usaha List (UP < 5% or UK < 10% & muatan_murni > 0)
             if ($muatanMurni > 0) {
                 $anomaliSlsList = $slsAnomaliMap[$row->email_pencacah] ?? [];
             } else {

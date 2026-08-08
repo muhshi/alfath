@@ -684,7 +684,7 @@
                                     @endif
                                     @if(($rankingSummary['cnt_warning_usaha'] ?? 0) > 0)
                                         <span class="badge bg-danger text-white px-2.5 py-1.5 rounded-pill font-weight-bold shadow-xs">
-                                            ⚠️ {{ number_format($rankingSummary['cnt_warning_usaha']) }} Petugas Warning Usaha (< 7%)
+                                            ⚠️ {{ number_format($rankingSummary['cnt_warning_usaha']) }} Petugas Warning Usaha (UP < 5% / UK < 10%)
                                         </span>
                                     @endif
                                 </div>
@@ -702,7 +702,7 @@
                                         <th class="text-end text-success font-weight-bold">Total<br>Submit</th>
                                         <th class="text-end text-primary font-weight-extrabold">% Capaian<br><span class="text-muted font-weight-normal small">vs {{ number_format($dynamicTargetPct, 1) }}%</span></th>
                                         <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">3 Hari Last</span></th>
-                                        <th class="text-center text-danger">Warning Usaha<br><span class="text-muted font-weight-normal small">(< 7% Ditemukan)</span></th>
+                                        <th class="text-center text-danger">Warning Anomali Usaha<br><span class="text-muted font-weight-normal small">(UP < 5% / UK < 10%)</span></th>
                                         <th class="text-center text-indigo">Laju s.d. 20 Agt<br><span class="text-muted font-weight-normal small">(Kejar Target 90%)</span></th>
                                         <th class="text-end bg-amber-lt text-amber font-weight-extrabold">Skor Kinerja<br><span class="text-muted font-weight-normal small">(0 - 100)</span></th>
                                         <th class="text-center">Kategori Kinerja</th>
@@ -764,18 +764,29 @@
                                             <td class="text-center" data-order="{{ $row->has_warning_usaha ? count($row->anomali_sls_list) : 0 }}">
                                                 @if($row->has_warning_usaha)
                                                     @php
-                                                        $anomaliHtml = "<div class='text-start small'><strong>SLS Usaha &lt;7% Muatan Murni:</strong><ul class='ps-3 mb-0 mt-1'>";
+                                                        $anomaliHtml = "<div class='text-start small'><strong>🚨 Warning Anomali Usaha SLS:</strong><ul class='ps-3 mb-0 mt-1'>";
                                                         foreach ($row->anomali_sls_list as $an) {
-                                                            $anomaliHtml .= "<li><b>{$an['nama_sls']}</b>: {$an['usaha']} usaha dari {$an['muatan_murni']} muatan murni (<b class='text-danger'>{$an['pct_usaha']}% usaha</b>)</li>";
+                                                            $anomaliHtml .= "<li><b>{$an['nama_sls']}</b> (Muatan Murni: {$an['muatan_murni']}):<br>";
+                                                            if ($an['is_low_up']) {
+                                                                $anomaliHtml .= "• 🏢 <b class='text-danger'>Usaha Perusahaan: {$an['up_sls']} ({$an['pct_up']}% vs min 5%)</b><br>";
+                                                            } else {
+                                                                $anomaliHtml .= "• 🏢 Usaha Perusahaan: {$an['up_sls']} ({$an['pct_up']}% ✅)<br>";
+                                                            }
+                                                            if ($an['is_low_uk']) {
+                                                                $anomaliHtml .= "• 🏡 <b class='text-danger'>Usaha Keluarga: {$an['uk_sls']} ({$an['pct_uk']}% vs min 10%)</b>";
+                                                            } else {
+                                                                $anomaliHtml .= "• 🏡 Usaha Keluarga: {$an['uk_sls']} ({$an['pct_uk']}% ✅)";
+                                                            }
+                                                            $anomaliHtml .= "</li>";
                                                         }
-                                                        $anomaliHtml .= "</ul><span class='text-danger font-weight-bold d-block mt-1'>⚠️ Proporsi usaha di SLS ini terlalu rendah (&lt;7%). Wajib periksa kembali!</span></div>";
+                                                        $anomaliHtml .= "</ul><span class='text-danger font-weight-bold d-block mt-1'>⚠️ Wajib periksa kembali probing usaha di SLS ini!</span></div>";
                                                     @endphp
-                                                    <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm cursor-pointer" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-html="true" title="🚨 Warning Usaha Low (< 7% Murni)" data-bs-content="{{ $anomaliHtml }}">
-                                                        🚨 {{ count($row->anomali_sls_list) }} SLS &lt;7% Usaha
+                                                    <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm cursor-pointer" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-html="true" title="🚨 Warning Anomali Usaha SLS" data-bs-content="{{ $anomaliHtml }}">
+                                                        🚨 {{ count($row->anomali_sls_list) }} SLS Anomali
                                                     </span>
                                                 @else
                                                     <span class="badge bg-success-lt text-success px-2 py-1">
-                                                        ✅ Normal
+                                                        ✅ Usaha Normal
                                                     </span>
                                                 @endif
                                             </td>
