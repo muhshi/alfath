@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 class PetugasPerformanceRankingService
 {
     /**
-     * Calculate Petugas Performance Ranking & 3-Day Warning Signals.
+     * Calculate Petugas Performance Ranking, Target 90% to 20 Aug, SLS Low Usaha Warnings, & 3-Day Warning Signals.
      */
     public function calculateRankingData(Collection $records, ?string $selectedDate): array
     {
@@ -21,6 +21,10 @@ class PetugasPerformanceRankingService
         $currentDate = !empty($selectedDate) ? \Carbon\Carbon::parse($selectedDate) : \Carbon\Carbon::now();
         $diffDays = max(1, $startDate->diffInDays($currentDate, false) + 1);
         $dynamicTargetPct = min(100.0, round($diffDays * 1.33333, 2));
+
+        // Target Date: 20 August 2026 for 90% Milestone
+        $targetDate90 = \Carbon\Carbon::parse('2026-08-20');
+        $daysRemainingTo20Aug = max(1, $currentDate->diffInDays($targetDate90, false));
 
         // 2. Fetch 3 latest snapshot dates up to selectedDate
         $recentDates = [];
@@ -67,13 +71,87 @@ class PetugasPerformanceRankingService
             }
         }
 
-        // 3. Process Each Petugas
+        // 3. SLS Level Usaha Anomali Check (< 7% Usaha vs Submit)
+        $slsAnomaliMap = [];
+        if (Schema::connection($connName)->hasTable('monitoring_se2026')) {
+            $sipwSub = $db->table('sipw')
+                ->select('id_subsls', DB::raw('MAX(nama_sls) as nama_sls'))
+                ->groupBy('id_subsls');
+
+            $pkSub = $db->table('se2026_pemutakhiran_keluarga')
+                ->select('kode', DB::raw('MAX(sub_sls) as sub_sls'))
+                ->groupBy('kode');
+
+            $upSub = $db->table('se2026_usaha_perusahaan')
+                ->select('kode', DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'))
+                ->groupBy('kode');
+
+            $ukSub = $db->table('se2026_usaha_keluarga')
+                ->select('kode', DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED)) AS uk_ditemukan'))
+                ->groupBy('kode');
+
+            $slsRows = $db->table('monitoring_se2026 as m')
+                ->leftJoinSub($sipwSub, 'sipw', 'm.region_code', '=', 'sipw.id_subsls')
+                ->leftJoinSub($pkSub, 'pk', 'm.region_code', '=', 'pk.kode')
+                ->leftJoinSub($upSub, 'up', 'm.region_code', '=', 'up.kode')
+                ->leftJoinSub($ukSub, 'uk', 'm.region_code', '=', 'uk.kode')
+                ->select([
+                    'm.email_pencacah',
+                    'm.region_code',
+                    DB::raw('COALESCE(
+                        NULLIF(sipw.nama_sls, "-"),
+                        NULLIF(pk.sub_sls, "-"),
+                        NULLIF(pk.sub_sls, "TIDAK DIKETAHUI"),
+                        CONCAT("SLS ", m.region_code)
+                    ) as nama_sls'),
+                    DB::raw('SUM(m.total_beban) as beban_sls'),
+                    DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as submit_sls'),
+                    DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) as usaha_sls'),
+                ])
+                ->when(!empty($selectedDate), function ($q) use ($selectedDate) {
+                    $q->where('m.tanggal_tarik', '=', $selectedDate);
+                })
+                ->groupBy('m.email_pencacah', 'm.region_code', 'sipw.nama_sls', 'pk.sub_sls')
+                ->get();
+
+            foreach ($slsRows as $sr) {
+                if ($sr->submit_sls > 0) {
+                    $pctUsahaSls = round(($sr->usaha_sls / max(1, $sr->submit_sls)) * 100, 1);
+                    if ($pctUsahaSls < 7.0) {
+                        $slsAnomaliMap[$sr->email_pencacah][] = [
+                            'region_code' => $sr->region_code,
+                            'nama_sls' => $sr->nama_sls,
+                            'submit' => $sr->submit_sls,
+                            'usaha' => $sr->usaha_sls,
+                            'pct_usaha' => $pctUsahaSls,
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 4. Process Each Petugas
         $rankingList = collect();
         foreach ($records as $row) {
             $beban = max(1, $row->beban_saat_ini);
             $submit = $row->total_submit;
             $capaianPct = $row->pct_submit;
             $muatanMurni = $row->muatan_murni;
+
+            // Target 90% Calculation for 20 August 2026
+            $target90Count = (int) ceil($beban * 0.90);
+            $neededTo90 = max(0, $target90Count - $submit);
+            if ($capaianPct >= 90.0) {
+                $ketTarget90 = "✅ Selesai (>= 90%)";
+                $lajuHarian90 = 0;
+            } else {
+                $lajuHarian90 = (int) ceil($neededTo90 / $daysRemainingTo20Aug);
+                $ketTarget90 = "🎯 +{$lajuHarian90} submit/hari s.d. 20 Agt (Sisa {$neededTo90})";
+            }
+
+            // Warning Usaha List (< 7%)
+            $anomaliSlsList = $slsAnomaliMap[$row->email_pencacah] ?? [];
+            $hasWarningUsaha = count($anomaliSlsList) > 0;
 
             // Progress Score (Max 45)
             if ($capaianPct < $dynamicTargetPct) {
@@ -92,9 +170,6 @@ class PetugasPerformanceRankingService
             $skorKinerja = round($progressScore + $volumeScore, 1);
 
             // Warning logic:
-            // 1. If progress has reached 100% (completed), status is 'completed' (🎉 Selesai 100%).
-            // 2. If progress is ON-TRACK or ahead of daily target (e.g. 90% vs target 72%), status is 'normal' (✅ On-Track/Aman). No warning needed!
-            // 3. Warning (🚨 Stagnan / ⚠️ Lambat) ONLY applies if progress is BELOW daily target ($capaianPct < $dynamicTargetPct).
             if ($capaianPct >= 100.0 || $row->belum_dikerjakan <= 0) {
                 $warning = 'completed';
             } elseif ($capaianPct >= $dynamicTargetPct) {
@@ -122,7 +197,6 @@ class PetugasPerformanceRankingService
                     $rekomendasi = 'Monitoring Regular PML (On-Track)';
                 }
             } else {
-                // Capaian < Dynamic Target
                 if ($muatanMurni >= 330 && $capaianPct >= max(0, $dynamicTargetPct - 5.0)) {
                     $katCode = '2_RAJIN';
                     $katLabel = '2. Rajin (Good Performer 🟢)';
@@ -155,19 +229,33 @@ class PetugasPerformanceRankingService
             $item->rekomendasi = $rekomendasi;
             $item->warning_status = $warning;
 
+            // Target 90% & Warning Usaha Attributes
+            $item->needed_to_90 = $neededTo90;
+            $item->laju_harian_90 = $lajuHarian90;
+            $item->ket_target_90 = $ketTarget90;
+            $item->days_remaining_to_20aug = $daysRemainingTo20Aug;
+            $item->has_warning_usaha = $hasWarningUsaha;
+            $item->anomali_sls_list = $anomaliSlsList;
+
             $rankingList->push($item);
         }
 
-        // Sort ranking list by Skor Kinerja DESC, then Muatan Murni DESC
+        // Primary Sort: % Capaian Submit (pct_submit) DESC
+        // Secondary Sort: Skor Kinerja (skor_kinerja) DESC
+        // Tertiary Sort: Muatan Murni (muatan_murni) DESC
         $sortedRanking = $rankingList->sort(function ($a, $b) {
-            if ($a->skor_kinerja == $b->skor_kinerja) {
-                return $b->muatan_murni <=> $a->muatan_murni;
+            if ($a->pct_submit == $b->pct_submit) {
+                if ($a->skor_kinerja == $b->skor_kinerja) {
+                    return $b->muatan_murni <=> $a->muatan_murni;
+                }
+                return $b->skor_kinerja <=> $a->skor_kinerja;
             }
-            return $b->skor_kinerja <=> $a->skor_kinerja;
+            return $b->pct_submit <=> $a->pct_submit;
         })->values();
 
         $rankingSummary = [
             'dynamic_target_pct' => $dynamicTargetPct,
+            'days_remaining_to_20aug' => $daysRemainingTo20Aug,
             'cnt_srajin' => $sortedRanking->where('kat_code', '1_SANGAT_RAJIN')->count(),
             'cnt_rajin' => $sortedRanking->where('kat_code', '2_RAJIN')->count(),
             'cnt_cukup' => $sortedRanking->where('kat_code', '3_CUKUP')->count(),
@@ -175,6 +263,7 @@ class PetugasPerformanceRankingService
             'cnt_smalas' => $sortedRanking->where('kat_code', '5_SANGAT_MALAS')->count(),
             'cnt_stagnant' => $sortedRanking->where('warning_status', 'stagnant_3d')->count(),
             'cnt_slow' => $sortedRanking->where('warning_status', 'slow_progress')->count(),
+            'cnt_warning_usaha' => $sortedRanking->where('has_warning_usaha', true)->count(),
         ];
 
         return [

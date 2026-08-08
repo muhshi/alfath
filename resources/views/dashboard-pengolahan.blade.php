@@ -682,6 +682,11 @@
                                             🚨 {{ number_format($rankingSummary['cnt_stagnant']) }} Petugas 3 Hari Stagnan
                                         </span>
                                     @endif
+                                    @if(($rankingSummary['cnt_warning_usaha'] ?? 0) > 0)
+                                        <span class="badge bg-danger text-white px-2.5 py-1.5 rounded-pill font-weight-bold shadow-xs">
+                                            ⚠️ {{ number_format($rankingSummary['cnt_warning_usaha']) }} Petugas Warning Usaha (< 7%)
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
 
@@ -695,8 +700,10 @@
                                         <th>Nama Pengawas<br><span class="text-muted font-weight-normal small">/ PML</span></th>
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end text-success font-weight-bold">Total<br>Submit</th>
-                                        <th class="text-end">% Capaian<br><span class="text-muted font-weight-normal small">vs {{ number_format($dynamicTargetPct, 1) }}%</span></th>
+                                        <th class="text-end text-primary font-weight-extrabold">% Capaian<br><span class="text-muted font-weight-normal small">vs {{ number_format($dynamicTargetPct, 1) }}%</span></th>
                                         <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">3 Hari Last</span></th>
+                                        <th class="text-center text-danger">Warning Usaha<br><span class="text-muted font-weight-normal small">(< 7% Ditemukan)</span></th>
+                                        <th class="text-center text-indigo">Laju s.d. 20 Agt<br><span class="text-muted font-weight-normal small">(Kejar Target 90%)</span></th>
                                         <th class="text-end bg-amber-lt text-amber font-weight-extrabold">Skor Kinerja<br><span class="text-muted font-weight-normal small">(0 - 100)</span></th>
                                         <th class="text-center">Kategori Kinerja</th>
                                         <th>Rekomendasi Tindakan PML</th>
@@ -708,11 +715,11 @@
                                             <td class="text-muted small text-center">{{ $index + 1 }}</td>
                                             <td class="text-center font-weight-extrabold" data-order="{{ $index + 1 }}">
                                                 @if($index == 0)
-                                                    <span class="badge bg-warning text-dark px-2.5 py-1 rounded-circle fs-3 shadow-sm" title="Juara 1 Kinerja">🥇 #1</span>
+                                                    <span class="badge bg-warning text-dark px-2.5 py-1 rounded-circle fs-3 shadow-sm" title="Juara 1 Progres">🥇 #1</span>
                                                 @elseif($index == 1)
-                                                    <span class="badge bg-secondary text-white px-2.5 py-1 rounded-circle fs-3 shadow-sm" title="Juara 2 Kinerja">🥈 #2</span>
+                                                    <span class="badge bg-secondary text-white px-2.5 py-1 rounded-circle fs-3 shadow-sm" title="Juara 2 Progres">🥈 #2</span>
                                                 @elseif($index == 2)
-                                                    <span class="badge bg-amber-lt text-amber px-2.5 py-1 rounded-circle fs-3 border border-amber" title="Juara 3 Kinerja">🥉 #3</span>
+                                                    <span class="badge bg-amber-lt text-amber px-2.5 py-1 rounded-circle fs-3 border border-amber" title="Juara 3 Progres">🥉 #3</span>
                                                 @else
                                                     <span class="badge bg-light text-dark border px-2 py-1">#{{ $index + 1 }}</span>
                                                 @endif
@@ -730,7 +737,7 @@
                                             </td>
                                             <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
                                             <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
-                                            <td class="text-end" data-order="{{ $row->pct_submit }}">
+                                            <td class="text-end font-weight-extrabold text-primary fs-3" data-order="{{ $row->pct_submit }}">
                                                 <span class="badge {{ $row->pct_submit >= $dynamicTargetPct ? 'bg-success-lt text-success' : ($row->pct_submit >= max(0, $dynamicTargetPct - 10) ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
                                                     {{ number_format($row->pct_submit, 1) }}%
                                                 </span>
@@ -750,8 +757,42 @@
                                                     </span>
                                                 @else
                                                     <span class="badge bg-success-lt text-success px-2 py-1" title="Progres submit teratur">
-                                                        ✅ Lancar
+                                                        ✅ On-Track
                                                     </span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center" data-order="{{ $row->has_warning_usaha ? count($row->anomali_sls_list) : 0 }}">
+                                                @if($row->has_warning_usaha)
+                                                    @php
+                                                        $anomaliHtml = "<div class='text-start small'><strong>SLS Usaha &lt;7%:</strong><ul class='ps-3 mb-0 mt-1'>";
+                                                        foreach ($row->anomali_sls_list as $an) {
+                                                            $anomaliHtml .= "<li><b>{$an['nama_sls']}</b>: {$an['usaha']} usaha dari {$an['submit']} submit (<b class='text-danger'>{$an['pct_usaha']}%</b>)</li>";
+                                                        }
+                                                        $anomaliHtml .= "</ul><span class='text-danger font-weight-bold d-block mt-1'>⚠️ Wajib periksa kembali SLS ini!</span></div>";
+                                                    @endphp
+                                                    <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm cursor-pointer" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-html="true" title="🚨 Warning Usaha Low (< 7%)" data-bs-content="{{ $anomaliHtml }}">
+                                                        🚨 {{ count($row->anomali_sls_list) }} SLS &lt;7%
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-success-lt text-success px-2 py-1">
+                                                        ✅ Normal
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center" data-order="{{ $row->laju_harian_90 }}">
+                                                @if($row->pct_submit >= 90.0)
+                                                    <span class="badge bg-success-lt text-success font-weight-bold px-2 py-1">
+                                                        ✅ Aman (&ge; 90%)
+                                                    </span>
+                                                @else
+                                                    <div class="text-nowrap">
+                                                        <span class="badge bg-amber text-white font-weight-bold px-2 py-1 shadow-xs">
+                                                            +{{ number_format($row->laju_harian_90) }} / hari
+                                                        </span>
+                                                        <div class="small text-muted mt-0.5" style="font-size: 0.75rem;">
+                                                            Sisa {{ number_format($row->needed_to_90) }} submit ({{ $row->days_remaining_to_20aug }} hr lg)
+                                                        </div>
+                                                    </div>
                                                 @endif
                                             </td>
                                             <td class="text-end font-weight-extrabold text-amber bg-amber-lt fs-2" data-order="{{ $row->skor_kinerja }}">
@@ -933,7 +974,7 @@
                         },
                         pageLength: 25,
                         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
-                        order: [[9, 'desc']], // Default sort: Skor Kinerja (Index 9) Descending
+                        order: [[7, 'desc']], // Default sort: % Capaian (Index 7) Descending
                         columnDefs: [
                             { orderable: false, targets: [0] } // Disable sorting for 'No' column
                         ],
