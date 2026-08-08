@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 class PetugasPerformanceRankingService
 {
     /**
-     * Calculate Petugas Performance Ranking, Target 90% to 20 Aug, SLS Low Usaha Warnings (UP < 5% / UK < 10%), & 3-Day Warning Signals.
+     * Calculate Petugas Performance Ranking, Target 95% to 20 Aug, SLS Low Usaha Warnings (UP < 5% / UK < 10%), & 3-Day Warning Signals.
      */
     public function calculateRankingData(Collection $records, ?string $selectedDate): array
     {
@@ -22,9 +22,9 @@ class PetugasPerformanceRankingService
         $diffDays = max(1, $startDate->diffInDays($currentDate, false) + 1);
         $dynamicTargetPct = min(100.0, round($diffDays * 1.33333, 2));
 
-        // Target Date: 20 August 2026 for 90% Milestone
-        $targetDate90 = \Carbon\Carbon::parse('2026-08-20');
-        $daysRemainingTo20Aug = max(1, $currentDate->diffInDays($targetDate90, false));
+        // Target Date: 20 August 2026 for 95% Milestone
+        $targetDate95 = \Carbon\Carbon::parse('2026-08-20');
+        $daysRemainingTo20Aug = max(1, $currentDate->diffInDays($targetDate95, false));
 
         // 2. Fetch 3 latest snapshot dates up to selectedDate
         $recentDates = [];
@@ -156,15 +156,15 @@ class PetugasPerformanceRankingService
             $capaianPct = $row->pct_submit;
             $muatanMurni = $row->muatan_murni;
 
-            // Target 90% Calculation for 20 August 2026
-            $target90Count = (int) ceil($beban * 0.90);
-            $neededTo90 = max(0, $target90Count - $submit);
-            if ($capaianPct >= 90.0) {
-                $ketTarget90 = "✅ Selesai (>= 90%)";
-                $lajuHarian90 = 0;
+            // Target 95% Calculation for 20 August 2026
+            $target95Count = (int) ceil($beban * 0.95);
+            $neededTo95 = max(0, $target95Count - $submit);
+            if ($capaianPct >= 95.0) {
+                $ketTarget95 = "✅ Selesai (>= 95%)";
+                $lajuHarian95 = 0;
             } else {
-                $lajuHarian90 = (int) ceil($neededTo90 / $daysRemainingTo20Aug);
-                $ketTarget90 = "🎯 +{$lajuHarian90} submit/hari s.d. 20 Agt (Sisa {$neededTo90})";
+                $lajuHarian95 = (int) ceil($neededTo95 / $daysRemainingTo20Aug);
+                $ketTarget95 = "🎯 +{$lajuHarian95} submit/hari s.d. 20 Agt (Sisa {$neededTo95})";
             }
 
             // Warning Usaha List (UP < 5% or UK < 10% & muatan_murni > 0)
@@ -251,10 +251,10 @@ class PetugasPerformanceRankingService
             $item->rekomendasi = $rekomendasi;
             $item->warning_status = $warning;
 
-            // Target 90% & Warning Usaha Attributes
-            $item->needed_to_90 = $neededTo90;
-            $item->laju_harian_90 = $lajuHarian90;
-            $item->ket_target_90 = $ketTarget90;
+            // Target 95% & Warning Usaha Attributes
+            $item->needed_to_95 = $neededTo95;
+            $item->laju_harian_95 = $lajuHarian95;
+            $item->ket_target_95 = $ketTarget95;
             $item->days_remaining_to_20aug = $daysRemainingTo20Aug;
             $item->has_warning_usaha = $hasWarningUsaha;
             $item->anomali_sls_list = $anomaliSlsList;

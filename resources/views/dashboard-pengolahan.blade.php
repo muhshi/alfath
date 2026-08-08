@@ -703,7 +703,7 @@
                                         <th class="text-end text-primary font-weight-extrabold">% Capaian<br><span class="text-muted font-weight-normal small">vs {{ number_format($dynamicTargetPct, 1) }}%</span></th>
                                         <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">3 Hari Last</span></th>
                                         <th class="text-center text-danger">Warning Anomali Usaha<br><span class="text-muted font-weight-normal small">(UP < 5% / UK < 10%)</span></th>
-                                        <th class="text-center text-indigo">Laju s.d. 20 Agt<br><span class="text-muted font-weight-normal small">(Kejar Target 90%)</span></th>
+                                        <th class="text-center text-indigo">Laju s.d. 20 Agt<br><span class="text-muted font-weight-normal small">(Kejar Target 95%)</span></th>
                                         <th class="text-end bg-amber-lt text-amber font-weight-extrabold">Skor Kinerja<br><span class="text-muted font-weight-normal small">(0 - 100)</span></th>
                                         <th class="text-center">Kategori Kinerja</th>
                                         <th>Rekomendasi Tindakan PML</th>
@@ -790,18 +790,18 @@
                                                     </span>
                                                 @endif
                                             </td>
-                                            <td class="text-center" data-order="{{ $row->laju_harian_90 }}">
-                                                @if($row->pct_submit >= 90.0)
+                                            <td class="text-center" data-order="{{ $row->laju_harian_95 }}">
+                                                @if($row->pct_submit >= 95.0)
                                                     <span class="badge bg-success-lt text-success font-weight-bold px-2 py-1">
-                                                        ✅ Aman (&ge; 90%)
+                                                        ✅ Aman (&ge; 95%)
                                                     </span>
                                                 @else
                                                     <div class="text-nowrap">
-                                                        <span class="badge bg-amber text-white font-weight-bold px-2 py-1 shadow-xs">
-                                                            +{{ number_format($row->laju_harian_90) }} / hari
+                                                        <span class="badge font-weight-extrabold px-2.5 py-1 border shadow-xs" style="color: #78350f !important; background-color: #fef3c7 !important; border-color: #f59e0b !important; font-size: 0.85rem;">
+                                                            +{{ number_format($row->laju_harian_95) }} / hari
                                                         </span>
                                                         <div class="small text-muted mt-0.5" style="font-size: 0.75rem;">
-                                                            Sisa {{ number_format($row->needed_to_90) }} submit ({{ $row->days_remaining_to_20aug }} hr lg)
+                                                            Sisa {{ number_format($row->needed_to_95) }} submit ({{ $row->days_remaining_to_20aug }} hr lg)
                                                         </div>
                                                     </div>
                                                 @endif
