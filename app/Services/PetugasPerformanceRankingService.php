@@ -115,7 +115,8 @@ class PetugasPerformanceRankingService
                 ->get();
 
             foreach ($slsRows as $sr) {
-                if ($sr->submit_sls > 0) {
+                // Ignore if submit is 0 or if muatan murni (usaha) is empty (0)
+                if ($sr->submit_sls > 0 && $sr->usaha_sls > 0) {
                     $pctUsahaSls = round(($sr->usaha_sls / max(1, $sr->submit_sls)) * 100, 1);
                     if ($pctUsahaSls < 7.0) {
                         $slsAnomaliMap[$sr->email_pencacah][] = [
@@ -149,8 +150,13 @@ class PetugasPerformanceRankingService
                 $ketTarget90 = "🎯 +{$lajuHarian90} submit/hari s.d. 20 Agt (Sisa {$neededTo90})";
             }
 
-            // Warning Usaha List (< 7%)
-            $anomaliSlsList = $slsAnomaliMap[$row->email_pencacah] ?? [];
+            // Warning Usaha List (< 7% Usaha & muatan_murni > 0)
+            // If muatan murni is empty (0), ignore warning usaha completely
+            if ($muatanMurni > 0) {
+                $anomaliSlsList = $slsAnomaliMap[$row->email_pencacah] ?? [];
+            } else {
+                $anomaliSlsList = [];
+            }
             $hasWarningUsaha = count($anomaliSlsList) > 0;
 
             // Progress Score (Max 45)
