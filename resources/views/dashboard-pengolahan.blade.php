@@ -541,6 +541,8 @@
                                             </td>
                                         </tr>
                                     @endforelse
+                                </tbody>
+                            </table>
                         </div>
 
                         <!-- TAB 3: ALOKASI & PROGRESS PER SLS / SUB-SLS -->
