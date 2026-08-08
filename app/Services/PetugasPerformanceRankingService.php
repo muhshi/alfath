@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 class PetugasPerformanceRankingService
 {
     /**
-     * Calculate Petugas Performance Ranking, Target 90% to 20 Aug, SLS Low Usaha Warnings, & 3-Day Warning Signals.
+     * Calculate Petugas Performance Ranking, Target 90% to 20 Aug, SLS Low Muatan Murni Warnings (< 7%), & 3-Day Warning Signals.
      */
     public function calculateRankingData(Collection $records, ?string $selectedDate): array
     {
@@ -71,7 +71,7 @@ class PetugasPerformanceRankingService
             }
         }
 
-        // 3. SLS Level Usaha Anomali Check (< 7% Usaha vs Submit)
+        // 3. SLS Level Muatan Murni Anomali Check (< 7% Muatan Murni vs Submit)
         $slsAnomaliMap = [];
         if (Schema::connection($connName)->hasTable('monitoring_se2026')) {
             $sipwSub = $db->table('sipw')
@@ -79,7 +79,11 @@ class PetugasPerformanceRankingService
                 ->groupBy('id_subsls');
 
             $pkSub = $db->table('se2026_pemutakhiran_keluarga')
-                ->select('kode', DB::raw('MAX(sub_sls) as sub_sls'))
+                ->select(
+                    'kode',
+                    DB::raw('MAX(sub_sls) as sub_sls'),
+                    DB::raw('SUM(ditemukan + keluarga_baru) AS pk_ditemukan')
+                )
                 ->groupBy('kode');
 
             $upSub = $db->table('se2026_usaha_perusahaan')
@@ -106,7 +110,7 @@ class PetugasPerformanceRankingService
                     ) as nama_sls'),
                     DB::raw('SUM(m.total_beban) as beban_sls'),
                     DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as submit_sls'),
-                    DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) as usaha_sls'),
+                    DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni_sls'),
                 ])
                 ->when(!empty($selectedDate), function ($q) use ($selectedDate) {
                     $q->where('m.tanggal_tarik', '=', $selectedDate);
@@ -115,16 +119,20 @@ class PetugasPerformanceRankingService
                 ->get();
 
             foreach ($slsRows as $sr) {
-                // Ignore if submit is 0 or if muatan murni (usaha) is empty (0)
-                if ($sr->submit_sls > 0 && $sr->usaha_sls > 0) {
-                    $pctUsahaSls = round(($sr->usaha_sls / max(1, $sr->submit_sls)) * 100, 1);
-                    if ($pctUsahaSls < 7.0) {
+                // Check SLS with submit > 0 and non-empty muatan murni (muatan_murni_sls > 0)
+                if ($sr->submit_sls > 0 && $sr->muatan_murni_sls > 0) {
+                    $pctMuatanMurni = round(($sr->muatan_murni_sls / max(1, $sr->submit_sls)) * 100, 1);
+                    $pctTdkDitemukan = round(100.0 - $pctMuatanMurni, 1);
+
+                    // If Muatan Murni < 7% (meaning > 93% was submitted as Tidak Ditemukan/Tutup/Ganda)
+                    if ($pctMuatanMurni < 7.0) {
                         $slsAnomaliMap[$sr->email_pencacah][] = [
                             'region_code' => $sr->region_code,
                             'nama_sls' => $sr->nama_sls,
                             'submit' => $sr->submit_sls,
-                            'usaha' => $sr->usaha_sls,
-                            'pct_usaha' => $pctUsahaSls,
+                            'muatan_murni' => $sr->muatan_murni_sls,
+                            'pct_murni' => $pctMuatanMurni,
+                            'pct_tdk_ditemukan' => $pctTdkDitemukan,
                         ];
                     }
                 }
@@ -150,8 +158,7 @@ class PetugasPerformanceRankingService
                 $ketTarget90 = "🎯 +{$lajuHarian90} submit/hari s.d. 20 Agt (Sisa {$neededTo90})";
             }
 
-            // Warning Usaha List (< 7% Usaha & muatan_murni > 0)
-            // If muatan murni is empty (0), ignore warning usaha completely
+            // Warning Usaha/Muatan Murni List (< 7% Muatan Murni & muatan_murni > 0)
             if ($muatanMurni > 0) {
                 $anomaliSlsList = $slsAnomaliMap[$row->email_pencacah] ?? [];
             } else {

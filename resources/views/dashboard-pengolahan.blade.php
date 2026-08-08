@@ -764,14 +764,14 @@
                                             <td class="text-center" data-order="{{ $row->has_warning_usaha ? count($row->anomali_sls_list) : 0 }}">
                                                 @if($row->has_warning_usaha)
                                                     @php
-                                                        $anomaliHtml = "<div class='text-start small'><strong>SLS Usaha &lt;7%:</strong><ul class='ps-3 mb-0 mt-1'>";
+                                                        $anomaliHtml = "<div class='text-start small'><strong>SLS Muatan Murni &lt;7%:</strong><ul class='ps-3 mb-0 mt-1'>";
                                                         foreach ($row->anomali_sls_list as $an) {
-                                                            $anomaliHtml .= "<li><b>{$an['nama_sls']}</b>: {$an['usaha']} usaha dari {$an['submit']} submit (<b class='text-danger'>{$an['pct_usaha']}%</b>)</li>";
+                                                            $anomaliHtml .= "<li><b>{$an['nama_sls']}</b>: {$an['muatan_murni']} murni dari {$an['submit']} submit (<b class='text-danger'>{$an['pct_murni']}% murni</b>, {$an['pct_tdk_ditemukan']}% tdk ditemukan/tutup)</li>";
                                                         }
-                                                        $anomaliHtml .= "</ul><span class='text-danger font-weight-bold d-block mt-1'>⚠️ Wajib periksa kembali SLS ini!</span></div>";
+                                                        $anomaliHtml .= "</ul><span class='text-danger font-weight-bold d-block mt-1'>⚠️ Diduga diisi Tidak Ditemukan/Tutup masal. Wajib periksa kembali!</span></div>";
                                                     @endphp
-                                                    <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm cursor-pointer" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-html="true" title="🚨 Warning Usaha Low (< 7%)" data-bs-content="{{ $anomaliHtml }}">
-                                                        🚨 {{ count($row->anomali_sls_list) }} SLS &lt;7%
+                                                    <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm cursor-pointer" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-html="true" title="🚨 Warning Muatan Murni Low (< 7%)" data-bs-content="{{ $anomaliHtml }}">
+                                                        🚨 {{ count($row->anomali_sls_list) }} SLS &lt;7% Murni
                                                     </span>
                                                 @else
                                                     <span class="badge bg-success-lt text-success px-2 py-1">
