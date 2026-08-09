@@ -121,6 +121,7 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                         } else {
                             $exitCode = Artisan::call('import:usaha', [
                                 'file' => $fullPath,
+                                '--no-truncate' => true,
                             ]);
                             $label = 'Progres Usaha (Perusahaan & Keluarga)';
                         }
