@@ -21,9 +21,9 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
 
     protected string $view = 'filament.pages.fasih-scraper';
 
-    protected static ?string $title = 'Import Excel Usaha';
+    protected static ?string $title = 'Import Excel Data SE2026';
 
-    protected static ?string $navigationLabel = 'Import Excel Usaha';
+    protected static ?string $navigationLabel = 'Import Excel Data';
 
     public function table(Table $table): Table
     {
@@ -41,7 +41,7 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('jumlah_prelist_usaha')
-                    ->label('Prelist')
+                    ->label('Prelist Usaha')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('status___ditemukan')
@@ -71,18 +71,29 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('upload-excel-usaha')
-                ->label('Upload Excel Usaha')
+            Actions\Action::make('upload-excel-se2026')
+                ->label('Upload Excel Data SE2026')
                 ->icon('heroicon-o-document-arrow-up')
                 ->color('success')
                 ->form([
+                    Forms\Components\Select::make('jenis_import')
+                        ->label('Jenis File Excel')
+                        ->options([
+                            'usaha' => '📁 Excel Progres Usaha (Usaha Perusahaan & Usaha Keluarga)',
+                            'pemutakhiran_keluarga' => '👨‍👩‍👧‍👦 Excel Progres Pemutakhiran Keluarga (Sub-SLS)',
+                        ])
+                        ->default('usaha')
+                        ->required()
+                        ->native(false)
+                        ->helperText('Pilih jenis data Excel yang akan diunggah ke database.'),
+
                     Forms\Components\FileUpload::make('excel_file')
-                        ->label('File Excel Export Progres Pendataan (.xlsx)')
+                        ->label('File Excel Export FASIH (.xlsx)')
                         ->maxSize(65536) // Allow up to 64 MB
                         ->helperText('File format .xlsx. Maksimal ukuran 64 MB.')
                         ->required()
                         ->disk('local')
-                        ->directory('uploads/excel-usaha'),
+                        ->directory('uploads/excel-se2026'),
                 ])
                 ->action(function (array $data) {
                     set_time_limit(600);
@@ -90,6 +101,7 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
 
                     $relativeFilePath = $data['excel_file'];
                     $fullPath = Storage::disk('local')->path($relativeFilePath);
+                    $jenisImport = $data['jenis_import'] ?? 'usaha';
 
                     if (!file_exists($fullPath)) {
                         Notification::make()
@@ -101,16 +113,24 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                     }
 
                     try {
-                        $exitCode = Artisan::call('import:usaha', [
-                            'file' => $fullPath,
-                        ]);
+                        if ($jenisImport === 'pemutakhiran_keluarga') {
+                            $exitCode = Artisan::call('import:pemutakhiran-keluarga', [
+                                'file' => $fullPath,
+                            ]);
+                            $label = 'Progres Pemutakhiran Keluarga';
+                        } else {
+                            $exitCode = Artisan::call('import:usaha', [
+                                'file' => $fullPath,
+                            ]);
+                            $label = 'Progres Usaha (Perusahaan & Keluarga)';
+                        }
 
                         $output = Artisan::output();
 
                         if ($exitCode === 0) {
                             Notification::make()
                                 ->title('Import Excel Berhasil!')
-                                ->body($output ?: 'Data Excel Usaha Perusahaan dan Usaha Keluarga telah berhasil diimpor.')
+                                ->body($output ?: "Data Excel {$label} telah berhasil diimpor ke database.")
                                 ->success()
                                 ->send();
                         } else {
