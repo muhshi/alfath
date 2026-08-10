@@ -927,6 +927,7 @@
 
 @push('js')
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Prevent AMD loaders (e.g. Vite/TinyMCE) from hijacking DataTables CDN attachment
         window._tempDefine = window.define;
@@ -1170,8 +1171,14 @@
 
                         $('#modalAnomaliTbody').html(html);
                         var modalEl = document.getElementById('modalAnomaliDetail');
-                        var myModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                        myModal.show();
+                        if (window.bootstrap && window.bootstrap.Modal) {
+                            var myModal = window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl);
+                            myModal.show();
+                        } else if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+                            $(modalEl).modal('show');
+                        } else {
+                            $(modalEl).addClass('show').css('display', 'block');
+                        }
                     });
 
                     // Buka Form Input Catatan
