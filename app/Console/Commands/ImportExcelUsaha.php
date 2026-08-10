@@ -101,36 +101,36 @@ class ImportExcelUsaha extends Command
             $subSls = substr($subSls, 0, 255);
 
             $cawiDitemukan = (int) $this->cleanNumeric($cells[3] ?? null);
-            $capiDitemukan = (int) $this->cleanNumeric($cells[17] ?? null);
+            $capiDitemukan = (int) $this->cleanNumeric($cells[19] ?? null);
 
             $cawiTutup = (int) $this->cleanNumeric($cells[9] ?? null);
-            $capiTutup = (int) $this->cleanNumeric($cells[19] ?? null);
+            $capiTutup = (int) $this->cleanNumeric($cells[21] ?? null);
 
             $cawiGanda = (int) $this->cleanNumeric($cells[11] ?? null);
-            $capiGanda = (int) $this->cleanNumeric($cells[21] ?? null);
+            $capiGanda = (int) $this->cleanNumeric($cells[23] ?? null);
 
             $cawiTidakDitemukan = (int) $this->cleanNumeric($cells[13] ?? null);
-            $capiTidakDitemukan = (int) $this->cleanNumeric($cells[23] ?? null);
+            $capiTidakDitemukan = (int) $this->cleanNumeric($cells[25] ?? null);
 
-            $capiBaru = (int) $this->cleanNumeric($cells[25] ?? null);
-            $bkuTotal = (int) $this->cleanNumeric($cells[29] ?? null);
+            $capiBaru = (int) $this->cleanNumeric($cells[27] ?? null);
+            $bkuTotal = (int) $this->cleanNumeric($cells[33] ?? null);
 
             $batch[] = [
                 'kode' => $kode,
                 'sub_sls' => $subSls,
                 'jumlah_prelist_usaha' => $this->cleanNumeric($cells[2] ?? null),
                 'status___ditemukan' => (string) ($cawiDitemukan + $capiDitemukan),
-                'status___persentase_ditemukan' => $this->cleanNumeric($cells[18] ?? $cells[4] ?? null),
+                'status___persentase_ditemukan' => $this->cleanNumeric($cells[20] ?? $cells[4] ?? null),
                 'status___tutup' => (string) ($cawiTutup + $capiTutup),
-                'status___persentase_tutup' => $this->cleanNumeric($cells[20] ?? $cells[10] ?? null),
+                'status___persentase_tutup' => $this->cleanNumeric($cells[22] ?? $cells[10] ?? null),
                 'status___ganda' => (string) ($cawiGanda + $capiGanda),
-                'status___persentase_ganda' => $this->cleanNumeric($cells[22] ?? $cells[12] ?? null),
+                'status___persentase_ganda' => $this->cleanNumeric($cells[24] ?? $cells[12] ?? null),
                 'status___tidak_ditemukan' => (string) ($cawiTidakDitemukan + $capiTidakDitemukan),
-                'status___persentase_tidak_ditemukan' => $this->cleanNumeric($cells[24] ?? $cells[15] ?? null),
+                'status___persentase_tidak_ditemukan' => $this->cleanNumeric($cells[26] ?? $cells[14] ?? null),
                 'status___baru' => (string) $capiBaru,
-                'status___persentase_baru' => $this->cleanNumeric($cells[26] ?? null),
+                'status___persentase_baru' => $this->cleanNumeric($cells[28] ?? null),
                 'jumlah_usaha_bku' => (string) $bkuTotal,
-                'persentase_usaha_bku' => $this->cleanNumeric($cells[30] ?? null),
+                'persentase_usaha_bku' => $this->cleanNumeric($cells[34] ?? null),
                 'tanggal_data' => $tanggalData,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -216,12 +216,12 @@ class ImportExcelUsaha extends Command
             $batch[] = [
                 'kode' => $kode,
                 'sub_sls' => $subSls,
-                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka' => $this->cleanNumeric($cells[2] ?? null),
-                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup' => $this->cleanNumeric($cells[3] ?? null),
-                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ganda' => $this->cleanNumeric($cells[4] ?? null),
-                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di' => $this->cleanNumeric($cells[5] ?? null),
-                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru' => $this->cleanNumeric($cells[6] ?? null),
-                'jumlah_usaha_dalam_keluarga' => $this->cleanNumeric($cells[7] ?? null),
+                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka' => $this->cleanNumeric($cells[3] ?? null),
+                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup' => $this->cleanNumeric($cells[5] ?? null),
+                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ganda' => $this->cleanNumeric($cells[7] ?? null),
+                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di' => $this->cleanNumeric($cells[9] ?? null),
+                'jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru' => $this->cleanNumeric($cells[11] ?? null),
+                'jumlah_usaha_dalam_keluarga' => $this->cleanNumeric($cells[15] ?? null),
                 'tanggal_data' => $tanggalData,
                 'created_at' => now(),
                 'updated_at' => now(),
