@@ -399,8 +399,8 @@ class PengolahanExportService
             $sheet->setCellValue('K' . $rowIdx, $row->has_warning_usaha ? "⚠️ Warning (UP < 5% / UK < 10%)" : "✅ Normal");
             $sheet->setCellValue('L' . $rowIdx, (float) $row->laju_harian_95);
             $sheet->setCellValue('M' . $rowIdx, (float) $row->skor_kinerja);
-            $sheet->setCellValue('N' . $rowIdx, $row->kategori_kinerja);
-            $sheet->setCellValue('O' . $rowIdx, $row->rekomendasi_tindakan);
+            $sheet->setCellValue('N' . $rowIdx, $row->kat_label ?? '-');
+            $sheet->setCellValue('O' . $rowIdx, $row->rekomendasi ?? '-');
 
             // Anomali notes details
             $statusAnomali = '-';
