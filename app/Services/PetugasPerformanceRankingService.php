@@ -71,6 +71,15 @@ class PetugasPerformanceRankingService
             }
         }
 
+        // Fetch all anomaly notes from se2026_anomali_catatan
+        $catatanMap = [];
+        if (Schema::connection($connName)->hasTable('se2026_anomali_catatan')) {
+            $catatanMap = $db->table('se2026_anomali_catatan')
+                ->get()
+                ->keyBy('region_code')
+                ->toArray();
+        }
+
         // 3. SLS Level Usaha Check (Dual Thresholds: UP < 5% & UK < 10% dari Muatan Murni SLS)
         $slsAnomaliMap = [];
         if (Schema::connection($connName)->hasTable('monitoring_se2026')) {
@@ -131,6 +140,8 @@ class PetugasPerformanceRankingService
 
                     // Warning if Usaha Perusahaan < 5% OR Usaha Keluarga < 10% of Muatan Murni
                     if ($isLowUp || $isLowUk) {
+                        $catatanObj = $catatanMap[$sr->region_code] ?? null;
+
                         $slsAnomaliMap[$sr->email_pencacah][] = [
                             'region_code' => $sr->region_code,
                             'nama_sls' => $sr->nama_sls,
@@ -142,6 +153,10 @@ class PetugasPerformanceRankingService
                             'pct_uk' => $pctUk,
                             'is_low_up' => $isLowUp,
                             'is_low_uk' => $isLowUk,
+                            'status_tindak_lanjut' => $catatanObj ? $catatanObj->status : 'belum',
+                            'catatan_petugas' => $catatanObj ? $catatanObj->catatan : null,
+                            'catatan_admin' => $catatanObj ? $catatanObj->catatan_admin : null,
+                            'nama_petugas_catatan' => $catatanObj ? $catatanObj->nama_petugas : null,
                         ];
                     }
                 }
@@ -258,6 +273,23 @@ class PetugasPerformanceRankingService
             $item->days_remaining_to_20aug = $daysRemainingTo20Aug;
             $item->has_warning_usaha = $hasWarningUsaha;
             $item->anomali_sls_list = $anomaliSlsList;
+
+            // Count follow-up statuses per pencacah
+            $cntBelum = 0;
+            $cntPending = 0;
+            $cntApproved = 0;
+            foreach ($anomaliSlsList as $an) {
+                if ($an['status_tindak_lanjut'] === 'approved') {
+                    $cntApproved++;
+                } elseif ($an['status_tindak_lanjut'] === 'pending') {
+                    $cntPending++;
+                } else {
+                    $cntBelum++;
+                }
+            }
+            $item->cnt_anomali_belum = $cntBelum;
+            $item->cnt_anomali_pending = $cntPending;
+            $item->cnt_anomali_approved = $cntApproved;
 
             $rankingList->push($item);
         }

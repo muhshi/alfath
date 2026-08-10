@@ -766,26 +766,36 @@
                                             <td class="text-center" data-order="{{ $row->has_warning_usaha ? count($row->anomali_sls_list) : 0 }}">
                                                 @if($row->has_warning_usaha)
                                                     @php
-                                                        $anomaliHtml = "<div class='text-start small'><strong>🚨 Warning Anomali Usaha SLS:</strong><ul class='ps-3 mb-0 mt-1'>";
-                                                        foreach ($row->anomali_sls_list as $an) {
-                                                            $anomaliHtml .= "<li><b>{$an['nama_sls']}</b> (Muatan Murni: {$an['muatan_murni']}):<br>";
-                                                            if ($an['is_low_up']) {
-                                                                $anomaliHtml .= "• 🏢 <b class='text-danger'>Usaha Perusahaan: {$an['up_sls']} ({$an['pct_up']}% vs min 5%)</b><br>";
-                                                            } else {
-                                                                $anomaliHtml .= "• 🏢 Usaha Perusahaan: {$an['up_sls']} ({$an['pct_up']}% ✅)<br>";
-                                                            }
-                                                            if ($an['is_low_uk']) {
-                                                                $anomaliHtml .= "• 🏡 <b class='text-danger'>Usaha Keluarga: {$an['uk_sls']} ({$an['pct_uk']}% vs min 10%)</b>";
-                                                            } else {
-                                                                $anomaliHtml .= "• 🏡 Usaha Keluarga: {$an['uk_sls']} ({$an['pct_uk']}% ✅)";
-                                                            }
-                                                            $anomaliHtml .= "</li>";
-                                                        }
-                                                        $anomaliHtml .= "</ul><span class='text-danger font-weight-bold d-block mt-1'>⚠️ Wajib periksa kembali probing usaha di SLS ini!</span></div>";
+                                                        $cntApproved = $row->cnt_anomali_approved;
+                                                        $cntPending = $row->cnt_anomali_pending;
+                                                        $cntBelum = $row->cnt_anomali_belum;
+                                                        $totalAnomali = count($row->anomali_sls_list);
+                                                        $slsJsonData = htmlspecialchars(json_encode([
+                                                            'nama_pencacah' => $row->nama_pencacah,
+                                                            'email_pencacah' => $row->email_pencacah,
+                                                            'sls_list' => $row->anomali_sls_list
+                                                        ]), ENT_QUOTES, 'UTF-8');
                                                     @endphp
-                                                    <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm cursor-pointer" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-html="true" title="🚨 Warning Anomali Usaha SLS" data-bs-content="{{ $anomaliHtml }}">
-                                                        🚨 {{ count($row->anomali_sls_list) }} SLS Anomali
-                                                    </span>
+
+                                                    <div class="d-flex flex-column align-items-center gap-1">
+                                                        @if($cntApproved === $totalAnomali && $totalAnomali > 0)
+                                                            <span class="badge bg-success text-white font-weight-bold px-2 py-1 shadow-sm">
+                                                                ✅ {{ $cntApproved }}/{{ $totalAnomali }} SLS Disetujui
+                                                            </span>
+                                                        @elseif($cntPending > 0)
+                                                            <span class="badge bg-warning text-dark font-weight-bold px-2 py-1 shadow-sm">
+                                                                ⏳ {{ $cntPending }} Menunggu Approval
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm">
+                                                                🚨 {{ $cntBelum }} SLS Belum Ditindaklanjuti
+                                                            </span>
+                                                        @endif
+                                                        <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold px-2 py-0.5 mt-1 btn-detail-anomali"
+                                                            data-sls-data="{{ $slsJsonData }}" style="border-radius: 6px; font-size: 0.75rem;">
+                                                            🔍 Detail / Catatan
+                                                        </button>
+                                                    </div>
                                                 @else
                                                     <span class="badge bg-success-lt text-success px-2 py-1">
                                                         ✅ Usaha Normal
@@ -839,6 +849,78 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- MODAL DETAIL & TINDAK LANJUT ANOMALI SLS -->
+    <div class="modal fade" id="modalAnomaliDetail" tabindex="-1" aria-labelledby="modalAnomaliDetailLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg" style="border-radius: 16px; border: 1px solid #cbd5e1;">
+                <div class="modal-header bg-light py-3 border-bottom">
+                    <div>
+                        <h5 class="modal-title font-weight-bold text-dark mb-0" id="modalAnomaliDetailLabel">
+                            🚨 Detail & Tindak Lanjut Anomali Usaha SLS
+                        </h5>
+                        <div class="small text-muted" id="modalAnomaliSubTitle">Petugas: -</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info border-0 bg-info-lt text-dark mb-3 p-3 rounded-3 small">
+                        <div class="font-weight-bold mb-1">ℹ️ Panduan Tindak Lanjut Anomali:</div>
+                        <ul class="mb-0 ps-3">
+                            <li><b>Perubahan Data (Probing Usaha Nambah):</b> Jika hasil pendataan bertambah usahanya (sehingga UP &ge; 5% / UK &ge; 10%), anomali akan <b>hilang otomatis</b> saat data diperbarui.</li>
+                            <li><b>Data Tetap / Tidak Berubah:</b> Petugas dapat memberikan <b>catatan klarifikasi</b> (misal: SLS kawasan persawahan / pemukiman non-usaha). Catatan akan diajukan ke Admin untuk disetujui (Approval).</li>
+                        </ul>
+                    </div>
+
+                    <!-- Container Tabel Daftar SLS Anomali -->
+                    <div class="table-responsive">
+                        <table class="table table-vcenter table-bordered small card-table">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Nama SLS & Kode</th>
+                                    <th class="text-center">Muatan Murni</th>
+                                    <th>Rincian Probing Usaha</th>
+                                    <th class="text-center">Status & Catatan Admin</th>
+                                    <th class="text-center">Aksi / Tindak Lanjut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalAnomaliTbody">
+                                <!-- Injected dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Form Accordion untuk Input Catatan -->
+                    <div id="formContainerCatatan" class="mt-4 p-3 bg-light rounded-3 border d-none">
+                        <h6 class="font-weight-bold text-primary mb-2">
+                            ✏️ Form Input Catatan Klarifikasi: <span id="formNamaSls" class="text-dark"></span>
+                        </h6>
+                        <form id="formSimpanCatatan">
+                            @csrf
+                            <input type="hidden" id="formRegionCode" name="region_code" value="">
+                            <input type="hidden" id="formNamaPetugas" name="nama_petugas" value="">
+                            <input type="hidden" id="formEmailPetugas" name="email_petugas" value="">
+
+                            <div class="mb-3">
+                                <label class="form-label font-weight-bold small text-muted">Catatan Klarifikasi / Alasan Lapangan <span class="text-danger">*</span></label>
+                                <textarea id="formCatatanText" name="catatan" class="form-control" rows="3" required minlength="5" placeholder="Contoh: SLS 001B merupakan kawasan persawahan murni dan pemukiman tani, tidak ditemukan usaha komersial/perusahaan."></textarea>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnCancelFormCatatan">Batal</button>
+                                <button type="submit" class="btn btn-primary btn-sm font-weight-bold" id="btnSubmitCatatan">
+                                    <span class="spinner-border spinner-border-sm me-1 d-none" id="spinnerSubmit"></span>
+                                    Kirim Catatan ke Admin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-secondary font-weight-bold" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
@@ -1020,6 +1102,118 @@
                         $('#table-loading-overlay').addClass('hidden');
                         $('#pengolahan-table, #pml-table, #sls-table, #ranking-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
                     }
+
+                    // =====================================================
+                    // Anomali SLS Detail Modal & Form JS Handlers
+                    // =====================================================
+                    $(document).on('click', '.btn-detail-anomali', function() {
+                        var rawData = $(this).attr('data-sls-data');
+                        if (!rawData) return;
+                        var data = JSON.parse(rawData);
+
+                        $('#modalAnomaliSubTitle').text('Petugas: ' + data.nama_pencacah + ' (' + data.email_pencacah + ')');
+                        $('#formContainerCatatan').addClass('d-none');
+
+                        var html = '';
+                        $.each(data.sls_list, function(idx, sls) {
+                            var upHtml = sls.is_low_up ? '<span class="text-danger font-weight-bold">🏢 UP: ' + sls.up_sls + ' (' + sls.pct_up + '% < min 5%)</span>' : '<span class="text-success">🏢 UP: ' + sls.up_sls + ' (' + sls.pct_up + '% ✅)</span>';
+                            var ukHtml = sls.is_low_uk ? '<span class="text-danger font-weight-bold">🏡 UK: ' + sls.uk_sls + ' (' + sls.pct_uk + '% < min 10%)</span>' : '<span class="text-success">🏡 UK: ' + sls.uk_sls + ' (' + sls.pct_uk + '% ✅)</span>';
+
+                            var statusBadge = '';
+                            var catatanContent = '';
+                            var aksiBtn = '';
+
+                            if (sls.status_tindak_lanjut === 'approved') {
+                                statusBadge = '<span class="badge bg-success text-white font-weight-bold px-2 py-1">✅ Disetujui Admin</span>';
+                                catatanContent = '<div class="mt-1 small bg-white p-2 rounded border text-dark text-start"><b>Catatan Petugas:</b> ' + (sls.catatan_petugas || '-') + '</div>';
+                                if (sls.catatan_admin) {
+                                    catatanContent += '<div class="mt-1 small text-success text-start"><b>Catatan Admin:</b> ' + sls.catatan_admin + '</div>';
+                                }
+                                aksiBtn = '<span class="text-muted small font-weight-bold">✅ Selesai</span>';
+                            } else if (sls.status_tindak_lanjut === 'pending') {
+                                statusBadge = '<span class="badge bg-warning text-dark font-weight-bold px-2 py-1">⏳ Menunggu Approval</span>';
+                                catatanContent = '<div class="mt-1 small bg-white p-2 rounded border text-dark text-start"><b>Catatan:</b> ' + (sls.catatan_petugas || '-') + '</div>';
+                                aksiBtn = '<button type="button" class="btn btn-xs btn-outline-secondary btn-buka-form" data-code="' + sls.region_code + '" data-nama="' + sls.nama_sls + '" data-pencacah="' + data.nama_pencacah + '" data-email="' + data.email_pencacah + '" data-existing="' + (sls.catatan_petugas || '') + '">✏️ Edit Catatan</button>';
+                            } else if (sls.status_tindak_lanjut === 'rejected') {
+                                statusBadge = '<span class="badge bg-danger text-white font-weight-bold px-2 py-1">❌ Catatan Ditolak</span>';
+                                catatanContent = '<div class="mt-1 small text-danger text-start"><b>Alasan Penolakan:</b> ' + (sls.catatan_admin || 'Perlu perbaikan alasan') + '</div>';
+                                aksiBtn = '<button type="button" class="btn btn-xs btn-outline-danger btn-buka-form" data-code="' + sls.region_code + '" data-nama="' + sls.nama_sls + '" data-pencacah="' + data.nama_pencacah + '" data-email="' + data.email_pencacah + '" data-existing="' + (sls.catatan_petugas || '') + '">✏️ Perbaiki Catatan</button>';
+                            } else {
+                                statusBadge = '<span class="badge bg-secondary text-white px-2 py-1">🔴 Belum Ada Catatan</span>';
+                                aksiBtn = '<button type="button" class="btn btn-xs btn-primary font-weight-bold btn-buka-form" data-code="' + sls.region_code + '" data-nama="' + sls.nama_sls + '" data-pencacah="' + data.nama_pencacah + '" data-email="' + data.email_pencacah + '" data-existing="">➕ Beri Catatan</button>';
+                            }
+
+                            html += '<tr>';
+                            html += '<td><div class="font-weight-bold">' + sls.nama_sls + '</div><div class="font-monospace text-muted small">' + sls.region_code + '</div></td>';
+                            html += '<td class="text-center font-weight-bold text-teal">' + sls.muatan_murni + '</td>';
+                            html += '<td>' + upHtml + '<br>' + ukHtml + '</td>';
+                            html += '<td class="text-center">' + statusBadge + catatanContent + '</td>';
+                            html += '<td class="text-center">' + aksiBtn + '</td>';
+                            html += '</tr>';
+                        });
+
+                        $('#modalAnomaliTbody').html(html);
+                        var modalEl = document.getElementById('modalAnomaliDetail');
+                        var myModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        myModal.show();
+                    });
+
+                    // Buka Form Input Catatan
+                    $(document).on('click', '.btn-buka-form', function() {
+                        var code = $(this).attr('data-code');
+                        var nama = $(this).attr('data-nama');
+                        var pencacah = $(this).attr('data-pencacah');
+                        var email = $(this).attr('data-email');
+                        var existing = $(this).attr('data-existing');
+
+                        $('#formRegionCode').val(code);
+                        $('#formNamaPetugas').val(pencacah);
+                        $('#formEmailPetugas').val(email);
+                        $('#formNamaSls').text(nama + ' (' + code + ')');
+                        $('#formCatatanText').val(existing);
+
+                        $('#formContainerCatatan').removeClass('d-none');
+                    });
+
+                    $('#btnCancelFormCatatan').click(function() {
+                        $('#formContainerCatatan').addClass('d-none');
+                    });
+
+                    // AJAX Submit Catatan
+                    $('#formSimpanCatatan').submit(function(e) {
+                        e.preventDefault();
+
+                        var btn = $('#btnSubmitCatatan');
+                        var spinner = $('#spinnerSubmit');
+                        btn.prop('disabled', true);
+                        spinner.removeClass('d-none');
+
+                        $.ajax({
+                            url: '{{ route("dashboard.pengolahan.catatan-anomali") }}',
+                            type: 'POST',
+                            data: $(this).serialize(),
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}'
+                            },
+                            success: function(resp) {
+                                btn.prop('disabled', false);
+                                spinner.addClass('d-none');
+
+                                alert('✅ ' + resp.message);
+                                $('#formContainerCatatan').addClass('d-none');
+                                location.reload();
+                            },
+                            error: function(err) {
+                                btn.prop('disabled', false);
+                                spinner.addClass('d-none');
+                                var errMsg = 'Gagal menyimpan catatan.';
+                                if (err.responseJSON && err.responseJSON.message) {
+                                    errMsg = err.responseJSON.message;
+                                }
+                                alert('❌ Error: ' + errMsg);
+                            }
+                        });
+                    });
 
                     setTimeout(revealDataTables, 150);
                 } else {

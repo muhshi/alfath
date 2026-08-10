@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Se2026AnomaliCatatan;
 use App\Services\PengolahanExportService;
 use App\Services\PetugasPerformanceRankingService;
 use App\Services\Se2026MonitoringService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PengolahanController extends Controller
@@ -46,6 +48,35 @@ class PengolahanController extends Controller
             'dynamicTargetPct' => $rankingData['dynamicTargetPct'],
             'rankingSummary' => $rankingData['rankingSummary'],
             'kpiSummary' => $kpiSummary,
+        ]);
+    }
+
+    /**
+     * Store or update an anomaly clarification note for an SLS from dashboard modal.
+     */
+    public function simpanCatatanAnomali(Request $request): JsonResponse
+    {
+        $request->validate([
+            'region_code' => 'required|string|size:16',
+            'catatan' => 'required|string|min:5|max:1000',
+            'nama_petugas' => 'nullable|string|max:255',
+            'email_petugas' => 'nullable|string|max:255',
+        ]);
+
+        Se2026AnomaliCatatan::updateOrCreate(
+            ['region_code' => $request->input('region_code')],
+            [
+                'catatan' => trim($request->input('catatan')),
+                'nama_petugas' => $request->input('nama_petugas'),
+                'email_petugas' => $request->input('email_petugas'),
+                'status' => 'pending',
+                'updated_at' => now(),
+            ]
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Catatan klarifikasi berhasil dikirim. Status saat ini: Menunggu Approval Admin.',
         ]);
     }
 

@@ -157,7 +157,12 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Restorasi Tab **Ranking Kinerja Petugas (🏆)**: Mengembalikan Tab 4 Ranking Kinerja Petugas beserta kalkulasi Skor Kinerja (0-100), Target Milestone 95% s.d. 20 Agustus, indikator laju harian, serta sistem warning anomali SLS (Usaha Perusahaan < 5% / Usaha Keluarga < 10%) & 3-day stagnancy signal.
   - Pemulihan 4 Tab Utama: Menjamin ke-4 tab (`Tab 1: PPL`, `Tab 2: PML`, `Tab 3: SLS`, dan `Tab 4: Ranking Kinerja`) berfungsi 100% normal dan lancar saat berpindah tab.
   - Database Performance Indexes (`2026_08_10_000001_add_performance_indexes_se2026`): Menambahkan composite index `idx_tgl_email` pada `monitoring_se2026(tanggal_tarik, email_pencacah)` dan `idx_email_pengawas` pada `alokasi_pengawas.email_pengawas`. Berhasil memotong waktu eksekusi agregasi dari >30 detik (timeout) menjadi ~17 detik tanpa menghilangkan fitur ranking maupun data statistik penting.
-  - Peningkatan Batas Memori PHP (`ini_set('memory_limit', '512M')`): Menambahkan alokasi memori hingga 512M pada `PengolahanController.php` untuk mencegah error `Allowed memory size exhausted` saat me-render buffer Blade view berukuran besar yang memuat 3.900+ data SLS dan 1.000+ data ranking petugas. Hasil render kini super cepat (~4,3 detik).
+  - **Sistem Catatan & Approval Anomali Usaha SLS SE2026**:
+    - Otomasi Resolve Probing Usaha: Jika data pendataan bertambah (UP ≥ 5% / UK ≥ 10%) akibat update scraping/import, warning anomali pada SLS tersebut **hilang/teratasi secara otomatis**.
+    - Fitur Input Catatan Klarifikasi Petugas: Menambahkan modal interaktif `modalAnomaliDetail` pada Dashboard Pengolahan dengan tombol **"✏️ Beri Catatan Klarifikasi"** untuk SLS yang datanya tidak berubah (misal: kawasan persawahan/pemukiman non-usaha) dan mengirim via AJAX POST `/dashboard-pengolahan/catatan-anomali`.
+    - Halaman Approval Admin Filament (`Se2026AnomaliCatatanResource`): Menambahkan resource admin Filament baru di kelompok *Sensus Ekonomi 2026* untuk menyetujui (Approve) atau menolak (Reject) catatan klarifikasi petugas, lengkap dengan *navigation badge counter* pengajuan Pending berwarna merah.
+    - Indikator Status & Tampilan Elegan di Dashboard: Menampilkan badge status real-time di tabel ranking (`✅ X/Y Disetujui`, `⏳ X Menunggu Approval`, `🚨 X Belum Ditindaklanjuti`) serta menampilkan catatan klarifikasi yang telah disetujui beserta tanggapan admin di dashboard secara rapi.
+
 
 
 

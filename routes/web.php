@@ -27,6 +27,7 @@ Route::get('/home', [\App\Http\Controllers\HomeController::class , 'index'])->na
 Route::get('/dashboard-se2026', [\App\Http\Controllers\ExecutiveDashboardController::class , 'index'])->name('dashboard.se2026');
 Route::get('/dashboard-pengolahan', [\App\Http\Controllers\PengolahanController::class , 'index'])->name('dashboard.pengolahan');
 Route::get('/dashboard-pengolahan/export', [\App\Http\Controllers\PengolahanController::class , 'export'])->name('dashboard.pengolahan.export');
+Route::post('/dashboard-pengolahan/catatan-anomali', [\App\Http\Controllers\PengolahanController::class , 'simpanCatatanAnomali'])->name('dashboard.pengolahan.catatan-anomali');
 Route::get('/debug-db', function () {
     try {
         return 'Conn: ' . (new \App\Models\ScraperCookie)->getConnectionName();
