@@ -158,5 +158,6 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Server-Side DataTables Processing: Menambahkan 2 endpoint baru (`/dashboard-pengolahan/pml-data` dan `/dashboard-pengolahan/sls-data`) yang mendukung server-side pagination, sorting, dan searching melalui DataTables AJAX — menghindari loading seluruh data sekaligus pada tabel dengan 430K+ rows.
   - Optimasi KPI Summary: Mengganti kalkulasi `total_pml` dan `total_sls` dari `$collection->get()->count()` menjadi query `COUNT(DISTINCT ...)` ringan yang jauh lebih efisien pada tabel besar.
   - Database Index Baru: Menambahkan index `idx_email_pengawas` pada `alokasi_pengawas.email_pengawas` dan composite index `idx_tgl_email` pada `monitoring_se2026(tanggal_tarik, email_pencacah)` untuk mempercepat JOIN dan GROUP BY.
-  - Refactor Controller Methods: Memisahkan `getPmlQuery` dan `getSlsQuery` menjadi `getPmlBaseQuery` dan `getSlsBaseQuery` yang mengembalikan query builder (belum dieksekusi), serta menambahkan method `pmlData()` dan `slsData()` sebagai AJAX endpoint dengan format JSON DataTables.
+  - Refactor Service Layer Pattern (`app/Services/`): Memangkas `PengolahanController.php` dari **680 baris** menjadi hanya **~65 baris**. Memisahkan seluruh kueri database & pencetakan DataTables ke `PengolahanDataService.php` serta seluruh pembuatan file Excel multi-sheet ke `PengolahanExportService.php` demi menjaga kebersihan arsitektur Laravel.
+
 
