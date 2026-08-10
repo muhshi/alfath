@@ -95,6 +95,8 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                             'application/x-zip-compressed',
                             'application/octet-stream',
                             'application/zip',
+                            'application/wps-office.xlsx',
+                            'application/x-ms-excel',
                         ])
                         ->maxSize(65536) // Allow up to 64 MB
                         ->helperText('File format .xlsx. Maksimal ukuran 64 MB.')
