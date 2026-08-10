@@ -77,8 +77,11 @@
         table.dataTable thead th.bg-amber-lt { background-color: #fef3c7 !important; }
         table.dataTable thead th.bg-danger { background-color: #d63939 !important; color: #ffffff !important; }
         .table-responsive {
+            max-height: calc(100vh - 270px) !important;
+            min-height: 380px !important;
             overflow-x: auto !important;
-            overflow-y: visible !important;
+            overflow-y: auto !important;
+            position: relative !important;
         }
         table.dataTable tbody td {
             vertical-align: middle;
