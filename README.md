@@ -163,7 +163,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Halaman Approval Admin Filament (`Se2026AnomaliCatatanResource`): Menambahkan resource admin Filament baru di kelompok *Sensus Ekonomi 2026* untuk menyetujui (Approve) atau menolak (Reject) catatan klarifikasi petugas, lengkap dengan *navigation badge counter* pengajuan Pending berwarna merah.
     - Fix Filament Action Class Error: Memperbaiki import namespace `Filament\Actions` di `Se2026AnomaliCatatanResource.php` untuk mengatasi error `Class "Filament\Tables\Actions\Action" not found`.
     - Hirarki Badge Warning Anomali Usaha: Memperbarui logika status badge agar badge `🚨 X SLS Belum Ditindaklanjuti` **tetap tampil menonjol** selama masih terdapat SLS yang belum diberi catatan klarifikasi (badge `⏳ Menunggu Approval` hanya tampil apabila **seluruh SLS** pada petugas tersebut telah dikirimkan catatannya).
-    - Multi-Sheet Excel Export 4-in-1 Dashboard (`PengolahanExportService`): Meng-upgrade fitur Export Excel menjadi **Workbook 4 Sheet Lengkap**: `Data Petugas (PPL)`, `Agregasi Pengawas (PML)`, `Alokasi Per SLS` (lengkap 20 kolom termasuk `Total Ditemukan` & `Total Tdk Ditemukan`), serta `Ranking Kinerja Petugas` (lengkap dengan Skor Kinerja, Status Warning, & Catatan Anomali). Proses eksekusi ~6.100 data sangat ringan dan selesai hanya dalam ~19 detik dengan penggunaan memori terukur (~324 MB).
+    - Fix Upload Excel Failed Error (Limit Size PHP): Meng-upgrade `upload_max_filesize` dan `post_max_size` dari default `2M`/`8M` menjadi **`128M`** (via `php.ini`, `.user.ini`, & `public/.htaccess`) serta menambahkan `acceptedFileTypes` pada `FasihScraper.php` untuk mengeliminasi error `failed to upload` saat mengunggah file Excel berukuran > 2MB.
+
 
 
 
