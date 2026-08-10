@@ -164,6 +164,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Fix Filament Action Class Error: Memperbaiki import namespace `Filament\Actions` di `Se2026AnomaliCatatanResource.php` untuk mengatasi error `Class "Filament\Tables\Actions\Action" not found`.
     - Hirarki Badge Warning Anomali Usaha: Memperbarui logika status badge agar badge `🚨 X SLS Belum Ditindaklanjuti` **tetap tampil menonjol** selama masih terdapat SLS yang belum diberi catatan klarifikasi (badge `⏳ Menunggu Approval` hanya tampil apabila **seluruh SLS** pada petugas tersebut telah dikirimkan catatannya).
     - Fix Upload Excel Failed Error (Limit Size PHP & Livewire Logging): Meng-upgrade `upload_max_filesize` dan `post_max_size` dari default `2M`/`8M` menjadi **`128M`** (via `php.ini`, `.user.ini`, & `public/.htaccess`), membuat direktori `storage/app/livewire-tmp` & `storage/app/private/uploads/excel-se2026`, menambahkan instrumen logging diagnostik penuh di `storage/logs/laravel.log`, serta menerapkan *dynamic APP_URL host matching* pada `AppServiceProvider.php` untuk mencegah kegagalan verifikasi signed URL (HTTP 401).
+    - Fitur Freeze Header Tabel (*Sticky Table Header*): Menambahkan CSS `position: sticky; top: 0; z-index: 15` dengan background solid dan *inset shadow divider* pada ke-4 tabel di Dashboard Pengolahan (`Tab PPL`, `Tab PML`, `Tab SLS`, & `Tab Ranking Kinerja`) sehingga header tabel tetap terkunci di bagian atas layar saat pengguna melakukan scroll ke bawah untuk kebutuhan screenshot data.
+
 
 
 

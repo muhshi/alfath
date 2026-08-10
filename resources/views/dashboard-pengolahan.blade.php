@@ -41,22 +41,44 @@
         table.dataTable {
             margin-top: 0 !important;
             margin-bottom: 0 !important;
-            border-collapse: collapse !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
             width: 100% !important;
         }
+        table.dataTable thead {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 15 !important;
+        }
         table.dataTable thead th {
-            border-bottom: 2px solid #e2e8f0 !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 15 !important;
             font-weight: 700;
             font-size: 0.75rem;
             letter-spacing: 0.02em;
             color: #334155;
-            background-color: #f8fafc;
+            background-color: #f8fafc !important;
             vertical-align: middle;
             padding: 0.65rem 0.45rem !important;
             white-space: normal !important;
             line-height: 1.25;
             text-wrap: balance;
             text-align: center !important;
+            box-shadow: inset 0 -2px 0 #cbd5e1, 0 3px 6px rgba(0, 0, 0, 0.08) !important;
+        }
+        /* Opaque backgrounds for special sticky table header cells */
+        table.dataTable thead th.bg-teal-lt { background-color: #e6fffa !important; }
+        table.dataTable thead th.bg-danger-lt { background-color: #ffeef0 !important; }
+        table.dataTable thead th.bg-purple-lt { background-color: #f3e8ff !important; }
+        table.dataTable thead th.bg-warning-lt { background-color: #fffbeb !important; }
+        table.dataTable thead th.bg-success-lt { background-color: #f0fdf4 !important; }
+        table.dataTable thead th.bg-primary-lt { background-color: #f0f9ff !important; }
+        table.dataTable thead th.bg-amber-lt { background-color: #fef3c7 !important; }
+        table.dataTable thead th.bg-danger { background-color: #d63939 !important; color: #ffffff !important; }
+        .table-responsive {
+            overflow-x: auto !important;
+            overflow-y: visible !important;
         }
         table.dataTable tbody td {
             vertical-align: middle;
