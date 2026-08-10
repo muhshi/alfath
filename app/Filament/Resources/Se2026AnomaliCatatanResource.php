@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\Se2026AnomaliCatatanResource\Pages;
 use App\Models\Se2026AnomaliCatatan;
 use Filament\Actions;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -43,7 +44,7 @@ class Se2026AnomaliCatatanResource extends Resource
                 Tables\Columns\TextColumn::make('nama_petugas')
                     ->label('Petugas Pengaju')
                     ->searchable()
-                    ->description(fn (Se2026AnomaliCatatan $record): ?string => $record->email_petugas),
+                    ->description(fn(Se2026AnomaliCatatan $record): ?string => $record->email_petugas),
                 Tables\Columns\TextColumn::make('catatan')
                     ->label('Catatan Klarifikasi')
                     ->wrap()
@@ -51,13 +52,13 @@ class Se2026AnomaliCatatanResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status Approval')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'approved' => 'success',
                         'pending' => 'warning',
                         'rejected' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'approved' => '✅ Disetujui',
                         'pending' => '⏳ Menunggu Approval',
                         'rejected' => '❌ Ditolak',
@@ -114,7 +115,7 @@ class Se2026AnomaliCatatanResource extends Resource
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (Se2026AnomaliCatatan $record): bool => $record->status !== 'approved'),
+                    ->visible(fn(Se2026AnomaliCatatan $record): bool => $record->status !== 'approved'),
 
                 Actions\Action::make('reject')
                     ->label('Tolak')
@@ -143,12 +144,12 @@ class Se2026AnomaliCatatanResource extends Resource
                             ->danger()
                             ->send();
                     })
-                    ->visible(fn (Se2026AnomaliCatatan $record): bool => $record->status !== 'rejected'),
+                    ->visible(fn(Se2026AnomaliCatatan $record): bool => $record->status !== 'rejected'),
 
                 Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+                BulkActionGroup::make([
                     Actions\DeleteBulkAction::make(),
                 ]),
             ]);
