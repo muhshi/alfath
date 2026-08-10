@@ -79,7 +79,8 @@ class Se2026MonitoringService
         $ukSubquery = $db->table('se2026_usaha_keluarga')
             ->select(
                 'kode',
-                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED)) AS uk_ditemukan')
+                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru AS SIGNED)) AS uk_ditemukan'),
+                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ganda AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di AS SIGNED)) AS uk_tdk')
             )
             ->groupBy('kode');
 
@@ -185,7 +186,28 @@ class Se2026MonitoringService
             ->groupBy('id_subsls');
 
         $pkSub = $db->table('se2026_pemutakhiran_keluarga')
-            ->select('kode', DB::raw('MAX(sub_sls) as sub_sls'))
+            ->select(
+                'kode',
+                DB::raw('MAX(sub_sls) as sub_sls'),
+                DB::raw('SUM(ditemukan + keluarga_baru) AS pk_ditemukan'),
+                DB::raw('SUM(meninggal + tidak_eligible + tidak_dapat_ditemui + tidak_ditemukan) AS pk_tdk')
+            )
+            ->groupBy('kode');
+
+        $upSub = $db->table('se2026_usaha_perusahaan')
+            ->select(
+                'kode',
+                DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'),
+                DB::raw('SUM(CAST(status___tutup AS SIGNED) + CAST(status___ganda AS SIGNED) + CAST(status___tidak_ditemukan AS SIGNED)) AS up_tdk')
+            )
+            ->groupBy('kode');
+
+        $ukSub = $db->table('se2026_usaha_keluarga')
+            ->select(
+                'kode',
+                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru AS SIGNED)) AS uk_ditemukan'),
+                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ganda AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di AS SIGNED)) AS uk_tdk')
+            )
             ->groupBy('kode');
 
         $query = $db->table('monitoring_se2026 as m')
@@ -195,6 +217,8 @@ class Se2026MonitoringService
             ->leftJoin('monitoring_sls_se2026 as sls', 'm.region_code', '=', 'sls.level_6_full_code')
             ->leftJoinSub($sipwSub, 'sipw', 'm.region_code', '=', 'sipw.id_subsls')
             ->leftJoinSub($pkSub, 'pk', 'm.region_code', '=', 'pk.kode')
+            ->leftJoinSub($upSub, 'up', 'm.region_code', '=', 'up.kode')
+            ->leftJoinSub($ukSub, 'uk', 'm.region_code', '=', 'uk.kode')
             ->select([
                 'm.tanggal_tarik as tanggal_data',
                 'm.region_code',
@@ -214,6 +238,12 @@ class Se2026MonitoringService
                 DB::raw('IFNULL(SUM(m.status_open), 0) as status_open'),
                 DB::raw('IFNULL(SUM(m.status_draft), 0) as status_draft'),
                 DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit'),
+                DB::raw('IFNULL(SUM(up.up_ditemukan), 0) as up_ditemukan'),
+                DB::raw('IFNULL(SUM(up.up_tdk), 0) as up_tdk'),
+                DB::raw('IFNULL(SUM(uk.uk_ditemukan), 0) as uk_ditemukan'),
+                DB::raw('IFNULL(SUM(uk.uk_tdk), 0) as uk_tdk'),
+                DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as pk_ditemukan'),
+                DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as pk_tdk'),
             ])
             ->groupBy([
                 'm.tanggal_tarik',
