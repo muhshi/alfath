@@ -20,6 +20,8 @@ class PengolahanController extends Controller
      */
     public function index(Request $request)
     {
+        ini_set('memory_limit', '512M');
+
         $data = $this->monitoringService->getFilteredQuery($request);
         $records = $data['query']->get();
 
@@ -52,6 +54,8 @@ class PengolahanController extends Controller
      */
     public function export(Request $request)
     {
+        ini_set('memory_limit', '512M');
+
         $filtered = $this->monitoringService->getFilteredQuery($request);
         return $this->exportService->exportToExcel($filtered, $this->monitoringService->getKecNameMap());
     }

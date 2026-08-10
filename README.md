@@ -157,7 +157,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Restorasi Tab **Ranking Kinerja Petugas (🏆)**: Mengembalikan Tab 4 Ranking Kinerja Petugas beserta kalkulasi Skor Kinerja (0-100), Target Milestone 95% s.d. 20 Agustus, indikator laju harian, serta sistem warning anomali SLS (Usaha Perusahaan < 5% / Usaha Keluarga < 10%) & 3-day stagnancy signal.
   - Pemulihan 4 Tab Utama: Menjamin ke-4 tab (`Tab 1: PPL`, `Tab 2: PML`, `Tab 3: SLS`, dan `Tab 4: Ranking Kinerja`) berfungsi 100% normal dan lancar saat berpindah tab.
   - Database Performance Indexes (`2026_08_10_000001_add_performance_indexes_se2026`): Menambahkan composite index `idx_tgl_email` pada `monitoring_se2026(tanggal_tarik, email_pencacah)` dan `idx_email_pengawas` pada `alokasi_pengawas.email_pengawas`. Berhasil memotong waktu eksekusi agregasi dari >30 detik (timeout) menjadi ~17 detik tanpa menghilangkan fitur ranking maupun data statistik penting.
-  - Arsitektur Clean Controller (`~50 baris`): `PengolahanController.php` tetap mempertahankan Service Layer Pattern yang terpisah rapi dengan mengdelegasikan tugas data ke `Se2026MonitoringService`, `PetugasPerformanceRankingService`, dan `PengolahanExportService`.
+  - Peningkatan Batas Memori PHP (`ini_set('memory_limit', '512M')`): Menambahkan alokasi memori hingga 512M pada `PengolahanController.php` untuk mencegah error `Allowed memory size exhausted` saat me-render buffer Blade view berukuran besar yang memuat 3.900+ data SLS dan 1.000+ data ranking petugas. Hasil render kini super cepat (~4,3 detik).
+
 
 
 
