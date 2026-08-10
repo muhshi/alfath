@@ -90,6 +90,8 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                     Forms\Components\FileUpload::make('excel_file')
                         ->label('File Excel Export FASIH (.xlsx)')
                         ->acceptedFileTypes([
+                            '.xlsx',
+                            '.xls',
                             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                             'application/vnd.ms-excel',
                             'application/x-zip-compressed',
