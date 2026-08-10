@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\Se2026AnomaliCatatanResource\Pages;
 use App\Models\Se2026AnomaliCatatan;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -86,7 +87,7 @@ class Se2026AnomaliCatatanResource extends Resource
                     ->default('pending'),
             ])
             ->actions([
-                Tables\Actions\Action::make('approve')
+                Actions\Action::make('approve')
                     ->label('Approve')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
@@ -115,7 +116,7 @@ class Se2026AnomaliCatatanResource extends Resource
                     })
                     ->visible(fn (Se2026AnomaliCatatan $record): bool => $record->status !== 'approved'),
 
-                Tables\Actions\Action::make('reject')
+                Actions\Action::make('reject')
                     ->label('Tolak')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')

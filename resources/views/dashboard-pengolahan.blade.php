@@ -778,21 +778,21 @@
                                                     @endphp
 
                                                     <div class="d-flex flex-column align-items-center gap-1">
-                                                        @if($cntApproved === $totalAnomali && $totalAnomali > 0)
-                                                            <span class="badge bg-success text-white font-weight-bold px-2 py-1 shadow-sm">
-                                                                ✅ {{ $cntApproved }}/{{ $totalAnomali }} SLS Disetujui
+                                                        @if($cntBelum > 0)
+                                                            <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm" title="Ada {{ $cntBelum }} SLS anomali yang belum diberi catatan">
+                                                                🚨 {{ $cntBelum }} SLS Belum Ditindaklanjuti
                                                             </span>
                                                         @elseif($cntPending > 0)
-                                                            <span class="badge bg-warning text-dark font-weight-bold px-2 py-1 shadow-sm">
+                                                            <span class="badge bg-warning text-dark font-weight-bold px-2 py-1 shadow-sm" style="background-color: #f59e0b !important; color: #ffffff !important;" title="Seluruh SLS telah diberi catatan, menunggu approval admin">
                                                                 ⏳ {{ $cntPending }} Menunggu Approval
                                                             </span>
                                                         @else
-                                                            <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm">
-                                                                🚨 {{ $cntBelum }} SLS Belum Ditindaklanjuti
+                                                            <span class="badge bg-success text-white font-weight-bold px-2 py-1 shadow-sm" title="Seluruh catatan klarifikasi SLS telah disetujui admin">
+                                                                ✅ {{ $cntApproved }}/{{ $totalAnomali }} SLS Disetujui
                                                             </span>
                                                         @endif
-                                                        <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold px-2 py-0.5 mt-1 btn-detail-anomali"
-                                                            data-sls-data="{{ $slsJsonData }}" style="border-radius: 6px; font-size: 0.75rem;">
+                                                        <button type="button" class="btn btn-sm btn-detail-anomali font-weight-bold py-0.5 px-2 mt-0.5 shadow-xs"
+                                                            data-sls-data="{{ $slsJsonData }}" style="border-radius: 12px; font-size: 0.72rem; border: 1px solid #93c5fd; background-color: #eff6ff; color: #1e40af; transition: all 0.2s ease-in-out;">
                                                             🔍 Detail / Catatan
                                                         </button>
                                                     </div>
