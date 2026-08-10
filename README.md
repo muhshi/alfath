@@ -163,7 +163,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Halaman Approval Admin Filament (`Se2026AnomaliCatatanResource`): Menambahkan resource admin Filament baru di kelompok *Sensus Ekonomi 2026* untuk menyetujui (Approve) atau menolak (Reject) catatan klarifikasi petugas, lengkap dengan *navigation badge counter* pengajuan Pending berwarna merah.
     - Fix Filament Action Class Error: Memperbaiki import namespace `Filament\Actions` di `Se2026AnomaliCatatanResource.php` untuk mengatasi error `Class "Filament\Tables\Actions\Action" not found`.
     - Hirarki Badge Warning Anomali Usaha: Memperbarui logika status badge agar badge `🚨 X SLS Belum Ditindaklanjuti` **tetap tampil menonjol** selama masih terdapat SLS yang belum diberi catatan klarifikasi (badge `⏳ Menunggu Approval` hanya tampil apabila **seluruh SLS** pada petugas tersebut telah dikirimkan catatannya).
-    - Detail Probing & Agregasi Total Per SLS (Tab 3): Menambahkan 8 kolom metrics probing & agregasi total pada **Tab 3: Alokasi Per SLS / Sub-SLS**: `UP Ditemukan`, `UP Tdk/Tutup/Ganda`, `UK Ditemukan`, `UK Tdk/Tutup/Ganda`, `Keluarga Ditemukan`, `Keluarga Tdk/Meninggal`, **`Total Ditemukan`** (Agregasi UP + UK + PK), dan **`Total Tdk Ditemukan / Tutup / Ganda`** (Bold Red Highlight). Dengan 2 kolom total ini, pengawas dapat dengan 1x klik header mengurutkan SLS mana yang paling menumpuk status tidak ditemukan/tutup/ganda-nya.
+    - Multi-Sheet Excel Export 4-in-1 Dashboard (`PengolahanExportService`): Meng-upgrade fitur Export Excel menjadi **Workbook 4 Sheet Lengkap**: `Data Petugas (PPL)`, `Agregasi Pengawas (PML)`, `Alokasi Per SLS` (lengkap 20 kolom termasuk `Total Ditemukan` & `Total Tdk Ditemukan`), serta `Ranking Kinerja Petugas` (lengkap dengan Skor Kinerja, Status Warning, & Catatan Anomali). Proses eksekusi ~6.100 data sangat ringan dan selesai hanya dalam ~19 detik dengan penggunaan memori terukur (~324 MB).
+
 
 
 
