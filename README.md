@@ -163,7 +163,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Halaman Approval Admin Filament (`Se2026AnomaliCatatanResource`): Menambahkan resource admin Filament baru di kelompok *Sensus Ekonomi 2026* untuk menyetujui (Approve) atau menolak (Reject) catatan klarifikasi petugas, lengkap dengan *navigation badge counter* pengajuan Pending berwarna merah.
     - Fix Filament Action Class Error: Memperbaiki import namespace `Filament\Actions` di `Se2026AnomaliCatatanResource.php` untuk mengatasi error `Class "Filament\Tables\Actions\Action" not found`.
     - Hirarki Badge Warning Anomali Usaha: Memperbarui logika status badge agar badge `🚨 X SLS Belum Ditindaklanjuti` **tetap tampil menonjol** selama masih terdapat SLS yang belum diberi catatan klarifikasi (badge `⏳ Menunggu Approval` hanya tampil apabila **seluruh SLS** pada petugas tersebut telah dikirimkan catatannya).
-    - Fix Upload Excel Failed Error (Limit Size PHP & Storage Dir): Meng-upgrade `upload_max_filesize` dan `post_max_size` dari default `2M`/`8M` menjadi **`128M`** (via `php.ini`, `.user.ini`, & `public/.htaccess`), membuat direktori `storage/app/livewire-tmp` & `storage/app/private/uploads/excel-se2026`, serta menambahkan pola ekstensi `.xlsx` dan `.xls` pada `acceptedFileTypes` di `FasihScraper.php` untuk mengeliminasi error `failed to upload` saat mengunggah file Excel berukuran > 2MB.
+    - Fix Upload Excel Failed Error (Limit Size PHP & Livewire Logging): Meng-upgrade `upload_max_filesize` dan `post_max_size` dari default `2M`/`8M` menjadi **`128M`** (via `php.ini`, `.user.ini`, & `public/.htaccess`), membuat direktori `storage/app/livewire-tmp` & `storage/app/private/uploads/excel-se2026`, menambahkan instrumen logging diagnostik penuh di `storage/logs/laravel.log`, serta menerapkan *dynamic APP_URL host matching* pada `AppServiceProvider.php` untuk mencegah kegagalan verifikasi signed URL (HTTP 401).
+
 
 
 
