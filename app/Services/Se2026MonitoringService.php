@@ -244,6 +244,8 @@ class Se2026MonitoringService
                 DB::raw('IFNULL(SUM(uk.uk_tdk), 0) as uk_tdk'),
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as pk_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as pk_tdk'),
+                DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as total_ditemukan'),
+                DB::raw('(IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0)) as total_tdk'),
             ])
             ->groupBy([
                 'm.tanggal_tarik',
