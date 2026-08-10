@@ -161,7 +161,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Otomasi Resolve Probing Usaha: Jika data pendataan bertambah (UP ≥ 5% / UK ≥ 10%) akibat update scraping/import, warning anomali pada SLS tersebut **hilang/teratasi secara otomatis**.
     - Fitur Input Catatan Klarifikasi Petugas: Menambahkan modal interaktif `modalAnomaliDetail` pada Dashboard Pengolahan dengan tombol **"✏️ Beri Catatan Klarifikasi"** untuk SLS yang datanya tidak berubah (misal: kawasan persawahan/pemukiman non-usaha) dan mengirim via AJAX POST `/dashboard-pengolahan/catatan-anomali`.
     - Halaman Approval Admin Filament (`Se2026AnomaliCatatanResource`): Menambahkan resource admin Filament baru di kelompok *Sensus Ekonomi 2026* untuk menyetujui (Approve) atau menolak (Reject) catatan klarifikasi petugas, lengkap dengan *navigation badge counter* pengajuan Pending berwarna merah.
-    - Indikator Status & Tampilan Elegan di Dashboard: Menampilkan badge status real-time di tabel ranking (`✅ X/Y Disetujui`, `⏳ X Menunggu Approval`, `🚨 X Belum Ditindaklanjuti`) serta menampilkan catatan klarifikasi yang telah disetujui beserta tanggapan admin di dashboard secara rapi.
+    - Fix JS JSON Parsing Error: Mengubah enkoding atribut `data-sls-data` pada tombol modal dari HTML entity escaping menjadi **Base64 JSON encoding** (`base64_encode` & `b64DecodeUnicode`) untuk menjamin tidak ada error `Uncaught SyntaxError: Expected property name or '}' in JSON` ketika data SLS memuat tanda kutip atau karakter khusus.
+
 
 
 

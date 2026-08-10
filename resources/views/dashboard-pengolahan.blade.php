@@ -770,11 +770,11 @@
                                                         $cntPending = $row->cnt_anomali_pending;
                                                         $cntBelum = $row->cnt_anomali_belum;
                                                         $totalAnomali = count($row->anomali_sls_list);
-                                                        $slsJsonData = htmlspecialchars(json_encode([
+                                                        $slsJsonData = base64_encode(json_encode([
                                                             'nama_pencacah' => $row->nama_pencacah,
                                                             'email_pencacah' => $row->email_pencacah,
                                                             'sls_list' => $row->anomali_sls_list
-                                                        ]), ENT_QUOTES, 'UTF-8');
+                                                        ]));
                                                     @endphp
 
                                                     <div class="d-flex flex-column align-items-center gap-1">
@@ -1103,13 +1103,29 @@
                         $('#pengolahan-table, #pml-table, #sls-table, #ranking-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
                     }
 
+                    function b64DecodeUnicode(str) {
+                        try {
+                            return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+                                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                            }).join(''));
+                        } catch(e) {
+                            return atob(str);
+                        }
+                    }
+
                     // =====================================================
                     // Anomali SLS Detail Modal & Form JS Handlers
                     // =====================================================
                     $(document).on('click', '.btn-detail-anomali', function() {
                         var rawData = $(this).attr('data-sls-data');
                         if (!rawData) return;
-                        var data = JSON.parse(rawData);
+                        var data = {};
+                        try {
+                            data = JSON.parse(b64DecodeUnicode(rawData));
+                        } catch(e) {
+                            console.error("Failed parsing b64 json:", e);
+                            return;
+                        }
 
                         $('#modalAnomaliSubTitle').text('Petugas: ' + data.nama_pencacah + ' (' + data.email_pencacah + ')');
                         $('#formContainerCatatan').addClass('d-none');
