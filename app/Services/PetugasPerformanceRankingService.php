@@ -83,11 +83,17 @@ class PetugasPerformanceRankingService
         // 3. SLS Level Usaha Check (Dual Thresholds: UP < 5% & UK < 10% dari Muatan Murni SLS)
         $slsAnomaliMap = [];
         if (Schema::connection($connName)->hasTable('monitoring_se2026')) {
+            $monitoringService = app(Se2026MonitoringService::class);
+            $upDate = $monitoringService->getTargetDateForTable('se2026_usaha_perusahaan', $selectedDate);
+            $ukDate = $monitoringService->getTargetDateForTable('se2026_usaha_keluarga', $selectedDate);
+            $pkDate = $monitoringService->getTargetDateForTable('se2026_pemutakhiran_keluarga', $selectedDate);
+
             $sipwSub = $db->table('sipw')
                 ->select('id_subsls', DB::raw('MAX(nama_sls) as nama_sls'))
                 ->groupBy('id_subsls');
 
             $pkSub = $db->table('se2026_pemutakhiran_keluarga')
+                ->when($pkDate, fn ($q) => $q->where('tanggal_data', $pkDate))
                 ->select(
                     'kode',
                     DB::raw('MAX(sub_sls) as sub_sls'),
@@ -96,10 +102,12 @@ class PetugasPerformanceRankingService
                 ->groupBy('kode');
 
             $upSub = $db->table('se2026_usaha_perusahaan')
+                ->when($upDate, fn ($q) => $q->where('tanggal_data', $upDate))
                 ->select('kode', DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'))
                 ->groupBy('kode');
 
             $ukSub = $db->table('se2026_usaha_keluarga')
+                ->when($ukDate, fn ($q) => $q->where('tanggal_data', $ukDate))
                 ->select('kode', DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED)) AS uk_ditemukan'))
                 ->groupBy('kode');
 

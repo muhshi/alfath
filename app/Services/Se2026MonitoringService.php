@@ -66,8 +66,13 @@ class Se2026MonitoringService
             $perPage = 15;
         }
 
+        $upDate = $this->getTargetDateForTable('se2026_usaha_perusahaan', $selectedDate);
+        $ukDate = $this->getTargetDateForTable('se2026_usaha_keluarga', $selectedDate);
+        $pkDate = $this->getTargetDateForTable('se2026_pemutakhiran_keluarga', $selectedDate);
+
         // Subquery for Usaha Perusahaan
         $upSubquery = $db->table('se2026_usaha_perusahaan')
+            ->when($upDate, fn ($q) => $q->where('tanggal_data', $upDate))
             ->select(
                 'kode',
                 DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'),
@@ -77,6 +82,7 @@ class Se2026MonitoringService
 
         // Subquery for Usaha Keluarga
         $ukSubquery = $db->table('se2026_usaha_keluarga')
+            ->when($ukDate, fn ($q) => $q->where('tanggal_data', $ukDate))
             ->select(
                 'kode',
                 DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru AS SIGNED)) AS uk_ditemukan'),
@@ -86,6 +92,7 @@ class Se2026MonitoringService
 
         // Subquery for Pemutakhiran Keluarga
         $pkSubquery = $db->table('se2026_pemutakhiran_keluarga')
+            ->when($pkDate, fn ($q) => $q->where('tanggal_data', $pkDate))
             ->select(
                 'kode',
                 DB::raw('SUM(ditemukan + keluarga_baru) AS pk_ditemukan'),
@@ -181,11 +188,16 @@ class Se2026MonitoringService
         $search = trim((string) $request->get('search', ''));
         $kodekec = trim((string) $request->get('kodekec', ''));
 
+        $upDate = $this->getTargetDateForTable('se2026_usaha_perusahaan', $selectedDate);
+        $ukDate = $this->getTargetDateForTable('se2026_usaha_keluarga', $selectedDate);
+        $pkDate = $this->getTargetDateForTable('se2026_pemutakhiran_keluarga', $selectedDate);
+
         $sipwSub = $db->table('sipw')
             ->select('id_subsls', DB::raw('MAX(nama_sls) as nama_sls'))
             ->groupBy('id_subsls');
 
         $pkSub = $db->table('se2026_pemutakhiran_keluarga')
+            ->when($pkDate, fn ($q) => $q->where('tanggal_data', $pkDate))
             ->select(
                 'kode',
                 DB::raw('MAX(sub_sls) as sub_sls'),
@@ -195,6 +207,7 @@ class Se2026MonitoringService
             ->groupBy('kode');
 
         $upSub = $db->table('se2026_usaha_perusahaan')
+            ->when($upDate, fn ($q) => $q->where('tanggal_data', $upDate))
             ->select(
                 'kode',
                 DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'),
@@ -203,6 +216,7 @@ class Se2026MonitoringService
             ->groupBy('kode');
 
         $ukSub = $db->table('se2026_usaha_keluarga')
+            ->when($ukDate, fn ($q) => $q->where('tanggal_data', $ukDate))
             ->select(
                 'kode',
                 DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru AS SIGNED)) AS uk_ditemukan'),
@@ -291,7 +305,12 @@ class Se2026MonitoringService
         $search = trim((string) $request->get('search', ''));
         $kodekec = trim((string) $request->get('kodekec', ''));
 
+        $upDate = $this->getTargetDateForTable('se2026_usaha_perusahaan', $selectedDate);
+        $ukDate = $this->getTargetDateForTable('se2026_usaha_keluarga', $selectedDate);
+        $pkDate = $this->getTargetDateForTable('se2026_pemutakhiran_keluarga', $selectedDate);
+
         $upSubquery = $db->table('se2026_usaha_perusahaan')
+            ->when($upDate, fn ($q) => $q->where('tanggal_data', $upDate))
             ->select(
                 'kode',
                 DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'),
@@ -300,6 +319,7 @@ class Se2026MonitoringService
             ->groupBy('kode');
 
         $ukSubquery = $db->table('se2026_usaha_keluarga')
+            ->when($ukDate, fn ($q) => $q->where('tanggal_data', $ukDate))
             ->select(
                 'kode',
                 DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED)) AS uk_ditemukan')
@@ -307,6 +327,7 @@ class Se2026MonitoringService
             ->groupBy('kode');
 
         $pkSubquery = $db->table('se2026_pemutakhiran_keluarga')
+            ->when($pkDate, fn ($q) => $q->where('tanggal_data', $pkDate))
             ->select(
                 'kode',
                 DB::raw('SUM(ditemukan + keluarga_baru) AS pk_ditemukan'),
@@ -385,5 +406,32 @@ class Se2026MonitoringService
                 ? round(($records->sum('total_submit') / $records->sum('beban_saat_ini')) * 100, 2)
                 : 0
         ];
+    }
+
+    /**
+     * Get target tanggal_data for a given table based on selectedDate.
+     */
+    public function getTargetDateForTable(string $tableName, ?string $selectedDate): ?string
+    {
+        $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
+        $db = DB::connection($connName);
+
+        if (!Schema::connection($connName)->hasTable($tableName)) {
+            return null;
+        }
+
+        $targetDate = $db->table($tableName)
+            ->whereNotNull('tanggal_data')
+            ->when(!empty($selectedDate), function ($q) use ($selectedDate) {
+                $q->where('tanggal_data', '<=', $selectedDate);
+            })
+            ->orderBy('tanggal_data', 'desc')
+            ->value('tanggal_data');
+
+        if (!$targetDate) {
+            $targetDate = $db->table($tableName)->max('tanggal_data');
+        }
+
+        return $targetDate;
     }
 }
