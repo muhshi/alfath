@@ -145,11 +145,11 @@ class Se2026AnomaliCatatanResource extends Resource
                     })
                     ->visible(fn (Se2026AnomaliCatatan $record): bool => $record->status !== 'rejected'),
 
-                Tables\Actions\DeleteAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
