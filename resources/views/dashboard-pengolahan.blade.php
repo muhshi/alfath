@@ -294,7 +294,12 @@
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">TOTAL SUBMIT</div>
                             <div class="h2 font-weight-extrabold text-success mb-0">{{ number_format($kpiSummary['total_submit'] ?? 0) }}</div>
-                            <div class="small text-success font-weight-bold mt-1">{{ number_format($kpiSummary['pct_overall_submit'] ?? 0, 1) }}% Capaian</div>
+                            <div class="small font-weight-bold mt-1">
+                                <span class="text-success">{{ number_format($kpiSummary['pct_overall_submit'] ?? 0, 1) }}% Submit</span>
+                                @if(($kpiSummary['total_draft'] ?? 0) > 0)
+                                    <span class="text-purple ms-1" title="{{ number_format($kpiSummary['total_draft']) }} data draft">(+Draft: {{ number_format($kpiSummary['pct_overall_submit_draft'] ?? 0, 1) }}%)</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -695,8 +700,8 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="p-2.5 border rounded bg-light h-100">
-                                                    <div class="font-weight-bold text-danger mb-1">3. Safety Rule & Warning 3-Hari</div>
-                                                    <p class="text-muted mb-0">Petugas dengan Capaian &ge; Target Harian <strong>dilarang masuk kategori Malas</strong>. Warning 🚨 3 Hari Stagnan diberikan jika submit tidak bertambah 3 snapshot berturut-turut.</p>
+                                                    <div class="font-weight-bold text-danger mb-1">3. Safety Rule & Warning Stagnan</div>
+                                                    <p class="text-muted mb-0">Petugas dengan Capaian &ge; Target Harian <strong>dilarang masuk kategori Malas</strong>. Warning 🚨 Stagnan diberikan jika submit tidak bertambah berturut-turut (misal: Stagnan 5 hari).</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -722,7 +727,7 @@
                                     </span>
                                     @if(($rankingSummary['cnt_stagnant'] ?? 0) > 0)
                                         <span class="badge bg-danger-lt text-danger px-2.5 py-1.5 rounded-pill font-weight-bold border border-danger">
-                                            🚨 {{ number_format($rankingSummary['cnt_stagnant']) }} Petugas 3 Hari Stagnan
+                                            🚨 {{ number_format($rankingSummary['cnt_stagnant']) }} Petugas Stagnan
                                         </span>
                                     @endif
                                     @if(($rankingSummary['cnt_warning_usaha'] ?? 0) > 0)
@@ -744,7 +749,7 @@
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end text-success font-weight-bold">Total<br>Submit</th>
                                         <th class="text-end text-primary font-weight-extrabold">% Capaian<br><span class="text-muted font-weight-normal small">vs {{ number_format($dynamicTargetPct, 1) }}%</span></th>
-                                        <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">3 Hari Last</span></th>
+                                        <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">submit/hari & stagnan</span></th>
                                         <th class="text-center text-danger">Warning Anomali Usaha<br><span class="text-muted font-weight-normal small">(UP < 5% / UK < 10%)</span></th>
                                         <th class="text-center text-indigo">Laju s.d. 20 Agt<br><span class="text-muted font-weight-normal small">(Kejar Target 95%)</span></th>
                                         <th class="text-end bg-amber-lt text-amber font-weight-extrabold">Skor Kinerja<br><span class="text-muted font-weight-normal small">(0 - 100)</span></th>
@@ -779,30 +784,47 @@
                                                 <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
                                             </td>
                                             <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
-                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
+                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">
+                                                {{ number_format($row->total_submit) }}
+                                                @if(($row->total_draft ?? 0) > 0)
+                                                    <div class="small text-purple font-weight-normal" style="font-size: 0.72rem;">(+{{ number_format($row->total_draft) }} draft)</div>
+                                                @endif
+                                            </td>
                                             <td class="text-end font-weight-extrabold text-primary fs-3" data-order="{{ $row->pct_submit }}">
                                                 <span class="badge {{ $row->pct_submit >= $dynamicTargetPct ? 'bg-success-lt text-success' : ($row->pct_submit >= max(0, $dynamicTargetPct - 10) ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
                                                     {{ number_format($row->pct_submit, 1) }}%
                                                 </span>
-                                            </td>
-                                            <td class="text-center" data-order="{{ $row->warning_status }}">
-                                                @if($row->warning_status === 'completed')
-                                                    <span class="badge bg-success text-white font-weight-bold px-2 py-1 shadow-sm" title="Pencacahan Selesai 100%">
-                                                        🎉 Selesai 100%
-                                                    </span>
-                                                @elseif($row->warning_status === 'stagnant_3d')
-                                                    <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm" title="Submit tidak bertambah dalam 3 snapshot terakhir">
-                                                        🚨 3 Hari Stagnan
-                                                    </span>
-                                                @elseif($row->warning_status === 'slow_progress')
-                                                    <span class="badge bg-warning-lt text-warning font-weight-bold px-2 py-1" title="Laju harian di bawah rata-rata target">
-                                                        ⚠️ Progres Lambat
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-success-lt text-success px-2 py-1" title="Progres submit teratur">
-                                                        ✅ On-Track
-                                                    </span>
+                                                @if(($row->total_draft ?? 0) > 0)
+                                                    <div class="mt-1" style="font-size: 0.72rem;">
+                                                        <span class="badge bg-purple-lt text-purple font-weight-bold px-1.5 py-0.5" title="Submit + Draft: {{ number_format($row->total_submit + $row->total_draft) }} (Draft: {{ number_format($row->total_draft) }})">
+                                                            +Draft: {{ number_format($row->pct_submit_draft ?? ($row->pct_submit + ($row->pct_draft ?? 0)), 1) }}%
+                                                        </span>
+                                                    </div>
                                                 @endif
+                                            </td>
+                                            <td class="text-center" data-order="{{ $row->warning_status === 'stagnant' ? 999 + ($row->stagnant_days ?? 0) : ($row->warning_status === 'slow_progress' ? 500 : 0) }}">
+                                                 <div class="d-flex flex-column align-items-center gap-1">
+                                                     <span class="badge bg-light text-dark border font-weight-bold px-2 py-0.5" style="font-size: 0.75rem;" title="Jumlah submit hari ini / snapshot terakhir">
+                                                         submit {{ number_format($row->submit_today ?? 0) }}/hari
+                                                     </span>
+                                                     @if($row->warning_status === 'completed')
+                                                         <span class="badge bg-success text-white font-weight-bold px-2 py-1 shadow-sm" title="Pencacahan Selesai 100%">
+                                                             🎉 Selesai 100%
+                                                         </span>
+                                                     @elseif($row->warning_status === 'stagnant')
+                                                         <span class="badge bg-danger text-white font-weight-bold px-2 py-1 shadow-sm" title="Submit tidak bertambah selama {{ $row->stagnant_days }} snapshot harian berturut-turut">
+                                                             🚨 Stagnan {{ $row->stagnant_days }} hari
+                                                         </span>
+                                                     @elseif($row->warning_status === 'slow_progress')
+                                                         <span class="badge bg-warning-lt text-warning font-weight-bold px-2 py-1" title="Laju harian di bawah rata-rata target">
+                                                             ⚠️ Progres Lambat
+                                                         </span>
+                                                     @else
+                                                         <span class="badge bg-success-lt text-success px-2 py-1" title="Progres submit teratur">
+                                                             ✅ On-Track
+                                                         </span>
+                                                     @endif
+                                                 </div>
                                             </td>
                                             <td class="text-center" data-order="{{ $row->has_warning_usaha ? count($row->anomali_sls_list) : 0 }}">
                                                 @if($row->has_warning_usaha)

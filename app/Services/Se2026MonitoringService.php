@@ -117,7 +117,10 @@ class Se2026MonitoringService
                 DB::raw('SUM(m.total_beban) as beban_saat_ini'),
                 DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as total_submit'),
                 DB::raw('(IFNULL(SUM(m.status_open), 0) + IFNULL(SUM(m.status_draft), 0)) as belum_dikerjakan'),
+                DB::raw('IFNULL(SUM(m.status_draft), 0) as total_draft'),
                 DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit'),
+                DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND((IFNULL(SUM(m.status_draft), 0) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_draft'),
+                DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit_draft'),
                 DB::raw('IFNULL(SUM(up.up_ditemukan), 0) as jumlah_usaha_ditemukan'),
                 DB::raw('IFNULL(SUM(up.up_tdk), 0) as usaha_tidak_ditemukan'),
                 DB::raw('IFNULL(SUM(uk.uk_ditemukan), 0) as jumlah_usaha_keluarga'),
@@ -352,7 +355,9 @@ class Se2026MonitoringService
                 DB::raw('SUM(m.total_beban) as beban_saat_ini'),
                 DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as total_submit'),
                 DB::raw('(IFNULL(SUM(m.status_open), 0) + IFNULL(SUM(m.status_draft), 0)) as belum_dikerjakan'),
+                DB::raw('IFNULL(SUM(m.status_draft), 0) as total_draft'),
                 DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit'),
+                DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit_draft'),
                 DB::raw('IFNULL(SUM(up.up_ditemukan), 0) as jumlah_usaha_ditemukan'),
                 DB::raw('IFNULL(SUM(up.up_tdk), 0) as usaha_tidak_ditemukan'),
                 DB::raw('IFNULL(SUM(uk.uk_ditemukan), 0) as jumlah_usaha_keluarga'),
@@ -396,6 +401,7 @@ class Se2026MonitoringService
             'total_pml' => $pmlRecords->count(),
             'total_beban' => $records->sum('beban_saat_ini'),
             'total_submit' => $records->sum('total_submit'),
+            'total_draft' => $records->sum('total_draft'),
             'total_belum_dikerjakan' => $records->sum('belum_dikerjakan'),
             'total_usaha_ditemukan' => $records->sum('jumlah_usaha_ditemukan'),
             'total_usaha_keluarga' => $records->sum('jumlah_usaha_keluarga'),
@@ -404,6 +410,12 @@ class Se2026MonitoringService
             'total_sls' => $slsRecords->count(),
             'pct_overall_submit' => $records->sum('beban_saat_ini') > 0
                 ? round(($records->sum('total_submit') / $records->sum('beban_saat_ini')) * 100, 2)
+                : 0,
+            'pct_overall_draft' => $records->sum('beban_saat_ini') > 0
+                ? round(($records->sum('total_draft') / $records->sum('beban_saat_ini')) * 100, 2)
+                : 0,
+            'pct_overall_submit_draft' => $records->sum('beban_saat_ini') > 0
+                ? round((($records->sum('total_submit') + $records->sum('total_draft')) / $records->sum('beban_saat_ini')) * 100, 2)
                 : 0
         ];
     }

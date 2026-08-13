@@ -26,7 +26,7 @@ class PetugasPerformanceRankingService
         $targetDate95 = \Carbon\Carbon::parse('2026-08-20');
         $daysRemainingTo20Aug = max(1, $currentDate->diffInDays($targetDate95, false));
 
-        // 2. Fetch 3 latest snapshot dates up to selectedDate
+        // 2. Fetch available snapshot dates up to selectedDate (ordered newest to oldest)
         $recentDates = [];
         if (Schema::connection($connName)->hasTable('monitoring_se2026')) {
             $recentDates = $db->table('monitoring_se2026')
@@ -36,14 +36,16 @@ class PetugasPerformanceRankingService
                 })
                 ->distinct()
                 ->orderBy('tanggal_tarik', 'desc')
-                ->limit(3)
+                ->limit(30)
                 ->pluck('tanggal_tarik')
                 ->toArray();
         }
 
-        // Fetch submit totals across recent 3 snapshot dates for all pencacah
+        // Fetch submit totals across snapshot dates for all pencacah
         $warningMap = [];
-        if (count($recentDates) >= 2) {
+        $submitTodayMap = [];
+        $stagnantDaysMap = [];
+        if (count($recentDates) >= 1) {
             $historyData = $db->table('monitoring_se2026')
                 ->select(
                     'email_pencacah',
@@ -58,12 +60,33 @@ class PetugasPerformanceRankingService
             foreach ($historyData as $email => $rows) {
                 $byDate = $rows->pluck('submit_total', 'tanggal_tarik');
                 $subLatest = $byDate[$recentDates[0]] ?? 0;
-                $subPrev1 = $byDate[$recentDates[1]] ?? null;
-                $subPrev2 = isset($recentDates[2]) ? ($byDate[$recentDates[2]] ?? null) : null;
+                $subPrev1 = isset($recentDates[1]) ? ($byDate[$recentDates[1]] ?? null) : null;
 
-                if ($subPrev1 !== null && $subLatest <= $subPrev1 && ($subPrev2 === null || $subPrev1 <= $subPrev2)) {
-                    $warningMap[$email] = 'stagnant_3d'; // 🚨 3 Hari Stagnan
-                } elseif ($subPrev1 !== null && ($subLatest - $subPrev1) < 5) {
+                // Submit today delta (latest date vs previous snapshot date)
+                $submitToday = ($subPrev1 !== null) ? max(0, $subLatest - $subPrev1) : 0;
+                $submitTodayMap[$email] = $submitToday;
+
+                // Calculate consecutive stagnant days/snapshots where submit did not increase
+                $stagnantDays = 0;
+                if (count($recentDates) >= 2) {
+                    for ($i = 0; $i < count($recentDates) - 1; $i++) {
+                        $currDate = $recentDates[$i];
+                        $prevDate = $recentDates[$i + 1];
+                        $currVal = $byDate[$currDate] ?? null;
+                        $prevVal = $byDate[$prevDate] ?? null;
+
+                        if ($currVal !== null && $prevVal !== null && $currVal <= $prevVal) {
+                            $stagnantDays++;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                $stagnantDaysMap[$email] = $stagnantDays;
+
+                if ($stagnantDays >= 2) {
+                    $warningMap[$email] = 'stagnant'; // 🚨 Stagnan N Hari
+                } elseif ($subPrev1 !== null && $submitToday < 5) {
                     $warningMap[$email] = 'slow_progress'; // ⚠️ Progres Lambat
                 } else {
                     $warningMap[$email] = 'normal'; // ✅ Progres Lancar
@@ -252,7 +275,7 @@ class PetugasPerformanceRankingService
                     $katLabel = '3. Cukup / Standar (Moderate 🟡)';
                     $katBadge = 'bg-warning-lt text-warning';
                     $rekomendasi = 'Monitoring Regular PML (Tingkatkan Progres)';
-                } elseif ($capaianPct >= max(0, $dynamicTargetPct - 20.0) && $warning !== 'stagnant_3d') {
+                } elseif ($capaianPct >= max(0, $dynamicTargetPct - 20.0) && $warning !== 'stagnant') {
                     $katCode = '4_MALAS';
                     $katLabel = '4. Malas / Kurang (Low Performer ⚠️)';
                     $katBadge = 'bg-orange-lt text-orange';
@@ -273,6 +296,8 @@ class PetugasPerformanceRankingService
             $item->kat_badge = $katBadge;
             $item->rekomendasi = $rekomendasi;
             $item->warning_status = $warning;
+            $item->submit_today = $submitTodayMap[$row->email_pencacah] ?? 0;
+            $item->stagnant_days = $stagnantDaysMap[$row->email_pencacah] ?? 0;
 
             // Target 95% & Warning Usaha Attributes
             $item->needed_to_95 = $neededTo95;
@@ -323,7 +348,7 @@ class PetugasPerformanceRankingService
             'cnt_cukup' => $sortedRanking->where('kat_code', '3_CUKUP')->count(),
             'cnt_malas' => $sortedRanking->where('kat_code', '4_MALAS')->count(),
             'cnt_smalas' => $sortedRanking->where('kat_code', '5_SANGAT_MALAS')->count(),
-            'cnt_stagnant' => $sortedRanking->where('warning_status', 'stagnant_3d')->count(),
+            'cnt_stagnant' => $sortedRanking->where('warning_status', 'stagnant')->count(),
             'cnt_slow' => $sortedRanking->where('warning_status', 'slow_progress')->count(),
             'cnt_warning_usaha' => $sortedRanking->where('has_warning_usaha', true)->count(),
         ];

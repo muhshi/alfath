@@ -168,19 +168,9 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Menambahkan method `getTargetDateForTable()` untuk memfilter `tanggal_data` secara presisi sesuai `$selectedDate` aktif (atau snapshot terbaru), sehingga perhitungan Muatan Murni kembali 100% akurat.
     - **Koreksi Pemetaan Kolom Parser Excel FASIH (`ImportExcelUsaha.php`)**: Memperbaiki pergeseran indeks kolom Excel FASIH pada sheet `USAHA PERUSAHAAN` (kolom CAPI Ditemukan, Tutup, Ganda, Tidak Ditemukan, Baru) dan `USAHA KELUARGA` (kolom Ditemukan, Tutup, Ganda, Tidak Ditemukan, Baru, Usaha Dalam Keluarga) di mana data 61.089 *Tidak Ditemukan* sebelumnya tersimpan sebagai *Baru* sehingga membengkakkan Muatan Murni dan membuat status Tidak Ditemukan hilang. Data Excel telah di-import ulang dan kini 100% tepat sesuai indikator FASIH.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### 2026-08-13
+- **Peningkatan Dashboard Pengolahan SE2026 (`/dashboard-pengolahan`)**:
+  - **Kalkulasi Stagnan Dinamis**: Menghitung secara fleksibel jumlah hari/snapshot berturut-turut di mana submit petugas tidak bertambah (`🚨 Stagnan X hari`, misal: Stagnan 5 hari, Stagnan 10 hari) tanpa dibatasi hanya 3 hari.
+  - **Tampilan Submit Harian (`submit X/hari`) pada Cell Status Warning**: Menampilkan informasi laju submit pada snapshot terakhir (`submit X/hari`) di bagian atas cell kolom Status Warning di tabel Ranking Kinerja Petugas, di atas badge status (`Stagnan X hari`, `Progres Lambat`, `On-Track`, atau `Selesai 100%`).
+  - **Apresiasi Data Draft & Persentase Gabungan**: Menghitung `total_draft`, `pct_draft`, dan persentase gabungan `pct_submit_draft` (`(Submit + Draft) / Beban * 100`). Menampilkan statistik `+Draft: X%` pada kartu KPI utama "TOTAL SUBMIT" serta pada kolom persentase capaian di tabel PPL, PML, dan Ranking Kinerja Petugas agar progres draft petugas mendapatkan apresiasi.
+  - **Pembaruan Ekspor Excel**: Memperbarui format ekspor Excel Sheet Ranking Kinerja untuk menyertakan angka submit harian dan durasi hari stagnan aktual.
