@@ -392,7 +392,14 @@
                 <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <ul class="nav custom-pill-tabs font-weight-bold" id="dashboard-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="petugas-tab" data-bs-toggle="tab" data-bs-target="#tab-petugas" type="button" role="tab" aria-controls="tab-petugas" aria-selected="true">
+                            <button class="nav-link active" id="ranking-tab" data-bs-toggle="tab" data-bs-target="#tab-ranking" type="button" role="tab" aria-controls="tab-ranking" aria-selected="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trophy me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M8 21l8 0"/><path d="M12 17l0 4"/><path d="M7 4l10 0"/><path d="M17 4v8a5 5 0 0 1 -10 0v-8"/><path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/></svg>
+                                <span>Ranking Kinerja</span>
+                                <span class="badge-tab-count" style="background-color: #f59e0b; color: #ffffff;">{{ number_format($rankingRecords->count()) }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="petugas-tab" data-bs-toggle="tab" data-bs-target="#tab-petugas" type="button" role="tab" aria-controls="tab-petugas" aria-selected="false">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-check" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4"/><path d="M16 19l2 2l4 -4"/></svg>
                                 <span>Ringkasan Per PPL</span>
                                 <span class="badge-tab-count">{{ number_format($records->count()) }}</span>
@@ -412,13 +419,6 @@
                                 <span class="badge-tab-count">{{ number_format($slsRecords->count()) }}</span>
                             </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="ranking-tab" data-bs-toggle="tab" data-bs-target="#tab-ranking" type="button" role="tab" aria-controls="tab-ranking" aria-selected="false">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trophy me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M8 21l8 0"/><path d="M12 17l0 4"/><path d="M7 4l10 0"/><path d="M17 4v8a5 5 0 0 1 -10 0v-8"/><path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/></svg>
-                                <span>Ranking Kinerja</span>
-                                <span class="badge-tab-count" style="background-color: #f59e0b; color: #ffffff;">{{ number_format($rankingRecords->count()) }}</span>
-                            </button>
-                        </li>
                     </ul>
                     <div class="d-flex align-items-center gap-2">
                         <a href="{{ route('dashboard.pengolahan.export', request()->query()) }}" class="btn btn-sm btn-success font-weight-bold" style="border-radius: 8px;">
@@ -431,229 +431,8 @@
                 <div class="card-body p-0">
                     <div class="tab-content" id="dashboard-tabs-content">
                         
-                        <!-- TAB 1: RINGKASAN PER PPL (PENCACAH) -->
-                        <div class="tab-pane fade show active" id="tab-petugas" role="tabpanel" aria-labelledby="petugas-tab">
-                            <table id="pengolahan-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
-                                <thead>
-                                    <tr class="bg-light text-uppercase small font-weight-bold">
-                                        <th class="w-1 text-center">No</th>
-                                        <th>Kecamatan</th>
-                                        <th>Nama Petugas<br><span class="text-muted font-weight-normal small">/ Pencacah</span></th>
-                                        <th>Nama<br>Pengawas</th>
-                                        <th class="text-end bg-teal-lt text-teal font-weight-bold">Muatan<br>Murni ⭐</th>
-                                        <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum<br>Dikerjakan</th>
-                                        <th class="text-end">Beban<br>Saat Ini</th>
-                                        <th class="text-end">Total<br>Submit</th>
-                                        <th class="text-end">% Progres</th>
-                                        <th class="text-end">Usaha<br>Perusahaan</th>
-                                        <th class="text-end">Usaha Perusahaan<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
-                                        <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
-                                        <th class="text-end">Keluarga<br><span class="text-warning font-weight-normal small">(Ditemukan+Baru)</span></th>
-                                        <th class="text-end">Keluarga<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($records as $index => $row)
-                                        <tr>
-                                            <td class="text-muted small text-center">{{ $index + 1 }}</td>
-                                            <td>
-                                                <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
-                                                <div class="small text-muted">Kode: {{ $row->kode_kec }}</div>
-                                            </td>
-                                            <td>
-                                                <div class="font-weight-bold text-dark">{{ $row->nama_pencacah }}</div>
-                                                <div class="small text-muted">{{ $row->email_pencacah }}</div>
-                                            </td>
-                                            <td>
-                                                <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
-                                            </td>
-                                            <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">
-                                                {{ number_format($row->muatan_murni) }}
-                                            </td>
-                                            <td class="text-end font-weight-bold text-danger bg-danger-lt fs-3" data-order="{{ $row->belum_dikerjakan }}">
-                                                {{ number_format($row->belum_dikerjakan) }}
-                                            </td>
-                                            <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
-                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
-                                            <td class="text-end" data-order="{{ $row->pct_submit }}">
-                                                <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
-                                                    {{ number_format($row->pct_submit, 1) }}%
-                                                </span>
-                                            </td>
-                                            <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">{{ number_format($row->jumlah_usaha_ditemukan) }}</td>
-                                            <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
-                                            <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">{{ number_format($row->jumlah_usaha_keluarga) }}</td>
-                                            <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">{{ number_format($row->jumlah_keluarga_ditemukan) }}</td>
-                                            <td class="text-end text-muted" data-order="{{ $row->keluarga_tidak_ditemukan }}">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="14" class="text-center py-5 text-muted">
-                                                <div class="mb-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
-                                                </div>
-                                                <div class="font-weight-bold fs-3">Tidak Ada Data Ditemukan</div>
-                                                <div class="small">Coba ubah kata kunci pencarian atau filter kecamatan yang dipilih.</div>
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- TAB 2: RINGKASAN PER PML (PENGAWAS) -->
-                        <div class="tab-pane fade" id="tab-pml" role="tabpanel" aria-labelledby="pml-tab">
-                            <table id="pml-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
-                                <thead>
-                                    <tr class="bg-light text-uppercase small font-weight-bold">
-                                        <th class="w-1 text-center">No</th>
-                                        <th>Kecamatan</th>
-                                        <th>Nama Pengawas<br><span class="text-muted font-weight-normal small">/ PML</span></th>
-                                        <th class="text-center">Jml PPL<br><span class="text-muted font-weight-normal small">Didampingi</span></th>
-                                        <th class="text-center">Jml SLS<br><span class="text-muted font-weight-normal small">Didampingi</span></th>
-                                        <th class="text-end bg-teal-lt text-teal font-weight-bold">Muatan<br>Murni ⭐</th>
-                                        <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum<br>Dikerjakan</th>
-                                        <th class="text-end">Beban<br>Saat Ini</th>
-                                        <th class="text-end">Total<br>Submit</th>
-                                        <th class="text-end">% Progres</th>
-                                        <th class="text-end">Usaha<br>Perusahaan</th>
-                                        <th class="text-end">Usaha Perusahaan<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
-                                        <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
-                                        <th class="text-end">Keluarga<br><span class="text-warning font-weight-normal small">(Ditemukan+Baru)</span></th>
-                                        <th class="text-end">Keluarga<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($pmlRecords as $index => $row)
-                                        <tr>
-                                            <td class="text-muted small text-center">{{ $index + 1 }}</td>
-                                            <td>
-                                                <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
-                                                <div class="small text-muted">Kode: {{ $row->kode_kec }}</div>
-                                            </td>
-                                            <td>
-                                                <div class="font-weight-bold text-dark">{{ $row->nama_pengawas }}</div>
-                                                <div class="small text-muted">{{ $row->email_pengawas ?: '-' }}</div>
-                                            </td>
-                                            <td class="text-center font-weight-bold" data-order="{{ $row->total_ppl }}">
-                                                <span class="badge bg-blue-lt text-blue px-2 py-1 fs-4">{{ number_format($row->total_ppl) }} PPL</span>
-                                            </td>
-                                            <td class="text-center font-weight-bold" data-order="{{ $row->total_sls }}">
-                                                <span class="badge bg-indigo-lt text-indigo px-2 py-1 fs-4">{{ number_format($row->total_sls) }} SLS</span>
-                                            </td>
-                                            <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">
-                                                {{ number_format($row->muatan_murni) }}
-                                            </td>
-                                            <td class="text-end font-weight-bold text-danger bg-danger-lt fs-3" data-order="{{ $row->belum_dikerjakan }}">
-                                                {{ number_format($row->belum_dikerjakan) }}
-                                            </td>
-                                            <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
-                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
-                                            <td class="text-end" data-order="{{ $row->pct_submit }}">
-                                                <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
-                                                    {{ number_format($row->pct_submit, 1) }}%
-                                                </span>
-                                            </td>
-                                            <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">{{ number_format($row->jumlah_usaha_ditemukan) }}</td>
-                                            <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
-                                            <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">{{ number_format($row->jumlah_usaha_keluarga) }}</td>
-                                            <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">{{ number_format($row->jumlah_keluarga_ditemukan) }}</td>
-                                            <td class="text-end text-muted" data-order="{{ $row->keluarga_tidak_ditemukan }}">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="15" class="text-center py-5 text-muted">
-                                                <div class="mb-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
-                                                </div>
-                                                <div class="font-weight-bold fs-3">Tidak Ada Data PML Ditemukan</div>
-                                                <div class="small">Coba ubah kata kunci pencarian atau filter kecamatan yang dipilih.</div>
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- TAB 3: ALOKASI & PROGRESS PER SLS / SUB-SLS -->
-                        <div class="tab-pane fade" id="tab-sls" role="tabpanel" aria-labelledby="sls-tab">
-                            <table id="sls-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
-                                <thead>
-                                    <tr class="bg-light text-uppercase small font-weight-bold">
-                                        <th class="w-1 text-center">No</th>
-                                        <th>Kecamatan</th>
-                                        <th>Kode & Nama SLS / Sub-SLS</th>
-                                        <th>Nama Petugas<br><span class="text-muted font-weight-normal small">/ Pencacah</span></th>
-                                        <th>Nama<br>Pengawas</th>
-                                        <th class="text-end">Beban<br>Saat Ini</th>
-                                        <th class="text-end">Total<br>Submit</th>
-                                        <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum Disentuh<br>(Open)</th>
-                                        <th class="text-end">% Progres</th>
-                                        <th class="text-end text-info font-weight-bold">UP<br><span class="font-weight-normal small">Ditemukan</span></th>
-                                        <th class="text-end text-danger font-weight-bold" style="background-color: #fef2f2 !important;">UP<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
-                                        <th class="text-end text-purple font-weight-bold">UK<br><span class="font-weight-normal small">Ditemukan</span></th>
-                                        <th class="text-end text-orange font-weight-bold" style="background-color: #fff7ed !important;">UK<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
-                                        <th class="text-end text-success font-weight-bold">Keluarga<br><span class="font-weight-normal small">Ditemukan</span></th>
-                                        <th class="text-end text-muted font-weight-bold">Keluarga<br><span class="font-weight-normal small">Tdk/Meninggal</span></th>
-                                        <th class="text-end bg-success-lt text-success font-weight-extrabold fs-3">Total<br><span class="font-weight-bold small">Ditemukan</span></th>
-                                        <th class="text-end bg-danger text-white font-weight-extrabold fs-3 shadow-xs">Total Tdk Ditemukan<br><span class="font-weight-bold small">/ Tutup / Ganda</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($slsRecords as $index => $row)
-                                        <tr>
-                                            <td class="text-muted small text-center">{{ $index + 1 }}</td>
-                                            <td>
-                                                <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
-                                                <div class="small text-muted">Kode: {{ $row->kode_kec }}</div>
-                                            </td>
-                                            <td>
-                                                <div class="font-weight-bold text-dark">{{ $row->nama_sls }}</div>
-                                                <div class="small text-muted font-monospace">{{ $row->region_code }}</div>
-                                            </td>
-                                            <td>
-                                                <div class="font-weight-bold text-dark">{{ $row->nama_pencacah }}</div>
-                                                <div class="small text-muted">{{ $row->email_pencacah }}</div>
-                                            </td>
-                                            <td>
-                                                <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
-                                            </td>
-                                            <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
-                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
-                                            <td class="text-end font-weight-bold text-danger bg-danger-lt fs-3" data-order="{{ $row->status_open }}">
-                                                {{ number_format($row->status_open) }}
-                                            </td>
-                                            <td class="text-end" data-order="{{ $row->pct_submit }}">
-                                                <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
-                                                    {{ number_format($row->pct_submit, 1) }}%
-                                                </span>
-                                            </td>
-                                            <td class="text-end font-weight-bold text-info" data-order="{{ $row->up_ditemukan }}">{{ number_format($row->up_ditemukan) }}</td>
-                                            <td class="text-end font-weight-bold text-danger" style="background-color: #fef2f2 !important;" data-order="{{ $row->up_tdk }}">{{ number_format($row->up_tdk) }}</td>
-                                            <td class="text-end font-weight-bold text-purple" data-order="{{ $row->uk_ditemukan }}">{{ number_format($row->uk_ditemukan) }}</td>
-                                            <td class="text-end font-weight-bold text-orange" style="background-color: #fff7ed !important;" data-order="{{ $row->uk_tdk }}">{{ number_format($row->uk_tdk) }}</td>
-                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->pk_ditemukan }}">{{ number_format($row->pk_ditemukan) }}</td>
-                                            <td class="text-end text-muted" data-order="{{ $row->pk_tdk }}">{{ number_format($row->pk_tdk) }}</td>
-                                            <td class="text-end font-weight-extrabold text-success bg-success-lt fs-3" data-order="{{ $row->total_ditemukan }}">{{ number_format($row->total_ditemukan) }}</td>
-                                            <td class="text-end font-weight-extrabold text-white bg-danger fs-3 shadow-xs" data-order="{{ $row->total_tdk }}">{{ number_format($row->total_tdk) }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="17" class="text-center py-5 text-muted">
-                                                <div class="mb-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
-                                                </div>
-                                                <div class="font-weight-bold fs-3">Tidak Ada Data SLS Ditemukan</div>
-                                                <div class="small">Coba ubah kata kunci pencarian atau filter kecamatan yang dipilih.</div>
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- TAB 4: RANKING KINERJA PETUGAS -->
-                        <div class="tab-pane fade" id="tab-ranking" role="tabpanel" aria-labelledby="ranking-tab">
+                        <!-- TAB 1: RANKING KINERJA PETUGAS -->
+                        <div class="tab-pane fade show active" id="tab-ranking" role="tabpanel" aria-labelledby="ranking-tab">
                             
                             <!-- Ranking Summary Cards & Target Info -->
                             <div class="p-3 bg-light border-bottom">
@@ -914,6 +693,229 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- TAB 2: RINGKASAN PER PPL (PENCACAH) -->
+                        <div class="tab-pane fade" id="tab-petugas" role="tabpanel" aria-labelledby="petugas-tab">
+                            <table id="pengolahan-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
+                                <thead>
+                                    <tr class="bg-light text-uppercase small font-weight-bold">
+                                        <th class="w-1 text-center">No</th>
+                                        <th>Kecamatan</th>
+                                        <th>Nama Petugas<br><span class="text-muted font-weight-normal small">/ Pencacah</span></th>
+                                        <th>Nama<br>Pengawas</th>
+                                        <th class="text-end bg-teal-lt text-teal font-weight-bold">Muatan<br>Murni ⭐</th>
+                                        <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum<br>Dikerjakan</th>
+                                        <th class="text-end">Beban<br>Saat Ini</th>
+                                        <th class="text-end">Total<br>Submit</th>
+                                        <th class="text-end">% Progres</th>
+                                        <th class="text-end">Usaha<br>Perusahaan</th>
+                                        <th class="text-end">Usaha Perusahaan<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                        <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
+                                        <th class="text-end">Keluarga<br><span class="text-warning font-weight-normal small">(Ditemukan+Baru)</span></th>
+                                        <th class="text-end">Keluarga<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($records as $index => $row)
+                                        <tr>
+                                            <td class="text-muted small text-center">{{ $index + 1 }}</td>
+                                            <td>
+                                                <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
+                                                <div class="small text-muted">Kode: {{ $row->kode_kec }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="font-weight-bold text-dark">{{ $row->nama_pencacah }}</div>
+                                                <div class="small text-muted">{{ $row->email_pencacah }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
+                                            </td>
+                                            <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">
+                                                {{ number_format($row->muatan_murni) }}
+                                            </td>
+                                            <td class="text-end font-weight-bold text-danger bg-danger-lt fs-3" data-order="{{ $row->belum_dikerjakan }}">
+                                                {{ number_format($row->belum_dikerjakan) }}
+                                            </td>
+                                            <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
+                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
+                                            <td class="text-end" data-order="{{ $row->pct_submit }}">
+                                                <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
+                                                    {{ number_format($row->pct_submit, 1) }}%
+                                                </span>
+                                            </td>
+                                            <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">{{ number_format($row->jumlah_usaha_ditemukan) }}</td>
+                                            <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
+                                            <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">{{ number_format($row->jumlah_usaha_keluarga) }}</td>
+                                            <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">{{ number_format($row->jumlah_keluarga_ditemukan) }}</td>
+                                            <td class="text-end text-muted" data-order="{{ $row->keluarga_tidak_ditemukan }}">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="14" class="text-center py-5 text-muted">
+                                                <div class="mb-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
+                                                </div>
+                                                <div class="font-weight-bold fs-3">Tidak Ada Data Ditemukan</div>
+                                                <div class="small">Coba ubah kata kunci pencarian atau filter kecamatan yang dipilih.</div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- TAB 2: RINGKASAN PER PML (PENGAWAS) -->
+                        <div class="tab-pane fade" id="tab-pml" role="tabpanel" aria-labelledby="pml-tab">
+                            <table id="pml-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
+                                <thead>
+                                    <tr class="bg-light text-uppercase small font-weight-bold">
+                                        <th class="w-1 text-center">No</th>
+                                        <th>Kecamatan</th>
+                                        <th>Nama Pengawas<br><span class="text-muted font-weight-normal small">/ PML</span></th>
+                                        <th class="text-center">Jml PPL<br><span class="text-muted font-weight-normal small">Didampingi</span></th>
+                                        <th class="text-center">Jml SLS<br><span class="text-muted font-weight-normal small">Didampingi</span></th>
+                                        <th class="text-end bg-teal-lt text-teal font-weight-bold">Muatan<br>Murni ⭐</th>
+                                        <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum<br>Dikerjakan</th>
+                                        <th class="text-end">Beban<br>Saat Ini</th>
+                                        <th class="text-end">Total<br>Submit</th>
+                                        <th class="text-end">% Progres</th>
+                                        <th class="text-end">Usaha<br>Perusahaan</th>
+                                        <th class="text-end">Usaha Perusahaan<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                        <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
+                                        <th class="text-end">Keluarga<br><span class="text-warning font-weight-normal small">(Ditemukan+Baru)</span></th>
+                                        <th class="text-end">Keluarga<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($pmlRecords as $index => $row)
+                                        <tr>
+                                            <td class="text-muted small text-center">{{ $index + 1 }}</td>
+                                            <td>
+                                                <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
+                                                <div class="small text-muted">Kode: {{ $row->kode_kec }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="font-weight-bold text-dark">{{ $row->nama_pengawas }}</div>
+                                                <div class="small text-muted">{{ $row->email_pengawas ?: '-' }}</div>
+                                            </td>
+                                            <td class="text-center font-weight-bold" data-order="{{ $row->total_ppl }}">
+                                                <span class="badge bg-blue-lt text-blue px-2 py-1 fs-4">{{ number_format($row->total_ppl) }} PPL</span>
+                                            </td>
+                                            <td class="text-center font-weight-bold" data-order="{{ $row->total_sls }}">
+                                                <span class="badge bg-indigo-lt text-indigo px-2 py-1 fs-4">{{ number_format($row->total_sls) }} SLS</span>
+                                            </td>
+                                            <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">
+                                                {{ number_format($row->muatan_murni) }}
+                                            </td>
+                                            <td class="text-end font-weight-bold text-danger bg-danger-lt fs-3" data-order="{{ $row->belum_dikerjakan }}">
+                                                {{ number_format($row->belum_dikerjakan) }}
+                                            </td>
+                                            <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
+                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
+                                            <td class="text-end" data-order="{{ $row->pct_submit }}">
+                                                <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
+                                                    {{ number_format($row->pct_submit, 1) }}%
+                                                </span>
+                                            </td>
+                                            <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">{{ number_format($row->jumlah_usaha_ditemukan) }}</td>
+                                            <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
+                                            <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">{{ number_format($row->jumlah_usaha_keluarga) }}</td>
+                                            <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">{{ number_format($row->jumlah_keluarga_ditemukan) }}</td>
+                                            <td class="text-end text-muted" data-order="{{ $row->keluarga_tidak_ditemukan }}">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="15" class="text-center py-5 text-muted">
+                                                <div class="mb-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
+                                                </div>
+                                                <div class="font-weight-bold fs-3">Tidak Ada Data PML Ditemukan</div>
+                                                <div class="small">Coba ubah kata kunci pencarian atau filter kecamatan yang dipilih.</div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- TAB 3: ALOKASI & PROGRESS PER SLS / SUB-SLS -->
+                        <div class="tab-pane fade" id="tab-sls" role="tabpanel" aria-labelledby="sls-tab">
+                            <table id="sls-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
+                                <thead>
+                                    <tr class="bg-light text-uppercase small font-weight-bold">
+                                        <th class="w-1 text-center">No</th>
+                                        <th>Kecamatan</th>
+                                        <th>Kode & Nama SLS / Sub-SLS</th>
+                                        <th>Nama Petugas<br><span class="text-muted font-weight-normal small">/ Pencacah</span></th>
+                                        <th>Nama<br>Pengawas</th>
+                                        <th class="text-end">Beban<br>Saat Ini</th>
+                                        <th class="text-end">Total<br>Submit</th>
+                                        <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum Disentuh<br>(Open)</th>
+                                        <th class="text-end">% Progres</th>
+                                        <th class="text-end text-info font-weight-bold">UP<br><span class="font-weight-normal small">Ditemukan</span></th>
+                                        <th class="text-end text-danger font-weight-bold" style="background-color: #fef2f2 !important;">UP<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
+                                        <th class="text-end text-purple font-weight-bold">UK<br><span class="font-weight-normal small">Ditemukan</span></th>
+                                        <th class="text-end text-orange font-weight-bold" style="background-color: #fff7ed !important;">UK<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
+                                        <th class="text-end text-success font-weight-bold">Keluarga<br><span class="font-weight-normal small">Ditemukan</span></th>
+                                        <th class="text-end text-muted font-weight-bold">Keluarga<br><span class="font-weight-normal small">Tdk/Meninggal</span></th>
+                                        <th class="text-end bg-success-lt text-success font-weight-extrabold fs-3">Total<br><span class="font-weight-bold small">Ditemukan</span></th>
+                                        <th class="text-end bg-danger text-white font-weight-extrabold fs-3 shadow-xs">Total Tdk Ditemukan<br><span class="font-weight-bold small">/ Tutup / Ganda</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($slsRecords as $index => $row)
+                                        <tr>
+                                            <td class="text-muted small text-center">{{ $index + 1 }}</td>
+                                            <td>
+                                                <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
+                                                <div class="small text-muted">Kode: {{ $row->kode_kec }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="font-weight-bold text-dark">{{ $row->nama_sls }}</div>
+                                                <div class="small text-muted font-monospace">{{ $row->region_code }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="font-weight-bold text-dark">{{ $row->nama_pencacah }}</div>
+                                                <div class="small text-muted">{{ $row->email_pencacah }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
+                                            </td>
+                                            <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
+                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
+                                            <td class="text-end font-weight-bold text-danger bg-danger-lt fs-3" data-order="{{ $row->status_open }}">
+                                                {{ number_format($row->status_open) }}
+                                            </td>
+                                            <td class="text-end" data-order="{{ $row->pct_submit }}">
+                                                <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
+                                                    {{ number_format($row->pct_submit, 1) }}%
+                                                </span>
+                                            </td>
+                                            <td class="text-end font-weight-bold text-info" data-order="{{ $row->up_ditemukan }}">{{ number_format($row->up_ditemukan) }}</td>
+                                            <td class="text-end font-weight-bold text-danger" style="background-color: #fef2f2 !important;" data-order="{{ $row->up_tdk }}">{{ number_format($row->up_tdk) }}</td>
+                                            <td class="text-end font-weight-bold text-purple" data-order="{{ $row->uk_ditemukan }}">{{ number_format($row->uk_ditemukan) }}</td>
+                                            <td class="text-end font-weight-bold text-orange" style="background-color: #fff7ed !important;" data-order="{{ $row->uk_tdk }}">{{ number_format($row->uk_tdk) }}</td>
+                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->pk_ditemukan }}">{{ number_format($row->pk_ditemukan) }}</td>
+                                            <td class="text-end text-muted" data-order="{{ $row->pk_tdk }}">{{ number_format($row->pk_tdk) }}</td>
+                                            <td class="text-end font-weight-extrabold text-success bg-success-lt fs-3" data-order="{{ $row->total_ditemukan }}">{{ number_format($row->total_ditemukan) }}</td>
+                                            <td class="text-end font-weight-extrabold text-white bg-danger fs-3 shadow-xs" data-order="{{ $row->total_tdk }}">{{ number_format($row->total_tdk) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="17" class="text-center py-5 text-muted">
+                                                <div class="mb-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
+                                                </div>
+                                                <div class="font-weight-bold fs-3">Tidak Ada Data SLS Ditemukan</div>
+                                                <div class="small">Coba ubah kata kunci pencarian atau filter kecamatan yang dipilih.</div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+
 
                     </div>
                 </div>

@@ -37,32 +37,32 @@ class PengolahanExportService
         $spreadsheet = new Spreadsheet();
 
         // -------------------------------------------------------------
-        // SHEET 1: DATA PETUGAS (PPL)
+        // SHEET 1: RANKING KINERJA PETUGAS
         // -------------------------------------------------------------
         $sheet1 = $spreadsheet->getActiveSheet();
-        $sheet1->setTitle('Data Petugas (PPL)');
-        $this->buildPplSheet($sheet1, $records, $kecNameMap, $selectedDate, $kodekec, $search);
+        $sheet1->setTitle('Ranking Kinerja Petugas');
+        $this->buildRankingSheet($sheet1, $rankingRecords, $kecNameMap, $selectedDate, $rankingData['dynamicTargetPct']);
 
         // -------------------------------------------------------------
-        // SHEET 2: AGREGASI PENGAWAS (PML)
+        // SHEET 2: DATA PETUGAS (PPL)
         // -------------------------------------------------------------
         $sheet2 = $spreadsheet->createSheet();
-        $sheet2->setTitle('Agregasi Pengawas (PML)');
-        $this->buildPmlSheet($sheet2, $pmlRecords, $kecNameMap, $selectedDate, $kodekec, $search);
+        $sheet2->setTitle('Data Petugas (PPL)');
+        $this->buildPplSheet($sheet2, $records, $kecNameMap, $selectedDate, $kodekec, $search);
 
         // -------------------------------------------------------------
-        // SHEET 3: ALOKASI PER SLS / SUB-SLS
+        // SHEET 3: AGREGASI PENGAWAS (PML)
         // -------------------------------------------------------------
         $sheet3 = $spreadsheet->createSheet();
-        $sheet3->setTitle('Alokasi Per SLS');
-        $this->buildSlsSheet($sheet3, $slsRecords, $kecNameMap, $selectedDate, $kodekec, $search);
+        $sheet3->setTitle('Agregasi Pengawas (PML)');
+        $this->buildPmlSheet($sheet3, $pmlRecords, $kecNameMap, $selectedDate, $kodekec, $search);
 
         // -------------------------------------------------------------
-        // SHEET 4: RANKING KINERJA PETUGAS
+        // SHEET 4: ALOKASI PER SLS / SUB-SLS
         // -------------------------------------------------------------
         $sheet4 = $spreadsheet->createSheet();
-        $sheet4->setTitle('Ranking Kinerja Petugas');
-        $this->buildRankingSheet($sheet4, $rankingRecords, $kecNameMap, $selectedDate, $rankingData['dynamicTargetPct']);
+        $sheet4->setTitle('Alokasi Per SLS');
+        $this->buildSlsSheet($sheet4, $slsRecords, $kecNameMap, $selectedDate, $kodekec, $search);
 
         $spreadsheet->setActiveSheetIndex(0);
 
