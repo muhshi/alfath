@@ -1,5 +1,9 @@
 :80
 
+request_body {
+    max_size 100MB
+}
+
 root * /app/public
 php_server
 
