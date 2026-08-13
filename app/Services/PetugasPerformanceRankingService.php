@@ -85,11 +85,9 @@ class PetugasPerformanceRankingService
                 $stagnantDaysMap[$email] = $stagnantDays;
 
                 if ($stagnantDays >= 1) {
-                    $warningMap[$email] = 'stagnant'; // 🚨 Stagnan N Hari (termasuk 1 hari jika submit 0/hari)
-                } elseif ($subPrev1 !== null && $submitToday < 5) {
-                    $warningMap[$email] = 'slow_progress'; // ⚠️ Progres Lambat (submit > 0 tapi < 5/hari)
+                    $warningMap[$email] = 'stagnant';
                 } else {
-                    $warningMap[$email] = 'normal'; // ✅ Progres Lancar
+                    $warningMap[$email] = 'normal';
                 }
             }
         }
@@ -240,15 +238,15 @@ class PetugasPerformanceRankingService
             // Warning logic:
             if ($capaianPct >= 100.0 || $row->belum_dikerjakan <= 0) {
                 $warning = 'completed';
+            } elseif ($stagnantDays >= 1) {
+                // Submit 0/hari (tidak ada penambahan submit dibanding snapshot kemarin)
+                $warning = 'stagnant';
+            } elseif ($capaianPct < 95.0 && $submitToday < $lajuHarian95) {
+                // Ada submit (>0) tetapi di bawah target laju harian s.d. 20 Agustus
+                $warning = 'slow_progress';
             } else {
-                $mappedWarning = $warningMap[$row->email_pencacah] ?? 'normal';
-                if ($mappedWarning === 'stagnant') {
-                    $warning = 'stagnant';
-                } elseif ($capaianPct >= $dynamicTargetPct) {
-                    $warning = 'normal';
-                } else {
-                    $warning = $mappedWarning;
-                }
+                // Laju submit harian memadai (>= target laju harian 95%)
+                $warning = 'normal';
             }
 
             // Safety Rule: Capaian >= Dynamic Target cannot be Malas
