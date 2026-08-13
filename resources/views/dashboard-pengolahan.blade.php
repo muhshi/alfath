@@ -804,9 +804,16 @@
                                             </td>
                                             <td class="text-center" data-order="{{ $row->warning_status === 'stagnant' ? 999 + ($row->stagnant_days ?? 0) : ($row->warning_status === 'slow_progress' ? 500 : 0) }}">
                                                  <div class="d-flex flex-column align-items-center gap-1">
-                                                     <span class="badge bg-light text-dark border font-weight-bold px-2 py-0.5" style="font-size: 0.75rem;" title="Jumlah submit hari ini / snapshot terakhir">
-                                                         submit {{ number_format($row->submit_today ?? 0) }}/hari
-                                                     </span>
+                                                     <div class="d-flex flex-wrap align-items-center justify-content-center gap-1">
+                                                         <span class="badge bg-light text-dark border font-weight-bold px-2 py-0.5" style="font-size: 0.75rem;" title="Jumlah submit hari ini / snapshot terakhir">
+                                                             submit {{ number_format($row->submit_today ?? 0) }}/hari
+                                                         </span>
+                                                         @if(($row->draft_today ?? 0) > 0)
+                                                             <span class="badge bg-purple-lt text-purple font-weight-bold px-1.5 py-0.5" style="font-size: 0.72rem;" title="Pertambahan data draft hari ini / snapshot terakhir">
+                                                                 +{{ number_format($row->draft_today) }} draft/hari
+                                                             </span>
+                                                         @endif
+                                                     </div>
                                                      @if($row->warning_status === 'completed')
                                                          <span class="badge bg-success text-white font-weight-bold px-2 py-1 shadow-sm" title="Pencacahan Selesai 100%">
                                                              🎉 Selesai 100%
@@ -816,11 +823,11 @@
                                                              🚨 Stagnan {{ $row->stagnant_days }} hari
                                                          </span>
                                                      @elseif($row->warning_status === 'slow_progress')
-                                                         <span class="badge bg-warning-lt text-warning font-weight-bold px-2 py-1" title="Laju harian di bawah rata-rata target">
+                                                         <span class="badge bg-warning-lt text-warning font-weight-bold px-2 py-1" title="Laju submit hari ini ({{ number_format($row->submit_today) }}/hari) kurang dari target laju s.d. 20 Agt ({{ number_format($row->laju_harian_95) }}/hari)">
                                                              ⚠️ Progres Lambat
                                                          </span>
                                                      @else
-                                                         <span class="badge bg-success-lt text-success px-2 py-1" title="Progres submit teratur">
+                                                         <span class="badge bg-success-lt text-success px-2 py-1" title="Progres submit teratur / di atas target harian">
                                                              ✅ On-Track
                                                          </span>
                                                      @endif

@@ -41,16 +41,18 @@ class PetugasPerformanceRankingService
                 ->toArray();
         }
 
-        // Fetch submit totals across snapshot dates for all pencacah
+        // Fetch submit & draft totals across snapshot dates for all pencacah
         $warningMap = [];
         $submitTodayMap = [];
+        $draftTodayMap = [];
         $stagnantDaysMap = [];
         if (count($recentDates) >= 1) {
             $historyData = $db->table('monitoring_se2026')
                 ->select(
                     'email_pencacah',
                     'tanggal_tarik',
-                    DB::raw('SUM(total_beban - status_open - status_draft) as submit_total')
+                    DB::raw('SUM(total_beban - status_open - status_draft) as submit_total'),
+                    DB::raw('SUM(status_draft) as draft_total')
                 )
                 ->whereIn('tanggal_tarik', $recentDates)
                 ->groupBy('email_pencacah', 'tanggal_tarik')
@@ -58,13 +60,18 @@ class PetugasPerformanceRankingService
                 ->groupBy('email_pencacah');
 
             foreach ($historyData as $email => $rows) {
-                $byDate = $rows->pluck('submit_total', 'tanggal_tarik');
-                $subLatest = $byDate[$recentDates[0]] ?? 0;
-                $subPrev1 = isset($recentDates[1]) ? ($byDate[$recentDates[1]] ?? null) : null;
+                $byDateSubmit = $rows->pluck('submit_total', 'tanggal_tarik');
+                $byDateDraft = $rows->pluck('draft_total', 'tanggal_tarik');
 
-                // Submit today delta (latest date vs previous snapshot date)
+                $subLatest = $byDateSubmit[$recentDates[0]] ?? 0;
+                $subPrev1 = isset($recentDates[1]) ? ($byDateSubmit[$recentDates[1]] ?? null) : null;
                 $submitToday = ($subPrev1 !== null) ? max(0, $subLatest - $subPrev1) : 0;
                 $submitTodayMap[$email] = $submitToday;
+
+                $draftLatest = $byDateDraft[$recentDates[0]] ?? 0;
+                $draftPrev1 = isset($recentDates[1]) ? ($byDateDraft[$recentDates[1]] ?? null) : null;
+                $draftToday = ($draftPrev1 !== null) ? max(0, $draftLatest - $draftPrev1) : 0;
+                $draftTodayMap[$email] = $draftToday;
 
                 // Calculate consecutive stagnant days/snapshots where submit did not increase
                 $stagnantDays = 0;
@@ -72,8 +79,8 @@ class PetugasPerformanceRankingService
                     for ($i = 0; $i < count($recentDates) - 1; $i++) {
                         $currDate = $recentDates[$i];
                         $prevDate = $recentDates[$i + 1];
-                        $currVal = $byDate[$currDate] ?? null;
-                        $prevVal = $byDate[$prevDate] ?? null;
+                        $currVal = $byDateSubmit[$currDate] ?? null;
+                        $prevVal = $byDateSubmit[$prevDate] ?? null;
 
                         if ($currVal !== null && $prevVal !== null && $currVal <= $prevVal) {
                             $stagnantDays++;
@@ -83,12 +90,6 @@ class PetugasPerformanceRankingService
                     }
                 }
                 $stagnantDaysMap[$email] = $stagnantDays;
-
-                if ($stagnantDays >= 1) {
-                    $warningMap[$email] = 'stagnant';
-                } else {
-                    $warningMap[$email] = 'normal';
-                }
             }
         }
 
@@ -235,13 +236,20 @@ class PetugasPerformanceRankingService
             // Total Score
             $skorKinerja = round($progressScore + $volumeScore, 1);
 
+            $submitToday = $submitTodayMap[$row->email_pencacah] ?? 0;
+            $draftToday = $draftTodayMap[$row->email_pencacah] ?? 0;
+            $stagnantDays = $stagnantDaysMap[$row->email_pencacah] ?? 0;
+
             // Warning logic:
             if ($capaianPct >= 100.0 || $row->belum_dikerjakan <= 0) {
                 $warning = 'completed';
+            } elseif ($capaianPct >= $dynamicTargetPct) {
+                // Petugas sudah di atas/sesuai Target Harian Standar (On-Track)
+                $warning = 'normal';
             } elseif ($stagnantDays >= 1) {
-                // Submit 0/hari (tidak ada penambahan submit dibanding snapshot kemarin)
+                // Submit 0/hari (tidak ada penambahan submit dibanding snapshot kemarin) & di bawah target
                 $warning = 'stagnant';
-            } elseif ($capaianPct < 95.0 && $submitToday < $lajuHarian95) {
+            } elseif ($submitToday < $lajuHarian95) {
                 // Ada submit (>0) tetapi di bawah target laju harian s.d. 20 Agustus
                 $warning = 'slow_progress';
             } else {
@@ -299,8 +307,9 @@ class PetugasPerformanceRankingService
             $item->kat_badge = $katBadge;
             $item->rekomendasi = $rekomendasi;
             $item->warning_status = $warning;
-            $item->submit_today = $submitTodayMap[$row->email_pencacah] ?? 0;
-            $item->stagnant_days = $stagnantDaysMap[$row->email_pencacah] ?? 0;
+            $item->submit_today = $submitToday;
+            $item->draft_today = $draftToday;
+            $item->stagnant_days = $stagnantDays;
 
             // Target 95% & Warning Usaha Attributes
             $item->needed_to_95 = $neededTo95;

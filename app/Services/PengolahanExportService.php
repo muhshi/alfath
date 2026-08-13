@@ -390,7 +390,8 @@ class PengolahanExportService
             $sheet->setCellValue('G' . $rowIdx, (int) $row->beban_saat_ini);
             $sheet->setCellValue('H' . $rowIdx, (int) $row->total_submit);
             $sheet->setCellValue('I' . $rowIdx, (float) $row->pct_submit);
-            $submitStr = "submit " . number_format($row->submit_today ?? 0) . "/hari | ";
+            $draftStr = ($row->draft_today ?? 0) > 0 ? " (+" . number_format($row->draft_today) . " draft/hari)" : "";
+            $submitStr = "submit " . number_format($row->submit_today ?? 0) . "/hari" . $draftStr . " | ";
             $sheet->setCellValue('J' . $rowIdx, $submitStr . match($row->warning_status) {
                 'completed' => '🎉 Selesai 100%',
                 'stagnant' => '🚨 Stagnan ' . ($row->stagnant_days ?? 0) . ' hari',
