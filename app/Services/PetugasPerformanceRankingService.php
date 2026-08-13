@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 class PetugasPerformanceRankingService
 {
     /**
-     * Calculate Petugas Performance Ranking, Target 95% to 20 Aug, SLS Low Usaha Warnings (UP < 5% / UK < 10%), & 3-Day Warning Signals.
+     * Calculate Petugas Performance Ranking, Target 95% to 20 Aug, SLS Low Usaha Warnings (BKU < 5% / UK < 10%), & Stagnant Warning Signals.
      */
     public function calculateRankingData(Collection $records, ?string $selectedDate): array
     {

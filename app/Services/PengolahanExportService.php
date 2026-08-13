@@ -91,7 +91,7 @@ class PengolahanExportService
         $headers = [
             'No', 'Kode Kec', 'Nama Kecamatan', 'Nama Pencacah', 'Email Pencacah', 'Nama Pengawas',
             'Muatan Murni ⭐', 'Belum Dikerjakan', 'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)',
-            'UP Ditemukan', 'UP Tdk Ditemukan', 'UK Ditemukan', 'Keluarga Ditemukan', 'Keluarga Tdk Ditemukan'
+            'BKU Ditemukan', 'BKU Tdk Ditemukan', 'UK Ditemukan', 'Keluarga Ditemukan', 'Keluarga Tdk Ditemukan'
         ];
 
         foreach ($headers as $colIdx => $header) {
@@ -177,7 +177,7 @@ class PengolahanExportService
         $headers = [
             'No', 'Kode Kec', 'Nama Kecamatan', 'Nama Pengawas (PML)', 'Email Pengawas', 'Total PPL', 'Total SLS',
             'Muatan Murni ⭐', 'Belum Dikerjakan', 'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)',
-            'UP Ditemukan', 'UP Tdk Ditemukan', 'UK Ditemukan', 'Keluarga Ditemukan', 'Keluarga Tdk Ditemukan'
+            'BKU Ditemukan', 'BKU Tdk Ditemukan', 'UK Ditemukan', 'Keluarga Ditemukan', 'Keluarga Tdk Ditemukan'
         ];
 
         foreach ($headers as $colIdx => $header) {
@@ -265,7 +265,7 @@ class PengolahanExportService
         $headers = [
             'No', 'Kode Kec', 'Nama Kecamatan', 'Kode SLS (16 Digit)', 'Nama SLS / Sub-SLS', 'Nama Pencacah', 'Email Pencacah', 'Nama Pengawas',
             'Beban Saat Ini', 'Total Submit', 'Belum Disentuh (Open)', 'Capaian Submit (%)',
-            'UP Ditemukan', 'UP Tdk/Tutup/Ganda', 'UK Ditemukan', 'UK Tdk/Tutup/Ganda',
+            'BKU Ditemukan', 'BKU Tdk/Tutup/Ganda', 'UK Ditemukan', 'UK Tdk/Tutup/Ganda',
             'Keluarga Ditemukan', 'Keluarga Tdk/Meninggal', 'TOTAL DITEMUKAN', 'TOTAL TDK DITEMUKAN / TUTUP / GANDA'
         ];
 
@@ -398,7 +398,7 @@ class PengolahanExportService
                 'slow_progress' => '⚠️ Progres Lambat',
                 default => '✅ Normal',
             });
-            $sheet->setCellValue('K' . $rowIdx, $row->has_warning_usaha ? "⚠️ Warning (UP < 5% / UK < 10%)" : "✅ Normal");
+            $sheet->setCellValue('K' . $rowIdx, $row->has_warning_usaha ? "⚠️ Warning (BKU < 5% / UK < 10%)" : "✅ Normal");
             $sheet->setCellValue('L' . $rowIdx, (float) $row->laju_harian_95);
             $sheet->setCellValue('M' . $rowIdx, (float) $row->skor_kinerja);
             $sheet->setCellValue('N' . $rowIdx, $row->kat_label ?? '-');

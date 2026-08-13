@@ -309,7 +309,7 @@
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">USAHA DITEMUKAN</div>
                             <div class="h2 font-weight-extrabold text-info mb-0">{{ number_format($kpiSummary['total_usaha_ditemukan'] ?? 0) }}</div>
-                            <div class="small text-muted mt-1">Usaha Perusahaan</div>
+                            <div class="small text-muted mt-1">BKU (Bangunan Khusus Usaha)</div>
                         </div>
                     </div>
                 </div>
@@ -329,7 +329,7 @@
                         <div class="card-body p-3">
                             <div class="text-teal font-weight-bold small mb-1">MUATAN MURNI</div>
                             <div class="h2 font-weight-extrabold text-teal mb-0">{{ number_format($kpiSummary['total_muatan_murni'] ?? 0) }}</div>
-                            <div class="small text-teal mt-1">Usaha Perusahaan + Keluarga</div>
+                            <div class="small text-teal mt-1">BKU + UK (Usaha Keluarga)</div>
                         </div>
                     </div>
                 </div>
@@ -511,7 +511,7 @@
                                     @endif
                                     @if(($rankingSummary['cnt_warning_usaha'] ?? 0) > 0)
                                         <span class="badge bg-danger text-white px-2.5 py-1.5 rounded-pill font-weight-bold shadow-xs">
-                                            ⚠️ {{ number_format($rankingSummary['cnt_warning_usaha']) }} Petugas Warning Usaha (UP < 5% / UK < 10%)
+                                            ⚠️ {{ number_format($rankingSummary['cnt_warning_usaha']) }} Petugas Warning Usaha (BKU < 5% / UK < 10%)
                                         </span>
                                     @endif
                                 </div>
@@ -529,7 +529,7 @@
                                         <th class="text-end text-success font-weight-bold">Total<br>Submit</th>
                                         <th class="text-end text-primary font-weight-extrabold">% Capaian<br><span class="text-muted font-weight-normal small">vs {{ number_format($dynamicTargetPct, 1) }}%</span></th>
                                         <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">submit/hari & stagnan</span></th>
-                                        <th class="text-center text-danger">Warning Anomali Usaha<br><span class="text-muted font-weight-normal small">(UP < 5% / UK < 10%)</span></th>
+                                        <th class="text-center text-danger">Warning Anomali Usaha<br><span class="text-muted font-weight-normal small">(BKU < 5% / UK < 10%)</span></th>
                                         <th class="text-center text-indigo">Laju s.d. 20 Agt<br><span class="text-muted font-weight-normal small">(Kejar Target 95%)</span></th>
                                         <th class="text-end bg-amber-lt text-amber font-weight-extrabold">Skor Kinerja<br><span class="text-muted font-weight-normal small">(0 - 100)</span></th>
                                         <th class="text-center">Kategori Kinerja</th>
@@ -708,8 +708,8 @@
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end">Total<br>Submit</th>
                                         <th class="text-end">% Progres</th>
-                                        <th class="text-end">Usaha<br>Perusahaan</th>
-                                        <th class="text-end">Usaha Perusahaan<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                        <th class="text-end">BKU</th>
+                                        <th class="text-end">BKU<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
                                         <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
                                         <th class="text-end">Keluarga<br><span class="text-warning font-weight-normal small">(Ditemukan+Baru)</span></th>
                                         <th class="text-end">Keluarga<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
@@ -779,8 +779,8 @@
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end">Total<br>Submit</th>
                                         <th class="text-end">% Progres</th>
-                                        <th class="text-end">Usaha<br>Perusahaan</th>
-                                        <th class="text-end">Usaha Perusahaan<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                        <th class="text-end">BKU</th>
+                                        <th class="text-end">BKU<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
                                         <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
                                         <th class="text-end">Keluarga<br><span class="text-warning font-weight-normal small">(Ditemukan+Baru)</span></th>
                                         <th class="text-end">Keluarga<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
@@ -852,8 +852,8 @@
                                         <th class="text-end">Total<br>Submit</th>
                                         <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum Disentuh<br>(Open)</th>
                                         <th class="text-end">% Progres</th>
-                                        <th class="text-end text-info font-weight-bold">UP<br><span class="font-weight-normal small">Ditemukan</span></th>
-                                        <th class="text-end text-danger font-weight-bold" style="background-color: #fef2f2 !important;">UP<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
+                                        <th class="text-end text-info font-weight-bold">BKU<br><span class="font-weight-normal small">Ditemukan</span></th>
+                                        <th class="text-end text-danger font-weight-bold" style="background-color: #fef2f2 !important;">BKU<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
                                         <th class="text-end text-purple font-weight-bold">UK<br><span class="font-weight-normal small">Ditemukan</span></th>
                                         <th class="text-end text-orange font-weight-bold" style="background-color: #fff7ed !important;">UK<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
                                         <th class="text-end text-success font-weight-bold">Keluarga<br><span class="font-weight-normal small">Ditemukan</span></th>
@@ -941,7 +941,7 @@
                     <div class="alert alert-info border-0 bg-info-lt text-dark mb-3 p-3 rounded-3 small">
                         <div class="font-weight-bold mb-1">ℹ️ Panduan Tindak Lanjut Anomali:</div>
                         <ul class="mb-0 ps-3">
-                            <li><b>Perubahan Data (Probing Usaha Nambah):</b> Jika hasil pendataan bertambah usahanya (sehingga UP &ge; 5% / UK &ge; 10%), anomali akan <b>hilang otomatis</b> saat data diperbarui.</li>
+                            <li><b>Perubahan Data (Probing Usaha Nambah):</b> Jika hasil pendataan bertambah usahanya (sehingga BKU &ge; 5% / UK &ge; 10%), anomali akan <b>hilang otomatis</b> saat data diperbarui.</li>
                             <li><b>Data Tetap / Tidak Berubah:</b> Petugas dapat memberikan <b>catatan klarifikasi</b> (misal: SLS kawasan persawahan / pemukiman non-usaha). Catatan akan diajukan ke Admin untuk disetujui (Approval).</li>
                         </ul>
                     </div>
@@ -1205,7 +1205,7 @@
 
                         var html = '';
                         $.each(data.sls_list, function(idx, sls) {
-                            var upHtml = sls.is_low_up ? '<span class="text-danger font-weight-bold">🏢 UP: ' + sls.up_sls + ' (' + sls.pct_up + '% < min 5%)</span>' : '<span class="text-success">🏢 UP: ' + sls.up_sls + ' (' + sls.pct_up + '% ✅)</span>';
+                            var upHtml = sls.is_low_up ? '<span class="text-danger font-weight-bold">🏢 BKU: ' + sls.up_sls + ' (' + sls.pct_up + '% < min 5%)</span>' : '<span class="text-success">🏢 BKU: ' + sls.up_sls + ' (' + sls.pct_up + '% ✅)</span>';
                             var ukHtml = sls.is_low_uk ? '<span class="text-danger font-weight-bold">🏡 UK: ' + sls.uk_sls + ' (' + sls.pct_uk + '% < min 10%)</span>' : '<span class="text-success">🏡 UK: ' + sls.uk_sls + ' (' + sls.pct_uk + '% ✅)</span>';
 
                             var statusBadge = '';
