@@ -271,8 +271,8 @@
                     </div>
                 </div>
 
-                <!-- KPI Summary Cards -->
-                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                <!-- KPI Summary Cards - 2 Baris (4 Atas, 4 Bawah) -->
+                <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">TOTAL PETUGAS</div>
@@ -282,7 +282,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">BEBAN SAAT INI</div>
@@ -292,7 +292,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-center mb-1">
@@ -312,7 +312,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-3 bg-blue-lt border-blue">
                         <div class="card-body p-3">
                             <div class="text-primary font-weight-bold small mb-1">PROGRESS SEHARUSNYA</div>
@@ -324,7 +324,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">USAHA DITEMUKAN</div>
@@ -334,7 +334,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">KELUARGA DITEMUKAN</div>
@@ -344,7 +344,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-3 bg-teal-lt">
                         <div class="card-body p-3">
                             <div class="text-teal font-weight-bold small mb-1">MUATAN MURNI</div>
@@ -354,7 +354,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-3 bg-amber-lt">
                         <div class="card-body p-3">
                             <div class="text-orange font-weight-bold small mb-1">BANGUNAN KOSONG / LAINNYA</div>

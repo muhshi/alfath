@@ -190,4 +190,5 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Menambahkan kartu KPI khusus **`PROGRESS SEHARUSNYA`** (`dynamicTargetPct`%, misal 1.33% / hari) pada jajaran kartu statistik utama.
     - Menambahkan badge target `Target: X%` pada kartu **TOTAL SUBMIT** serta badge header `🎯 Target Standar Hari Ini: X% (1.33%/hari)` pada banner utama dashboard.
   - **Dukungan Multi-Sheet Excel Export**: Menambahkan kolom `Bangunan Kosong/Lainnya`, `% Bangunan Lainnya`, dan `Warning Bangunan Lainnya (>=5%)` pada ke-4 sheet file Excel (`.xlsx`).
+  - **Penataan Grid Stat Overview (2 Baris: 4 Atas, 4 Bawah)**: Menata ulang 8 kartu ringkasan KPI di bagian header dashboard menjadi format grid 4 kolom (`col-6 col-lg-3`), sehingga pada layar desktop tersusun rapi menjadi 2 baris proporsional (4 card di atas dan 4 card di bawah) tanpa ada card yang memanjang kosong.
 
