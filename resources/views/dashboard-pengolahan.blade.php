@@ -240,7 +240,7 @@
                         <div class="card-body p-4">
                             <div class="row align-items-center">
                                 <div class="col-md-9">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
                                         <span class="badge bg-light text-primary font-weight-bold px-3 py-1.5 rounded-pill border">
                                             <span class="status-dot status-dot-animated bg-primary me-1"></span> SE2026 MONITORING & PETUGAS
                                         </span>
@@ -249,6 +249,9 @@
                                                 📅 Tanggal Data: {{ date('d M Y', strtotime($selectedDate)) }}
                                             </span>
                                         @endif
+                                        <span class="badge bg-warning-lt text-dark font-weight-bold px-3 py-1.5 rounded-pill border border-warning" title="Standar laju progres harian 1.33% per hari">
+                                            🎯 Target Standar Hari Ini: {{ number_format($dynamicTargetPct, 1) }}% <span class="font-weight-normal text-muted">(1.33%/hari)</span>
+                                        </span>
                                     </div>
                                     <h2 class="font-weight-extrabold text-dark mb-1" style="font-family: 'Outfit', sans-serif; color: #0f172a;">
                                         Tabel Petugas SE2026
@@ -292,13 +295,30 @@
                 <div class="col-6 col-md-4 col-lg-auto flex-fill">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
-                            <div class="text-muted small font-weight-bold mb-1">TOTAL SUBMIT</div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="text-muted small font-weight-bold">TOTAL SUBMIT</div>
+                                <span class="badge bg-blue-lt text-blue font-weight-bold px-1.5 py-0.5" style="font-size: 0.68rem;" title="Target standar progres harian 1.33% per hari">
+                                    Target: {{ number_format($dynamicTargetPct, 1) }}%
+                                </span>
+                            </div>
                             <div class="h2 font-weight-extrabold text-success mb-0">{{ number_format($kpiSummary['total_submit'] ?? 0) }}</div>
                             <div class="small font-weight-bold mt-1">
                                 <span class="text-success">{{ number_format($kpiSummary['pct_overall_submit'] ?? 0, 1) }}% Submit</span>
                                 @if(($kpiSummary['total_draft'] ?? 0) > 0)
                                     <span class="text-purple ms-1" title="{{ number_format($kpiSummary['total_draft']) }} data draft">(+Draft: {{ number_format($kpiSummary['pct_overall_submit_draft'] ?? 0, 1) }}%)</span>
                                 @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                    <div class="card border-0 shadow-sm rounded-3 bg-blue-lt border-blue">
+                        <div class="card-body p-3">
+                            <div class="text-primary font-weight-bold small mb-1">PROGRESS SEHARUSNYA</div>
+                            <div class="h2 font-weight-extrabold text-primary mb-0">{{ number_format($dynamicTargetPct, 1) }}%</div>
+                            <div class="small text-primary font-weight-bold mt-1">
+                                🎯 Standar 1.33% / Hari
                             </div>
                         </div>
                     </div>

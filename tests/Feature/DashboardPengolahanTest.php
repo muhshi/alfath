@@ -16,5 +16,6 @@ class DashboardPengolahanTest extends TestCase
         $response->assertSee('TARGET HARIAN STANDAR');
         $response->assertSee('BANGUNAN KOSONG / LAINNYA');
         $response->assertSee('Bangunan Kosong / Lainnya');
+        $response->assertSee('PROGRESS SEHARUSNYA');
     }
 }

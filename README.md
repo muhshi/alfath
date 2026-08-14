@@ -186,5 +186,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Kartu KPI ke-7 `BANGUNAN KOSONG / LAINNYA` pada header utama dashboard.
     - Mini metric badge `⚠️ X Petugas Warning Bangunan Lainnya (>=5%)` pada Tab Ranking Kinerja.
     - Kolom `Bangunan Kosong / Lainnya` dengan highlight badge warning orange pada seluruh 4 Tab (**Tab 1: Ranking Kinerja**, **Tab 2: Ringkasan PPL**, **Tab 3: Ringkasan PML**, dan **Tab 4: Alokasi Per SLS**).
+  - **Indikator Progres Seharusnya Hari Ini (1.33%/hari)**:
+    - Menambahkan kartu KPI khusus **`PROGRESS SEHARUSNYA`** (`dynamicTargetPct`%, misal 1.33% / hari) pada jajaran kartu statistik utama.
+    - Menambahkan badge target `Target: X%` pada kartu **TOTAL SUBMIT** serta badge header `🎯 Target Standar Hari Ini: X% (1.33%/hari)` pada banner utama dashboard.
   - **Dukungan Multi-Sheet Excel Export**: Menambahkan kolom `Bangunan Kosong/Lainnya`, `% Bangunan Lainnya`, dan `Warning Bangunan Lainnya (>=5%)` pada ke-4 sheet file Excel (`.xlsx`).
 
