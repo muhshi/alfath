@@ -299,6 +299,11 @@ class PetugasPerformanceRankingService
                 }
             }
 
+            // Bangunan Kosong / Bangunan Lainnya Calculation & Warning Threshold (>= 5% of total submit)
+            $bangunanLainnya = max(0, $submit - $muatanMurni - (($row->usaha_tidak_ditemukan ?? 0) + ($row->keluarga_tidak_ditemukan ?? 0)));
+            $pctBangunanLainnya = $submit > 0 ? round(($bangunanLainnya / $submit) * 100, 2) : 0;
+            $hasWarningBangunanLainnya = $pctBangunanLainnya >= 5.0;
+
             $item = clone $row;
             $item->dynamic_target_pct = $dynamicTargetPct;
             $item->skor_kinerja = $skorKinerja;
@@ -310,6 +315,11 @@ class PetugasPerformanceRankingService
             $item->submit_today = $submitToday;
             $item->draft_today = $draftToday;
             $item->stagnant_days = $stagnantDays;
+
+            // Bangunan Kosong / Bangunan Lainnya Attributes
+            $item->bangunan_lainnya = $bangunanLainnya;
+            $item->pct_bangunan_lainnya = $pctBangunanLainnya;
+            $item->has_warning_bangunan_lainnya = $hasWarningBangunanLainnya;
 
             // Target 95% & Warning Usaha Attributes
             $item->needed_to_95 = $neededTo95;
@@ -363,6 +373,7 @@ class PetugasPerformanceRankingService
             'cnt_stagnant' => $sortedRanking->where('warning_status', 'stagnant')->count(),
             'cnt_slow' => $sortedRanking->where('warning_status', 'slow_progress')->count(),
             'cnt_warning_usaha' => $sortedRanking->where('has_warning_usaha', true)->count(),
+            'cnt_warning_bangunan_lainnya' => $sortedRanking->where('has_warning_bangunan_lainnya', true)->count(),
         ];
 
         return [

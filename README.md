@@ -177,3 +177,14 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - **Tampilan Submit Harian (`submit X/hari`) & Pertambahan Draft (`+X draft/hari`) pada Cell Status Warning**: Menampilkan informasi laju submit selisih harian (`submit X/hari`) berdampingan dengan badge pertambahan draft harian (`+X draft/hari`) di bagian atas cell kolom Status Warning di tabel Ranking Kinerja Petugas, di atas badge status (`Stagnan X hari`, `Progres Lambat`, `On-Track`, atau `Selesai 100%`).
   - **Apresiasi Data Draft & Persentase Gabungan**: Menghitung `total_draft`, `pct_draft`, dan persentase gabungan `pct_submit_draft` (`(Submit + Draft) / Beban * 100`). Menampilkan statistik `+Draft: X%` pada kartu KPI utama "TOTAL SUBMIT" serta pada kolom persentase capaian di tabel PPL, PML, dan Ranking Kinerja Petugas agar progres draft petugas mendapatkan apresiasi.
   - **Pembaruan Ekspor Excel**: Memperbarui format ekspor Excel Sheet Ranking Kinerja untuk menyertakan angka submit harian, pertambahan draft harian, dan durasi hari stagnan secara bersih tanpa teks membingungkan (`stagnan 0 hari`).
+
+### 2026-08-14
+- **Kalkulasi & Warning Bangunan Kosong / Bangunan Lainnya di Dashboard Pengolahan (`/dashboard-pengolahan`)**:
+  - **Rumus Bangunan Kosong / Bangunan Lainnya**: Menghitung `bangunan_lainnya = total_submit - muatan_murni - muatan_tidak_ditemukan` untuk mendeteksi unit yang disubmit tanpa wawancara murni (bangunan kosong/fasum/pasar yang keliru diisi sebagai non-BKU).
+  - **Kriteria Warning &ge; 5% Total Submit**: Memicu warning otomatis `⚠️ Bangunan Kosong/Lainnya (>=5%)` apabila persentase `bangunan_lainnya` terhadap `total_submit` mencapai atau melebihi **5.0%**.
+  - **Visualisasi UI Dashboard Pengolahan**:
+    - Kartu KPI ke-7 `BANGUNAN KOSONG / LAINNYA` pada header utama dashboard.
+    - Mini metric badge `⚠️ X Petugas Warning Bangunan Lainnya (>=5%)` pada Tab Ranking Kinerja.
+    - Kolom `Bangunan Kosong / Lainnya` dengan highlight badge warning orange pada **Tab 1 (Ranking Kinerja)**, **Tab 2 (Ringkasan PPL)**, dan **Tab 3 (Alokasi Per SLS)**.
+  - **Dukungan Multi-Sheet Excel Export**: Menambahkan kolom `Bangunan Kosong/Lainnya`, `% Bangunan Lainnya`, dan `Warning Bangunan Lainnya (>=5%)` pada ke-4 sheet file Excel (`.xlsx`).
+

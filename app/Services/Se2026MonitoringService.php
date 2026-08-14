@@ -127,6 +127,9 @@ class Se2026MonitoringService
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as jumlah_keluarga_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as keluarga_tidak_ditemukan'),
                 DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni'),
+                DB::raw('GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) as bangunan_lainnya'),
+                DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 THEN ROUND((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100, 2) ELSE 0 END as pct_bangunan_lainnya'),
+                DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 AND ((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100) >= 5.0 THEN 1 ELSE 0 END as has_warning_bangunan_lainnya'),
             ])
             ->groupBy([
                 'm.tanggal_tarik',
@@ -263,6 +266,9 @@ class Se2026MonitoringService
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as pk_tdk'),
                 DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as total_ditemukan'),
                 DB::raw('(IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0)) as total_tdk'),
+                DB::raw('GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) as bangunan_lainnya'),
+                DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 THEN ROUND((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100, 2) ELSE 0 END as pct_bangunan_lainnya'),
+                DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 AND ((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100) >= 5.0 THEN 1 ELSE 0 END as has_warning_bangunan_lainnya'),
             ])
             ->groupBy([
                 'm.tanggal_tarik',
@@ -364,6 +370,9 @@ class Se2026MonitoringService
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as jumlah_keluarga_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as keluarga_tidak_ditemukan'),
                 DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni'),
+                DB::raw('GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) as bangunan_lainnya'),
+                DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 THEN ROUND((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100, 2) ELSE 0 END as pct_bangunan_lainnya'),
+                DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 AND ((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100) >= 5.0 THEN 1 ELSE 0 END as has_warning_bangunan_lainnya'),
             ])
             ->groupBy([
                 'm.tanggal_tarik',
@@ -407,6 +416,8 @@ class Se2026MonitoringService
             'total_usaha_keluarga' => $records->sum('jumlah_usaha_keluarga'),
             'total_keluarga_ditemukan' => $records->sum('jumlah_keluarga_ditemukan'),
             'total_muatan_murni' => $records->sum('muatan_murni'),
+            'total_bangunan_lainnya' => $records->sum('bangunan_lainnya'),
+            'cnt_warning_bangunan_lainnya' => $records->where('has_warning_bangunan_lainnya', 1)->count(),
             'total_sls' => $slsRecords->count(),
             'pct_overall_submit' => $records->sum('beban_saat_ini') > 0
                 ? round(($records->sum('total_submit') / $records->sum('beban_saat_ini')) * 100, 2)

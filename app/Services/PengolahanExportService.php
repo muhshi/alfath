@@ -91,6 +91,7 @@ class PengolahanExportService
         $headers = [
             'No', 'Kode Kec', 'Nama Kecamatan', 'Nama Pencacah', 'Email Pencacah', 'Nama Pengawas',
             'Muatan Murni ⭐', 'Belum Dikerjakan', 'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)',
+            'Bangunan Kosong/Lainnya', '% Bangunan Lainnya', 'Warning Bangunan Lainnya (&ge;5%)',
             'BKU Ditemukan', 'BKU Tdk Ditemukan', 'UK Ditemukan', 'Keluarga Ditemukan', 'Keluarga Tdk Ditemukan'
         ];
 
@@ -99,7 +100,7 @@ class PengolahanExportService
             $sheet->setCellValue($cell, $header);
         }
 
-        $headerRange = 'A4:P4';
+        $headerRange = 'A4:S4';
         $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFF'))->setSize(10);
         $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('0284C7');
         $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
@@ -118,20 +119,25 @@ class PengolahanExportService
             $sheet->setCellValue('I' . $rowIdx, (int) $row->beban_saat_ini);
             $sheet->setCellValue('J' . $rowIdx, (int) $row->total_submit);
             $sheet->setCellValue('K' . $rowIdx, (float) $row->pct_submit);
-            $sheet->setCellValue('L' . $rowIdx, (int) $row->jumlah_usaha_ditemukan);
-            $sheet->setCellValue('M' . $rowIdx, (int) $row->usaha_tidak_ditemukan);
-            $sheet->setCellValue('N' . $rowIdx, (int) $row->jumlah_usaha_keluarga);
-            $sheet->setCellValue('O' . $rowIdx, (int) $row->jumlah_keluarga_ditemukan);
-            $sheet->setCellValue('P' . $rowIdx, (int) $row->keluarga_tidak_ditemukan);
+            $sheet->setCellValue('L' . $rowIdx, (int) $row->bangunan_lainnya);
+            $sheet->setCellValue('M' . $rowIdx, (float) $row->pct_bangunan_lainnya);
+            $sheet->setCellValue('N' . $rowIdx, $row->has_warning_bangunan_lainnya ? "⚠️ Warning (&ge;5%)" : "✅ Normal");
+            $sheet->setCellValue('O' . $rowIdx, (int) $row->jumlah_usaha_ditemukan);
+            $sheet->setCellValue('P' . $rowIdx, (int) $row->usaha_tidak_ditemukan);
+            $sheet->setCellValue('Q' . $rowIdx, (int) $row->jumlah_usaha_keluarga);
+            $sheet->setCellValue('R' . $rowIdx, (int) $row->jumlah_keluarga_ditemukan);
+            $sheet->setCellValue('S' . $rowIdx, (int) $row->keluarga_tidak_ditemukan);
 
             $sheet->getStyle('A' . $rowIdx . ':B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle('G' . $rowIdx . ':J' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
             $sheet->getStyle('K' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
-            $sheet->getStyle('L' . $rowIdx . ':P' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('L' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('M' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
+            $sheet->getStyle('O' . $rowIdx . ':S' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
             $sheet->getStyle('G' . $rowIdx)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0D9488'));
 
             if ($index % 2 == 1) {
-                $sheet->getStyle('A' . $rowIdx . ':P' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
+                $sheet->getStyle('A' . $rowIdx . ':S' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
             }
             $rowIdx++;
         }
@@ -148,35 +154,41 @@ class PengolahanExportService
         $sheet->setCellValue("J{$sumRow}", "=SUM(J5:J{$lastRow})");
         $sheet->setCellValue("K{$sumRow}", "=IF(I{$sumRow}>0, ROUND((J{$sumRow}/I{$sumRow})*100, 2), 0)");
         $sheet->setCellValue("L{$sumRow}", "=SUM(L5:L{$lastRow})");
-        $sheet->setCellValue("M{$sumRow}", "=SUM(M5:M{$lastRow})");
-        $sheet->setCellValue("N{$sumRow}", "=SUM(N5:N{$lastRow})");
+        $sheet->setCellValue("M{$sumRow}", "=IF(J{$sumRow}>0, ROUND((L{$sumRow}/J{$sumRow})*100, 2), 0)");
+        $sheet->setCellValue("N{$sumRow}", "-");
         $sheet->setCellValue("O{$sumRow}", "=SUM(O5:O{$lastRow})");
         $sheet->setCellValue("P{$sumRow}", "=SUM(P5:P{$lastRow})");
+        $sheet->setCellValue("Q{$sumRow}", "=SUM(Q5:Q{$lastRow})");
+        $sheet->setCellValue("R{$sumRow}", "=SUM(R5:R{$lastRow})");
+        $sheet->setCellValue("S{$sumRow}", "=SUM(S5:S{$lastRow})");
 
-        $sumRange = "A{$sumRow}:P{$sumRow}";
+        $sumRange = "A{$sumRow}:S{$sumRow}";
         $sheet->getStyle($sumRange)->getFont()->setBold(true);
         $sheet->getStyle($sumRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('E2E8F0');
         $sheet->getStyle("G{$sumRow}:J{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
         $sheet->getStyle("K{$sumRow}")->getNumberFormat()->setFormatCode('0.00"%"');
-        $sheet->getStyle("L{$sumRow}:P{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("L{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("M{$sumRow}")->getNumberFormat()->setFormatCode('0.00"%"');
+        $sheet->getStyle("O{$sumRow}:S{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
 
-        $this->applyBordersAndAutoWidth($sheet, "A4:P{$sumRow}", 'A', 'P');
+        $this->applyBordersAndAutoWidth($sheet, "A4:S{$sumRow}", 'A', 'S');
     }
 
     protected function buildPmlSheet($sheet, $pmlRecords, $kecNameMap, $selectedDate, $kodekec, $search)
     {
-        $sheet->mergeCells('A1:Q1');
+        $sheet->mergeCells('A1:T1');
         $sheet->setCellValue('A1', 'AGREGASI PENGAWAS (PML) SE2026 - BPS KABUPATEN DEMAK');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0F172A'));
 
         $subTitle = 'Tanggal Data: ' . (!empty($selectedDate) ? date('d M Y', strtotime($selectedDate)) : 'Semua Tanggal');
-        $sheet->mergeCells('A2:Q2');
+        $sheet->mergeCells('A2:T2');
         $sheet->setCellValue('A2', $subTitle);
         $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('64748B'));
 
         $headers = [
             'No', 'Kode Kec', 'Nama Kecamatan', 'Nama Pengawas (PML)', 'Email Pengawas', 'Total PPL', 'Total SLS',
             'Muatan Murni ⭐', 'Belum Dikerjakan', 'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)',
+            'Bangunan Kosong/Lainnya', '% Bangunan Lainnya', 'Warning Bangunan Lainnya (&ge;5%)',
             'BKU Ditemukan', 'BKU Tdk Ditemukan', 'UK Ditemukan', 'Keluarga Ditemukan', 'Keluarga Tdk Ditemukan'
         ];
 
@@ -185,7 +197,7 @@ class PengolahanExportService
             $sheet->setCellValue($cell, $header);
         }
 
-        $headerRange = 'A4:Q4';
+        $headerRange = 'A4:T4';
         $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFF'))->setSize(10);
         $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('475569');
         $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
@@ -205,19 +217,24 @@ class PengolahanExportService
             $sheet->setCellValue('J' . $rowIdx, (int) $row->beban_saat_ini);
             $sheet->setCellValue('K' . $rowIdx, (int) $row->total_submit);
             $sheet->setCellValue('L' . $rowIdx, (float) $row->pct_submit);
-            $sheet->setCellValue('M' . $rowIdx, (int) $row->jumlah_usaha_ditemukan);
-            $sheet->setCellValue('N' . $rowIdx, (int) $row->usaha_tidak_ditemukan);
-            $sheet->setCellValue('O' . $rowIdx, (int) $row->jumlah_usaha_keluarga);
-            $sheet->setCellValue('P' . $rowIdx, (int) $row->jumlah_keluarga_ditemukan);
-            $sheet->setCellValue('Q' . $rowIdx, (int) $row->keluarga_tidak_ditemukan);
+            $sheet->setCellValue('M' . $rowIdx, (int) $row->bangunan_lainnya);
+            $sheet->setCellValue('N' . $rowIdx, (float) $row->pct_bangunan_lainnya);
+            $sheet->setCellValue('O' . $rowIdx, $row->has_warning_bangunan_lainnya ? "⚠️ Warning (&ge;5%)" : "✅ Normal");
+            $sheet->setCellValue('P' . $rowIdx, (int) $row->jumlah_usaha_ditemukan);
+            $sheet->setCellValue('Q' . $rowIdx, (int) $row->usaha_tidak_ditemukan);
+            $sheet->setCellValue('R' . $rowIdx, (int) $row->jumlah_usaha_keluarga);
+            $sheet->setCellValue('S' . $rowIdx, (int) $row->jumlah_keluarga_ditemukan);
+            $sheet->setCellValue('T' . $rowIdx, (int) $row->keluarga_tidak_ditemukan);
 
             $sheet->getStyle('A' . $rowIdx . ':B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle('F' . $rowIdx . ':K' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
             $sheet->getStyle('L' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
-            $sheet->getStyle('M' . $rowIdx . ':Q' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('M' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('N' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
+            $sheet->getStyle('P' . $rowIdx . ':T' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
 
             if ($index % 2 == 1) {
-                $sheet->getStyle('A' . $rowIdx . ':Q' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
+                $sheet->getStyle('A' . $rowIdx . ':T' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
             }
             $rowIdx++;
         }
@@ -236,29 +253,34 @@ class PengolahanExportService
         $sheet->setCellValue("K{$sumRow}", "=SUM(K5:K{$lastRow})");
         $sheet->setCellValue("L{$sumRow}", "=IF(J{$sumRow}>0, ROUND((K{$sumRow}/J{$sumRow})*100, 2), 0)");
         $sheet->setCellValue("M{$sumRow}", "=SUM(M5:M{$lastRow})");
-        $sheet->setCellValue("N{$sumRow}", "=SUM(N5:N{$lastRow})");
-        $sheet->setCellValue("O{$sumRow}", "=SUM(O5:O{$lastRow})");
+        $sheet->setCellValue("N{$sumRow}", "=IF(K{$sumRow}>0, ROUND((M{$sumRow}/K{$sumRow})*100, 2), 0)");
+        $sheet->setCellValue("O{$sumRow}", "-");
         $sheet->setCellValue("P{$sumRow}", "=SUM(P5:P{$lastRow})");
         $sheet->setCellValue("Q{$sumRow}", "=SUM(Q5:Q{$lastRow})");
+        $sheet->setCellValue("R{$sumRow}", "=SUM(R5:R{$lastRow})");
+        $sheet->setCellValue("S{$sumRow}", "=SUM(S5:S{$lastRow})");
+        $sheet->setCellValue("T{$sumRow}", "=SUM(T5:T{$lastRow})");
 
-        $sumRange = "A{$sumRow}:Q{$sumRow}";
+        $sumRange = "A{$sumRow}:T{$sumRow}";
         $sheet->getStyle($sumRange)->getFont()->setBold(true);
         $sheet->getStyle($sumRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('E2E8F0');
         $sheet->getStyle("F{$sumRow}:K{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
         $sheet->getStyle("L{$sumRow}")->getNumberFormat()->setFormatCode('0.00"%"');
-        $sheet->getStyle("M{$sumRow}:Q{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("M{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("N{$sumRow}")->getNumberFormat()->setFormatCode('0.00"%"');
+        $sheet->getStyle("P{$sumRow}:T{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
 
-        $this->applyBordersAndAutoWidth($sheet, "A4:Q{$sumRow}", 'A', 'Q');
+        $this->applyBordersAndAutoWidth($sheet, "A4:T{$sumRow}", 'A', 'T');
     }
 
     protected function buildSlsSheet($sheet, $slsRecords, $kecNameMap, $selectedDate, $kodekec, $search)
     {
-        $sheet->mergeCells('A1:T1');
+        $sheet->mergeCells('A1:W1');
         $sheet->setCellValue('A1', 'ALOKASI PER SLS / SUB-SLS SE2026 - BPS KABUPATEN DEMAK');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0F172A'));
 
         $subTitle = 'Tanggal Data: ' . (!empty($selectedDate) ? date('d M Y', strtotime($selectedDate)) : 'Semua Tanggal');
-        $sheet->mergeCells('A2:T2');
+        $sheet->mergeCells('A2:W2');
         $sheet->setCellValue('A2', $subTitle);
         $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('64748B'));
 
@@ -266,7 +288,8 @@ class PengolahanExportService
             'No', 'Kode Kec', 'Nama Kecamatan', 'Kode SLS (16 Digit)', 'Nama SLS / Sub-SLS', 'Nama Pencacah', 'Email Pencacah', 'Nama Pengawas',
             'Beban Saat Ini', 'Total Submit', 'Belum Disentuh (Open)', 'Capaian Submit (%)',
             'BKU Ditemukan', 'BKU Tdk/Tutup/Ganda', 'UK Ditemukan', 'UK Tdk/Tutup/Ganda',
-            'Keluarga Ditemukan', 'Keluarga Tdk/Meninggal', 'TOTAL DITEMUKAN', 'TOTAL TDK DITEMUKAN / TUTUP / GANDA'
+            'Keluarga Ditemukan', 'Keluarga Tdk/Meninggal', 'TOTAL DITEMUKAN', 'TOTAL TDK DITEMUKAN / TUTUP / GANDA',
+            'Bangunan Kosong/Lainnya', '% Bangunan Lainnya', 'Warning Bangunan Lainnya (&ge;5%)'
         ];
 
         foreach ($headers as $colIdx => $header) {
@@ -274,7 +297,7 @@ class PengolahanExportService
             $sheet->setCellValue($cell, $header);
         }
 
-        $headerRange = 'A4:T4';
+        $headerRange = 'A4:W4';
         $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFF'))->setSize(10);
         $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('2563EB');
         $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
@@ -302,12 +325,16 @@ class PengolahanExportService
             $sheet->setCellValue('R' . $rowIdx, (int) $row->pk_tdk);
             $sheet->setCellValue('S' . $rowIdx, (int) $row->total_ditemukan);
             $sheet->setCellValue('T' . $rowIdx, (int) $row->total_tdk);
+            $sheet->setCellValue('U' . $rowIdx, (int) $row->bangunan_lainnya);
+            $sheet->setCellValue('V' . $rowIdx, (float) $row->pct_bangunan_lainnya);
+            $sheet->setCellValue('W' . $rowIdx, $row->has_warning_bangunan_lainnya ? "⚠️ Warning (&ge;5%)" : "✅ Normal");
 
             $sheet->getStyle('A' . $rowIdx . ':B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle('D' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle('I' . $rowIdx . ':K' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
             $sheet->getStyle('L' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
-            $sheet->getStyle('M' . $rowIdx . ':T' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('M' . $rowIdx . ':U' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('V' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
 
             // Highlight Total Tdk Ditemukan column T with red fill
             if ($row->total_tdk > 0) {
@@ -316,7 +343,7 @@ class PengolahanExportService
             }
 
             if ($index % 2 == 1) {
-                $sheet->getStyle('A' . $rowIdx . ':S' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
+                $sheet->getStyle('A' . $rowIdx . ':W' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
             }
             $rowIdx++;
         }
@@ -339,31 +366,36 @@ class PengolahanExportService
         $sheet->setCellValue("R{$sumRow}", "=SUM(R5:R{$lastRow})");
         $sheet->setCellValue("S{$sumRow}", "=SUM(S5:S{$lastRow})");
         $sheet->setCellValue("T{$sumRow}", "=SUM(T5:T{$lastRow})");
+        $sheet->setCellValue("U{$sumRow}", "=SUM(U5:U{$lastRow})");
+        $sheet->setCellValue("V{$sumRow}", "=IF(J{$sumRow}>0, ROUND((U{$sumRow}/J{$sumRow})*100, 2), 0)");
+        $sheet->setCellValue("W{$sumRow}", "-");
 
-        $sumRange = "A{$sumRow}:T{$sumRow}";
+        $sumRange = "A{$sumRow}:W{$sumRow}";
         $sheet->getStyle($sumRange)->getFont()->setBold(true);
         $sheet->getStyle($sumRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('E2E8F0');
         $sheet->getStyle("I{$sumRow}:K{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
         $sheet->getStyle("L{$sumRow}")->getNumberFormat()->setFormatCode('0.00"%"');
-        $sheet->getStyle("M{$sumRow}:T{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("M{$sumRow}:U{$sumRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("V{$sumRow}")->getNumberFormat()->setFormatCode('0.00"%"');
 
-        $this->applyBordersAndAutoWidth($sheet, "A4:T{$sumRow}", 'A', 'T');
+        $this->applyBordersAndAutoWidth($sheet, "A4:W{$sumRow}", 'A', 'W');
     }
 
     protected function buildRankingSheet($sheet, $rankingRecords, $kecNameMap, $selectedDate, $dynamicTargetPct)
     {
-        $sheet->mergeCells('A1:R1');
+        $sheet->mergeCells('A1:U1');
         $sheet->setCellValue('A1', 'RANKING KINERJA PETUGAS SE2026 - BPS KABUPATEN DEMAK');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0F172A'));
 
         $subTitle = 'Target Harian Standar Hari Ini: ' . number_format($dynamicTargetPct, 1) . '% | Tanggal Data: ' . (!empty($selectedDate) ? date('d M Y', strtotime($selectedDate)) : 'Semua Tanggal');
-        $sheet->mergeCells('A2:R2');
+        $sheet->mergeCells('A2:U2');
         $sheet->setCellValue('A2', $subTitle);
         $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('D97706'));
 
         $headers = [
             'Peringkat', 'Kode Kec', 'Nama Kecamatan', 'Nama Petugas (PPL)', 'Email Petugas', 'Nama Pengawas (PML)',
-            'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)', 'Status Warning (3-Hari)', 'Warning Anomali Usaha',
+            'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)', 'Bangunan Kosong/Lainnya', '% Bangunan Lainnya', 'Warning Bangunan Lainnya (&ge;5%)',
+            'Status Warning (3-Hari)', 'Warning Anomali Usaha',
             'Laju s.d. 20 Agt', 'Skor Kinerja (0-100)', 'Kategori Kinerja', 'Rekomendasi Tindakan PML',
             'Status Catatan Anomali', 'Catatan Klarifikasi Petugas', 'Catatan Admin'
         ];
@@ -373,7 +405,7 @@ class PengolahanExportService
             $sheet->setCellValue($cell, $header);
         }
 
-        $headerRange = 'A4:R4';
+        $headerRange = 'A4:U4';
         $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFF'))->setSize(10);
         $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D97706');
         $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
@@ -390,19 +422,22 @@ class PengolahanExportService
             $sheet->setCellValue('G' . $rowIdx, (int) $row->beban_saat_ini);
             $sheet->setCellValue('H' . $rowIdx, (int) $row->total_submit);
             $sheet->setCellValue('I' . $rowIdx, (float) $row->pct_submit);
+            $sheet->setCellValue('J' . $rowIdx, (int) $row->bangunan_lainnya);
+            $sheet->setCellValue('K' . $rowIdx, (float) $row->pct_bangunan_lainnya);
+            $sheet->setCellValue('L' . $rowIdx, $row->has_warning_bangunan_lainnya ? "⚠️ Warning (&ge;5%)" : "✅ Normal");
             $draftStr = ($row->draft_today ?? 0) > 0 ? " (+" . number_format($row->draft_today) . " draft/hari)" : "";
             $submitStr = "submit " . number_format($row->submit_today ?? 0) . "/hari" . $draftStr . " | ";
-            $sheet->setCellValue('J' . $rowIdx, $submitStr . match($row->warning_status) {
+            $sheet->setCellValue('M' . $rowIdx, $submitStr . match($row->warning_status) {
                 'completed' => '🎉 Selesai 100%',
                 'stagnant' => '🚨 Stagnan ' . ($row->stagnant_days ?? 0) . ' hari',
                 'slow_progress' => '⚠️ Progres Lambat',
                 default => '✅ Normal',
             });
-            $sheet->setCellValue('K' . $rowIdx, $row->has_warning_usaha ? "⚠️ Warning (BKU < 5% / UK < 10%)" : "✅ Normal");
-            $sheet->setCellValue('L' . $rowIdx, (float) $row->laju_harian_95);
-            $sheet->setCellValue('M' . $rowIdx, (float) $row->skor_kinerja);
-            $sheet->setCellValue('N' . $rowIdx, $row->kat_label ?? '-');
-            $sheet->setCellValue('O' . $rowIdx, $row->rekomendasi ?? '-');
+            $sheet->setCellValue('N' . $rowIdx, $row->has_warning_usaha ? "⚠️ Warning (BKU < 5% / UK < 10%)" : "✅ Normal");
+            $sheet->setCellValue('O' . $rowIdx, (float) $row->laju_harian_95);
+            $sheet->setCellValue('P' . $rowIdx, (float) $row->skor_kinerja);
+            $sheet->setCellValue('Q' . $rowIdx, $row->kat_label ?? '-');
+            $sheet->setCellValue('R' . $rowIdx, $row->rekomendasi ?? '-');
 
             // Anomali notes details
             $statusAnomali = '-';
@@ -420,28 +455,30 @@ class PengolahanExportService
                 }
             }
 
-            $sheet->setCellValue('P' . $rowIdx, $statusAnomali);
-            $sheet->setCellValue('Q' . $rowIdx, !empty($catatanPetugasList) ? implode(" | ", $catatanPetugasList) : '-');
-            $sheet->setCellValue('R' . $rowIdx, !empty($catatanAdminList) ? implode(" | ", $catatanAdminList) : '-');
+            $sheet->setCellValue('S' . $rowIdx, $statusAnomali);
+            $sheet->setCellValue('T' . $rowIdx, !empty($catatanPetugasList) ? implode(" | ", $catatanPetugasList) : '-');
+            $sheet->setCellValue('U' . $rowIdx, !empty($catatanAdminList) ? implode(" | ", $catatanAdminList) : '-');
 
             $sheet->getStyle('A' . $rowIdx . ':B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle('G' . $rowIdx . ':H' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
             $sheet->getStyle('I' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
-            $sheet->getStyle('L' . $rowIdx)->getNumberFormat()->setFormatCode('0.0" SLS/hr"');
-            $sheet->getStyle('M' . $rowIdx)->getNumberFormat()->setFormatCode('0.0');
+            $sheet->getStyle('J' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('K' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
+            $sheet->getStyle('O' . $rowIdx)->getNumberFormat()->setFormatCode('0.0" SLS/hr"');
+            $sheet->getStyle('P' . $rowIdx)->getNumberFormat()->setFormatCode('0.0');
 
-            // Highlight Skor Kinerja M
-            $sheet->getStyle('M' . $rowIdx)->getFont()->setBold(true);
-            $sheet->getStyle('M' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FEF3C7');
+            // Highlight Skor Kinerja P
+            $sheet->getStyle('P' . $rowIdx)->getFont()->setBold(true);
+            $sheet->getStyle('P' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FEF3C7');
 
             if ($index % 2 == 1) {
-                $sheet->getStyle('A' . $rowIdx . ':L' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
-                $sheet->getStyle('N' . $rowIdx . ':R' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
+                $sheet->getStyle('A' . $rowIdx . ':O' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
+                $sheet->getStyle('Q' . $rowIdx . ':U' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
             }
             $rowIdx++;
         }
 
-        $this->applyBordersAndAutoWidth($sheet, "A4:R" . ($rowIdx - 1), 'A', 'R');
+        $this->applyBordersAndAutoWidth($sheet, "A4:U" . ($rowIdx - 1), 'A', 'U');
     }
 
     protected function applyBordersAndAutoWidth($sheet, $range, $startCol, $endCol)

@@ -269,7 +269,7 @@
                 </div>
 
                 <!-- KPI Summary Cards -->
-                <div class="col-6 col-lg-2">
+                <div class="col-6 col-md-4 col-lg-auto flex-fill">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">TOTAL PETUGAS</div>
@@ -279,7 +279,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-lg-2">
+                <div class="col-6 col-md-4 col-lg-auto flex-fill">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">BEBAN SAAT INI</div>
@@ -289,7 +289,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-lg-2">
+                <div class="col-6 col-md-4 col-lg-auto flex-fill">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">TOTAL SUBMIT</div>
@@ -304,7 +304,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-lg-2">
+                <div class="col-6 col-md-4 col-lg-auto flex-fill">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">USAHA DITEMUKAN</div>
@@ -314,7 +314,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-lg-2">
+                <div class="col-6 col-md-4 col-lg-auto flex-fill">
                     <div class="card border-0 shadow-sm rounded-3">
                         <div class="card-body p-3">
                             <div class="text-muted small font-weight-bold mb-1">KELUARGA DITEMUKAN</div>
@@ -324,12 +324,28 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-lg-2">
+                <div class="col-6 col-md-4 col-lg-auto flex-fill">
                     <div class="card border-0 shadow-sm rounded-3 bg-teal-lt">
                         <div class="card-body p-3">
                             <div class="text-teal font-weight-bold small mb-1">MUATAN MURNI</div>
                             <div class="h2 font-weight-extrabold text-teal mb-0">{{ number_format($kpiSummary['total_muatan_murni'] ?? 0) }}</div>
                             <div class="small text-teal mt-1">BKU + UK (Usaha Keluarga)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-auto flex-fill">
+                    <div class="card border-0 shadow-sm rounded-3 bg-amber-lt">
+                        <div class="card-body p-3">
+                            <div class="text-orange font-weight-bold small mb-1">BANGUNAN KOSONG / LAINNYA</div>
+                            <div class="h2 font-weight-extrabold text-orange mb-0">{{ number_format($kpiSummary['total_bangunan_lainnya'] ?? 0) }}</div>
+                            <div class="small text-orange font-weight-bold mt-1">
+                                @if(($kpiSummary['cnt_warning_bangunan_lainnya'] ?? 0) > 0)
+                                    <span>⚠️ {{ number_format($kpiSummary['cnt_warning_bangunan_lainnya']) }} Petugas Warning (&ge;5%)</span>
+                                @else
+                                    <span class="text-muted">Bangunan Kosong/Lainnya</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -514,6 +530,11 @@
                                             ⚠️ {{ number_format($rankingSummary['cnt_warning_usaha']) }} Petugas Warning Usaha (BKU < 5% / UK < 10%)
                                         </span>
                                     @endif
+                                    @if(($rankingSummary['cnt_warning_bangunan_lainnya'] ?? 0) > 0)
+                                        <span class="badge bg-amber text-white px-2.5 py-1.5 rounded-pill font-weight-bold shadow-xs">
+                                            ⚠️ {{ number_format($rankingSummary['cnt_warning_bangunan_lainnya']) }} Petugas Warning Bangunan Lainnya (&ge;5%)
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
 
@@ -528,6 +549,7 @@
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end text-success font-weight-bold">Total<br>Submit</th>
                                         <th class="text-end text-primary font-weight-extrabold">% Capaian<br><span class="text-muted font-weight-normal small">vs {{ number_format($dynamicTargetPct, 1) }}%</span></th>
+                                        <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
                                         <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">submit/hari & stagnan</span></th>
                                         <th class="text-center text-danger">Warning Anomali Usaha<br><span class="text-muted font-weight-normal small">(BKU < 5% / UK < 10%)</span></th>
                                         <th class="text-center text-indigo">Laju s.d. 20 Agt<br><span class="text-muted font-weight-normal small">(Kejar Target 95%)</span></th>
@@ -580,6 +602,18 @@
                                                         </span>
                                                     </div>
                                                 @endif
+                                            </td>
+                                            <td class="text-end font-weight-bold {{ $row->has_warning_bangunan_lainnya ? 'text-orange bg-amber-lt' : '' }}" data-order="{{ $row->bangunan_lainnya }}">
+                                                {{ number_format($row->bangunan_lainnya) }}
+                                                <div class="small font-weight-normal" style="font-size: 0.72rem;">
+                                                    @if($row->has_warning_bangunan_lainnya)
+                                                        <span class="badge bg-orange text-white font-weight-bold px-1.5 py-0.5" title="Bangunan Kosong/Lainnya {{ number_format($row->pct_bangunan_lainnya, 1) }}% dari Total Submit (>= 5%)">
+                                                            ⚠️ {{ number_format($row->pct_bangunan_lainnya, 1) }}%
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted">({{ number_format($row->pct_bangunan_lainnya, 1) }}%)</span>
+                                                    @endif
+                                                </div>
                                             </td>
                                             <td class="text-center" data-order="{{ $row->warning_status === 'stagnant' ? 999 + ($row->stagnant_days ?? 0) : ($row->warning_status === 'slow_progress' ? 500 : 0) }}">
                                                  <div class="d-flex flex-column align-items-center gap-1">
@@ -681,7 +715,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="12" class="text-center py-5 text-muted">
+                                            <td colspan="15" class="text-center py-5 text-muted">
                                                 <div class="mb-2">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trophy-off" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M8 21l8 0"/><path d="M12 17l0 4"/><path d="M8 4h9"/><path d="M17 4v8c0 .31-.028.614-.082.909"/><path d="M5 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M19 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M3 3l18 18"/></svg>
                                                 </div>
@@ -708,6 +742,7 @@
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end">Total<br>Submit</th>
                                         <th class="text-end">% Progres</th>
+                                        <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
                                         <th class="text-end">BKU</th>
                                         <th class="text-end">BKU<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
                                         <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
@@ -739,19 +774,31 @@
                                             <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
                                             <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
                                             <td class="text-end" data-order="{{ $row->pct_submit }}">
-                                                <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
-                                                    {{ number_format($row->pct_submit, 1) }}%
-                                                </span>
-                                            </td>
-                                            <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">{{ number_format($row->jumlah_usaha_ditemukan) }}</td>
-                                            <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
-                                            <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">{{ number_format($row->jumlah_usaha_keluarga) }}</td>
-                                            <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">{{ number_format($row->jumlah_keluarga_ditemukan) }}</td>
-                                            <td class="text-end text-muted" data-order="{{ $row->keluarga_tidak_ditemukan }}">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
+                                                 <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
+                                                     {{ number_format($row->pct_submit, 1) }}%
+                                                 </span>
+                                             </td>
+                                             <td class="text-end font-weight-bold {{ $row->has_warning_bangunan_lainnya ? 'text-orange bg-amber-lt' : '' }}" data-order="{{ $row->bangunan_lainnya }}">
+                                                 {{ number_format($row->bangunan_lainnya) }}
+                                                 <div class="small font-weight-normal" style="font-size: 0.72rem;">
+                                                     @if($row->has_warning_bangunan_lainnya)
+                                                         <span class="badge bg-orange text-white font-weight-bold px-1.5 py-0.5" title="Bangunan Kosong/Lainnya {{ number_format($row->pct_bangunan_lainnya, 1) }}% dari Total Submit (>= 5%)">
+                                                             ⚠️ {{ number_format($row->pct_bangunan_lainnya, 1) }}%
+                                                         </span>
+                                                     @else
+                                                         <span class="text-muted">({{ number_format($row->pct_bangunan_lainnya, 1) }}%)</span>
+                                                     @endif
+                                                 </div>
+                                             </td>
+                                             <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">{{ number_format($row->jumlah_usaha_ditemukan) }}</td>
+                                             <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
+                                             <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">{{ number_format($row->jumlah_usaha_keluarga) }}</td>
+                                             <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">{{ number_format($row->jumlah_keluarga_ditemukan) }}</td>
+                                             <td class="text-end text-muted" data-order="{{ $row->keluarga_tidak_ditemukan }}">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="14" class="text-center py-5 text-muted">
+                                            <td colspan="15" class="text-center py-5 text-muted">
                                                 <div class="mb-2">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
                                                 </div>
@@ -860,6 +907,7 @@
                                         <th class="text-end text-muted font-weight-bold">Keluarga<br><span class="font-weight-normal small">Tdk/Meninggal</span></th>
                                         <th class="text-end bg-success-lt text-success font-weight-extrabold fs-3">Total<br><span class="font-weight-bold small">Ditemukan</span></th>
                                         <th class="text-end bg-danger text-white font-weight-extrabold fs-3 shadow-xs">Total Tdk Ditemukan<br><span class="font-weight-bold small">/ Tutup / Ganda</span></th>
+                                        <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -899,10 +947,22 @@
                                             <td class="text-end text-muted" data-order="{{ $row->pk_tdk }}">{{ number_format($row->pk_tdk) }}</td>
                                             <td class="text-end font-weight-extrabold text-success bg-success-lt fs-3" data-order="{{ $row->total_ditemukan }}">{{ number_format($row->total_ditemukan) }}</td>
                                             <td class="text-end font-weight-extrabold text-white bg-danger fs-3 shadow-xs" data-order="{{ $row->total_tdk }}">{{ number_format($row->total_tdk) }}</td>
+                                            <td class="text-end font-weight-bold {{ $row->has_warning_bangunan_lainnya ? 'text-orange bg-amber-lt' : '' }}" data-order="{{ $row->bangunan_lainnya }}">
+                                                {{ number_format($row->bangunan_lainnya) }}
+                                                <div class="small font-weight-normal" style="font-size: 0.72rem;">
+                                                    @if($row->has_warning_bangunan_lainnya)
+                                                        <span class="badge bg-orange text-white font-weight-bold px-1.5 py-0.5" title="SLS Bangunan Kosong/Lainnya {{ number_format($row->pct_bangunan_lainnya, 1) }}% dari Total Submit (>= 5%)">
+                                                            ⚠️ {{ number_format($row->pct_bangunan_lainnya, 1) }}%
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted">({{ number_format($row->pct_bangunan_lainnya, 1) }}%)</span>
+                                                    @endif
+                                                </div>
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="17" class="text-center py-5 text-muted">
+                                            <td colspan="18" class="text-center py-5 text-muted">
                                                 <div class="mb-2">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
                                                 </div>
