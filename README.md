@@ -185,6 +185,6 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - **Visualisasi UI Dashboard Pengolahan**:
     - Kartu KPI ke-7 `BANGUNAN KOSONG / LAINNYA` pada header utama dashboard.
     - Mini metric badge `⚠️ X Petugas Warning Bangunan Lainnya (>=5%)` pada Tab Ranking Kinerja.
-    - Kolom `Bangunan Kosong / Lainnya` dengan highlight badge warning orange pada **Tab 1 (Ranking Kinerja)**, **Tab 2 (Ringkasan PPL)**, dan **Tab 3 (Alokasi Per SLS)**.
+    - Kolom `Bangunan Kosong / Lainnya` dengan highlight badge warning orange pada seluruh 4 Tab (**Tab 1: Ranking Kinerja**, **Tab 2: Ringkasan PPL**, **Tab 3: Ringkasan PML**, dan **Tab 4: Alokasi Per SLS**).
   - **Dukungan Multi-Sheet Excel Export**: Menambahkan kolom `Bangunan Kosong/Lainnya`, `% Bangunan Lainnya`, dan `Warning Bangunan Lainnya (>=5%)` pada ke-4 sheet file Excel (`.xlsx`).
 

@@ -826,6 +826,7 @@
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end">Total<br>Submit</th>
                                         <th class="text-end">% Progres</th>
+                                        <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
                                         <th class="text-end">BKU</th>
                                         <th class="text-end">BKU<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
                                         <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">(Ditemukan)</span></th>
@@ -864,6 +865,18 @@
                                                     {{ number_format($row->pct_submit, 1) }}%
                                                 </span>
                                             </td>
+                                            <td class="text-end font-weight-bold {{ $row->has_warning_bangunan_lainnya ? 'text-orange bg-amber-lt' : '' }}" data-order="{{ $row->bangunan_lainnya }}">
+                                                {{ number_format($row->bangunan_lainnya) }}
+                                                <div class="small font-weight-normal" style="font-size: 0.72rem;">
+                                                    @if($row->has_warning_bangunan_lainnya)
+                                                        <span class="badge bg-orange text-white font-weight-bold px-1.5 py-0.5" title="Agregasi PML Bangunan Kosong/Lainnya {{ number_format($row->pct_bangunan_lainnya, 1) }}% dari Total Submit (>= 5%)">
+                                                            ⚠️ {{ number_format($row->pct_bangunan_lainnya, 1) }}%
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted">({{ number_format($row->pct_bangunan_lainnya, 1) }}%)</span>
+                                                    @endif
+                                                </div>
+                                            </td>
                                             <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">{{ number_format($row->jumlah_usaha_ditemukan) }}</td>
                                             <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
                                             <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">{{ number_format($row->jumlah_usaha_keluarga) }}</td>
@@ -872,7 +885,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="15" class="text-center py-5 text-muted">
+                                            <td colspan="16" class="text-center py-5 text-muted">
                                                 <div class="mb-2">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
                                                 </div>
