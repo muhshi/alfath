@@ -190,8 +190,11 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Menampilkan tabel komparasi detail berisi: Hasil Pendataan SE2026 (Muatan Murni, BKU, UK, Total Usaha `BKU+UK`, Keluarga), Patokan Wilkerstat 2025 (KK & Usaha), serta kolom Indikator Komparasi & Warning Anomali (Deviasi KK dengan batas toleransi 5%, perbandingan capaian total usaha SE vs Wilkerstat, dan rasio probing BKU < 5% / UK < 10%).
     - Memberikan panduan dan konteks valid bagi petugas dan pengawas saat menindaklanjuti dan mengajukan catatan klarifikasi lapangan.
   - **Visualisasi UI Dashboard Pengolahan (`/dashboard-pengolahan`)**:
-    - Diterapkan pada **Tab 1: Ringkasan Per PPL**, **Tab 2: Ringkasan Per PML**, dan **Tab 3: Alokasi Per SLS / Sub-SLS**.
   - **Pembaruan Multi-Sheet Excel Export (`.xlsx`)**:
     - Menambahkan kolom pembanding Wilkerstat 2025 (KK & Usaha), Total Usaha SE (`BKU+UK`), persentase deviasi KK, dan status warning deviasi KK pada sheet PPL, PML, dan SLS lengkap dengan rumus kalkulasi total summary baris bawah.
+  - **Perbaikan Metabase Embed JWT Validation (`DomainException: Provided key is too short`)**:
+    - Menambahkan validasi panjang dan keberadaan `services.metabase.secret_key` pada `WilkerstatMetabase` dan `MetabaseEmbed`. Algoritma `HS256` pada `firebase/php-jwt` mensyaratkan secret key minimal 256-bit (32 karakter).
+    - Mencegah error fatal 500 jika `METABASE_SECRET_KEY` pada `.env` belum diisi atau kurang dari 32 karakter dengan memberikan graceful fallback serta logging peringatan.
+
 
 
