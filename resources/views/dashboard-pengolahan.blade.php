@@ -815,34 +815,42 @@
                                              </td>
                                              <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
                                              <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">
-                                                 {{ number_format($row->jumlah_usaha_keluarga) }}
-                                                 <div class="d-flex flex-column align-items-end mt-0.5" style="font-size: 0.72rem;">
-                                                     <span class="text-muted font-weight-normal">Total: {{ number_format($row->total_usaha_se) }} vs {{ number_format($row->wilkerstat_usaha) }}</span>
-                                                     @if($row->wilkerstat_usaha > 0)
-                                                         @if($row->total_usaha_se >= $row->wilkerstat_usaha)
-                                                             <span class="badge bg-success-lt text-success font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) &ge; Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }}) (Optimal)">
-                                                                 ✅ &ge; Wilkerstat (+{{ number_format(max(0, $row->pct_diff_usaha), 1) }}%)
-                                                             </span>
-                                                         @else
-                                                             <span class="badge bg-warning-lt text-warning font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) < Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }})">
-                                                                 ⚠️ < Wilkerstat ({{ number_format($row->pct_diff_usaha, 1) }}%)
-                                                             </span>
-                                                         @endif
-                                                     @endif
-                                                 </div>
+                                                {{ number_format($row->jumlah_usaha_keluarga) }}
+                                                <div class="d-flex flex-column align-items-end mt-0.5" style="font-size: 0.72rem;">
+                                                    <span class="text-muted font-weight-normal">Total: {{ number_format($row->total_usaha_se) }} vs {{ number_format($row->wilkerstat_usaha) }}</span>
+                                                    @if($row->wilkerstat_usaha > 0)
+                                                        @if($row->total_usaha_se >= $row->wilkerstat_usaha)
+                                                            <span class="badge bg-success-lt text-success font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) &ge; Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }}) (Optimal)">
+                                                                ✅ &ge; Wilkerstat (+{{ number_format(max(0, $row->pct_diff_usaha), 1) }}%)
+                                                            </span>
+                                                        @elseif($row->has_warning_diff_usaha)
+                                                            <span class="badge bg-warning-lt text-warning font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) < Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }}) (Lebih sedikit > 5%)">
+                                                                ⚠️ < Wilkerstat ({{ number_format($row->pct_diff_usaha, 1) }}%)
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-success-lt text-success font-weight-normal px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE mendekati Usaha Wilkerstat (Toleransi &le; 5%)">
+                                                                ✅ Sesuai ({{ number_format($row->pct_diff_usaha, 1) }}%)
+                                                            </span>
+                                                        @endif
+                                                    @endif
+                                                </div>
                                              </td>
                                              <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">
                                                  {{ number_format($row->jumlah_keluarga_ditemukan) }}
                                                  <div class="d-flex flex-column align-items-end mt-0.5" style="font-size: 0.72rem;">
                                                      <span class="text-muted font-weight-normal">vs KK: {{ number_format($row->wilkerstat_kk) }}</span>
                                                      @if($row->wilkerstat_kk > 0)
-                                                         @if($row->has_warning_diff_kk)
-                                                             <span class="badge bg-danger-lt text-danger font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Deviasi Keluarga SE vs Wilkerstat KK {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}% (> 5%)">
-                                                                 ⚠️ {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}%
+                                                         @if($row->jumlah_keluarga_ditemukan >= $row->wilkerstat_kk)
+                                                             <span class="badge bg-success-lt text-success font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Keluarga SE ({{ number_format($row->jumlah_keluarga_ditemukan) }}) &ge; KK Wilkerstat ({{ number_format($row->wilkerstat_kk) }}) (Aman / Lebih Baik)">
+                                                                 ✅ +{{ number_format($row->pct_diff_kk, 1) }}%
+                                                             </span>
+                                                         @elseif($row->has_warning_diff_kk)
+                                                             <span class="badge bg-danger-lt text-danger font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Keluarga SE ({{ number_format($row->jumlah_keluarga_ditemukan) }}) < KK Wilkerstat ({{ number_format($row->wilkerstat_kk) }}) (Lebih sedikit > 5%)">
+                                                                 ⚠️ {{ number_format($row->pct_diff_kk, 1) }}%
                                                              </span>
                                                          @else
-                                                             <span class="badge bg-success-lt text-success font-weight-normal px-1 py-0.2" style="font-size: 0.68rem;" title="Deviasi Keluarga SE vs Wilkerstat KK {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}% (Aman < 5%)">
-                                                                 ✅ {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}%
+                                                             <span class="badge bg-success-lt text-success font-weight-normal px-1 py-0.2" style="font-size: 0.68rem;" title="Keluarga SE mendekati KK Wilkerstat (Toleransi &le; 5%)">
+                                                                 ✅ {{ number_format($row->pct_diff_kk, 1) }}%
                                                              </span>
                                                          @endif
                                                      @endif
@@ -941,12 +949,16 @@
                                                     <span class="text-muted font-weight-normal">Total: {{ number_format($row->total_usaha_se) }} vs {{ number_format($row->wilkerstat_usaha) }}</span>
                                                     @if($row->wilkerstat_usaha > 0)
                                                         @if($row->total_usaha_se >= $row->wilkerstat_usaha)
-                                                            <span class="badge bg-success-lt text-success font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) &ge; Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }}) (Optimal)">
+                                                            <span class="badge bg-success-lt text-success font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) &ge; Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }}) (Aman / Lebih Baik)">
                                                                 ✅ &ge; Wilkerstat (+{{ number_format(max(0, $row->pct_diff_usaha), 1) }}%)
                                                             </span>
-                                                        @else
-                                                            <span class="badge bg-warning-lt text-warning font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) < Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }})">
+                                                        @elseif($row->has_warning_diff_usaha)
+                                                            <span class="badge bg-warning-lt text-warning font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) < Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }}) (Lebih sedikit > 5%)">
                                                                 ⚠️ < Wilkerstat ({{ number_format($row->pct_diff_usaha, 1) }}%)
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-success-lt text-success font-weight-normal px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE mendekati Usaha Wilkerstat (Toleransi &le; 5%)">
+                                                                ✅ Sesuai ({{ number_format($row->pct_diff_usaha, 1) }}%)
                                                             </span>
                                                         @endif
                                                     @endif
@@ -957,13 +969,17 @@
                                                 <div class="d-flex flex-column align-items-end mt-0.5" style="font-size: 0.72rem;">
                                                     <span class="text-muted font-weight-normal">vs KK: {{ number_format($row->wilkerstat_kk) }}</span>
                                                     @if($row->wilkerstat_kk > 0)
-                                                        @if($row->has_warning_diff_kk)
-                                                            <span class="badge bg-danger-lt text-danger font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Deviasi Keluarga SE vs Wilkerstat KK {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}% (> 5%)">
-                                                                ⚠️ {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}%
+                                                        @if($row->jumlah_keluarga_ditemukan >= $row->wilkerstat_kk)
+                                                            <span class="badge bg-success-lt text-success font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Keluarga SE ({{ number_format($row->jumlah_keluarga_ditemukan) }}) &ge; KK Wilkerstat ({{ number_format($row->wilkerstat_kk) }}) (Aman / Lebih Baik)">
+                                                                ✅ +{{ number_format($row->pct_diff_kk, 1) }}%
+                                                            </span>
+                                                        @elseif($row->has_warning_diff_kk)
+                                                            <span class="badge bg-danger-lt text-danger font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Keluarga SE ({{ number_format($row->jumlah_keluarga_ditemukan) }}) < KK Wilkerstat ({{ number_format($row->wilkerstat_kk) }}) (Lebih sedikit > 5%)">
+                                                                ⚠️ {{ number_format($row->pct_diff_kk, 1) }}%
                                                             </span>
                                                         @else
-                                                            <span class="badge bg-success-lt text-success font-weight-normal px-1 py-0.2" style="font-size: 0.68rem;" title="Deviasi Keluarga SE vs Wilkerstat KK {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}% (Aman < 5%)">
-                                                                ✅ {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}%
+                                                            <span class="badge bg-success-lt text-success font-weight-normal px-1 py-0.2" style="font-size: 0.68rem;" title="Keluarga SE mendekati KK Wilkerstat (Toleransi &le; 5%)">
+                                                                ✅ {{ number_format($row->pct_diff_kk, 1) }}%
                                                             </span>
                                                         @endif
                                                     @endif
@@ -1056,13 +1072,17 @@
                                                 <div class="d-flex flex-column align-items-end mt-0.5" style="font-size: 0.72rem;">
                                                     <span class="text-muted font-weight-normal">vs KK: {{ number_format($row->wilkerstat_kk) }}</span>
                                                     @if($row->wilkerstat_kk > 0)
-                                                        @if($row->has_warning_diff_kk)
-                                                            <span class="badge bg-danger-lt text-danger font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Deviasi Keluarga SE vs Wilkerstat KK {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}% (> 5%)">
-                                                                ⚠️ {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}%
+                                                        @if($row->pk_ditemukan >= $row->wilkerstat_kk)
+                                                            <span class="badge bg-success-lt text-success font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Keluarga SE ({{ number_format($row->pk_ditemukan) }}) &ge; KK Wilkerstat ({{ number_format($row->wilkerstat_kk) }}) (Aman / Lebih Baik)">
+                                                                ✅ +{{ number_format($row->pct_diff_kk, 1) }}%
+                                                            </span>
+                                                        @elseif($row->has_warning_diff_kk)
+                                                            <span class="badge bg-danger-lt text-danger font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Keluarga SE ({{ number_format($row->pk_ditemukan) }}) < KK Wilkerstat ({{ number_format($row->wilkerstat_kk) }}) (Lebih sedikit > 5%)">
+                                                                ⚠️ {{ number_format($row->pct_diff_kk, 1) }}%
                                                             </span>
                                                         @else
-                                                            <span class="badge bg-success-lt text-success font-weight-normal px-1 py-0.2" style="font-size: 0.68rem;" title="Deviasi Keluarga SE vs Wilkerstat KK {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}% (Aman < 5%)">
-                                                                ✅ {{ $row->pct_diff_kk > 0 ? '+' : '' }}{{ number_format($row->pct_diff_kk, 1) }}%
+                                                            <span class="badge bg-success-lt text-success font-weight-normal px-1 py-0.2" style="font-size: 0.68rem;" title="Keluarga SE mendekati KK Wilkerstat (Toleransi &le; 5%)">
+                                                                ✅ {{ number_format($row->pct_diff_kk, 1) }}%
                                                             </span>
                                                         @endif
                                                     @endif
@@ -1125,8 +1145,8 @@
                     <div class="alert alert-info border-0 bg-info-lt text-dark mb-3 p-3 rounded-3 small">
                         <div class="font-weight-bold mb-1">ℹ️ Panduan Tindak Lanjut Anomali & Patokan Wilkerstat:</div>
                         <ul class="mb-0 ps-3">
-                            <li><b>Patokan Usaha Wilkerstat 2025:</b> Usaha Wilkerstat 2025 seharusnya &le; Total Usaha SE2026 (BKU + UK). Jika hasil SE2026 lebih besar, itu sangat baik (optimal).</li>
-                            <li><b>Toleransi Keluarga (KK):</b> Deviasi keluarga SE2026 terhadap KK Wilkerstat diharapkan tidak jauh berbeda (&le; 5%). Sistem memberikan peringatan <code>⚠️ Deviasi > 5%</code> jika melebihi batas toleransi.</li>
+                            <li><b>Patokan Usaha (BKU + UK):</b> Selama Usaha SE &ge; Usaha Wilkerstat = <b>Aman / Lebih Baik</b>. Peringatan <code>⚠️ Usaha SE < Wilkerstat</code> hanya muncul jika Usaha SE lebih sedikit (> 5%) dibanding Wilkerstat.</li>
+                            <li><b>Patokan Keluarga (KK):</b> Muatan Keluarga Ditemukan + Baru dibandingkan dengan KK Wilkerstat. Selama KK SE &ge; KK Wilkerstat = <b>Aman / Lebih Baik</b>. Peringatan <code>⚠️ KK SE < Wilkerstat</code> hanya muncul jika KK SE lebih sedikit (> 5%) dibanding Wilkerstat.</li>
                             <li><b>Perubahan Data (Probing Usaha Nambah):</b> Jika hasil pendataan bertambah usahanya (sehingga BKU &ge; 5% / UK &ge; 10%), anomali akan <b>hilang otomatis</b> saat data diperbarui.</li>
                             <li><b>Data Tetap / Tidak Berubah:</b> Petugas dapat memberikan <b>catatan klarifikasi</b> (misal: SLS kawasan persawahan / pemukiman non-usaha). Catatan akan diajukan ke Admin untuk disetujui (Approval).</li>
                         </ul>
@@ -1402,10 +1422,12 @@
                             var diffKkBadge = '';
                             if ((sls.wilkerstat_kk || 0) > 0) {
                                 var prefixKk = sls.diff_kk_pct > 0 ? '+' : '';
-                                if (sls.has_warning_diff_kk) {
-                                    diffKkBadge = '<span class="badge bg-danger-lt text-danger font-weight-bold px-1.5 py-0.5" title="Deviasi Keluarga SE vs Wilkerstat KK melebihi batas toleransi 5%">⚠️ Deviasi KK: ' + prefixKk + sls.diff_kk_pct + '%</span>';
+                                if ((sls.pk_sls || 0) >= sls.wilkerstat_kk) {
+                                    diffKkBadge = '<span class="badge bg-success-lt text-success font-weight-bold px-1.5 py-0.5" title="Keluarga SE &ge; KK Wilkerstat (Aman / Lebih Baik)">✅ KK SE &ge; Wilkerstat (' + prefixKk + sls.diff_kk_pct + '%)</span>';
+                                } else if (sls.has_warning_diff_kk) {
+                                    diffKkBadge = '<span class="badge bg-danger-lt text-danger font-weight-bold px-1.5 py-0.5" title="Keluarga SE < KK Wilkerstat (Lebih sedikit > 5%)">⚠️ KK SE < Wilkerstat (' + sls.diff_kk_pct + '%)</span>';
                                 } else {
-                                    diffKkBadge = '<span class="badge bg-success-lt text-success px-1.5 py-0.5" title="Deviasi Keluarga SE vs Wilkerstat KK dalam batas wajar (&le; 5%)">✅ Deviasi KK: ' + prefixKk + sls.diff_kk_pct + '%</span>';
+                                    diffKkBadge = '<span class="badge bg-success-lt text-success px-1.5 py-0.5" title="Keluarga SE mendekati KK Wilkerstat (Toleransi &le; 5%)">✅ KK SE Sesuai (' + sls.diff_kk_pct + '%)</span>';
                                 }
                             } else {
                                 diffKkBadge = '<span class="text-muted small">KK: -</span>';
@@ -1413,18 +1435,29 @@
 
                             var diffUsahaHtml = '';
                             if ((sls.wilkerstat_usaha || 0) > 0) {
-                                if ((sls.total_usaha_se || 0) >= sls.wilkerstat_usaha) {
-                                    var prefixUsaha = sls.diff_usaha_pct > 0 ? '+' : '';
-                                    diffUsahaHtml = '<span class="badge bg-success-lt text-success px-1.5 py-0.5" title="Total Usaha SE (BKU+UK) &ge; Usaha Wilkerstat (Optimal)">✅ Usaha SE &ge; Wilkerstat (' + prefixUsaha + sls.diff_usaha_pct + '%)</span>';
-                                } else {
-                                    diffUsahaHtml = '<span class="badge bg-warning-lt text-warning px-1.5 py-0.5" title="Total Usaha SE (BKU+UK) < Usaha Wilkerstat">⚠️ Usaha SE < Wilkerstat (' + sls.diff_usaha_pct + '%)</span>';
+                                var totalUsahaVal = parseInt(sls.total_usaha_se, 10);
+                                if (isNaN(totalUsahaVal)) {
+                                    totalUsahaVal = (parseInt(sls.up_sls, 10) || 0) + (parseInt(sls.uk_sls, 10) || 0);
                                 }
+                                var prefixUsaha = sls.diff_usaha_pct > 0 ? '+' : '';
+                                if (totalUsahaVal >= sls.wilkerstat_usaha) {
+                                    diffUsahaHtml = '<span class="badge bg-success-lt text-success font-weight-bold px-1.5 py-0.5" title="Total Usaha SE (BKU+UK) &ge; Usaha Wilkerstat (Aman / Lebih Baik)">✅ Usaha SE &ge; Wilkerstat (' + prefixUsaha + sls.diff_usaha_pct + '%)</span>';
+                                } else if (sls.has_warning_diff_usaha || sls.diff_usaha_pct < -5.0) {
+                                    diffUsahaHtml = '<span class="badge bg-warning-lt text-warning font-weight-bold px-1.5 py-0.5" title="Total Usaha SE (BKU+UK) < Usaha Wilkerstat (Lebih sedikit > 5%)">⚠️ Usaha SE < Wilkerstat (' + sls.diff_usaha_pct + '%)</span>';
+                                } else {
+                                    diffUsahaHtml = '<span class="badge bg-success-lt text-success px-1.5 py-0.5" title="Total Usaha SE mendekati Usaha Wilkerstat (Toleransi &le; 5%)">✅ Usaha SE Sesuai (' + sls.diff_usaha_pct + '%)</span>';
+                                }
+                            }
+
+                            var totalUsahaNumber = parseInt(sls.total_usaha_se, 10);
+                            if (isNaN(totalUsahaNumber)) {
+                                totalUsahaNumber = (parseInt(sls.up_sls, 10) || 0) + (parseInt(sls.uk_sls, 10) || 0);
                             }
 
                             var seDetail = '<div class="d-flex flex-column gap-0.5">' +
                                 '<div><b>Muatan Murni:</b> <span class="badge bg-teal-lt text-teal font-weight-bold">' + (sls.muatan_murni || 0) + '</span></div>' +
                                 '<div class="text-muted small">BKU: <b class="text-dark">' + (sls.up_sls || 0) + '</b> | UK: <b class="text-dark">' + (sls.uk_sls || 0) + '</b></div>' +
-                                '<div><b>Total Usaha (BKU+UK):</b> <span class="badge bg-purple-lt text-purple font-weight-bold">' + (sls.total_usaha_se || ((sls.up_sls || 0) + (sls.uk_sls || 0))) + '</span></div>' +
+                                '<div><b>Total Usaha (BKU+UK):</b> <span class="badge bg-purple-lt text-purple font-weight-bold">' + totalUsahaNumber + '</span></div>' +
                                 '<div class="text-muted small">Keluarga Ditemukan: <b class="text-dark">' + (sls.pk_sls || 0) + '</b></div>' +
                                 '</div>';
 

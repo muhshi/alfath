@@ -191,7 +191,8 @@ class PetugasPerformanceRankingService
                             ? round((($totalUsahaSe - $sr->wilkerstat_usaha) / $sr->wilkerstat_usaha) * 100, 1)
                             : 0;
 
-                        $hasWarningDiffKk = $sr->wilkerstat_kk > 0 && abs($diffKkPct) > 5.0;
+                        $hasWarningDiffKk = $sr->wilkerstat_kk > 0 && $diffKkPct < -5.0;
+                        $hasWarningDiffUsaha = $sr->wilkerstat_usaha > 0 && $diffUsahaPct < -5.0;
 
                         $slsAnomaliMap[$sr->email_pencacah][] = [
                             'region_code' => $sr->region_code,
@@ -207,6 +208,7 @@ class PetugasPerformanceRankingService
                             'diff_kk_pct' => $diffKkPct,
                             'diff_usaha_pct' => $diffUsahaPct,
                             'has_warning_diff_kk' => $hasWarningDiffKk,
+                            'has_warning_diff_usaha' => $hasWarningDiffUsaha,
                             'is_usaha_optimal' => (int) $sr->wilkerstat_usaha > 0 ? ($totalUsahaSe >= (int) $sr->wilkerstat_usaha) : true,
                             'pct_up' => $pctUp,
                             'pct_uk' => $pctUk,

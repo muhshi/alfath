@@ -93,7 +93,7 @@ class PengolahanExportService
             'Muatan Murni ⭐', 'Belum Dikerjakan', 'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)',
             'Bangunan Kosong/Lainnya', '% Bangunan Lainnya', 'Warning Bangunan Lainnya (&ge;5%)',
             'BKU Ditemukan (SE)', 'BKU Tdk Ditemukan', 'UK Ditemukan (SE)', 'Total Usaha SE (BKU+UK)', 'Usaha Wilkerstat 2025',
-            'Keluarga Ditemukan (SE)', 'KK Wilkerstat 2025', 'Deviasi KK (%)', 'Warning Deviasi KK (>5%)', 'Keluarga Tdk Ditemukan'
+            'Keluarga Ditemukan (SE)', 'KK Wilkerstat 2025', 'Perbandingan KK SE vs Wilkerstat (%)', 'Status KK SE vs Wilkerstat', 'Keluarga Tdk Ditemukan'
         ];
 
         foreach ($headers as $colIdx => $header) {
@@ -131,7 +131,7 @@ class PengolahanExportService
             $sheet->setCellValue('T' . $rowIdx, (int) $row->jumlah_keluarga_ditemukan);
             $sheet->setCellValue('U' . $rowIdx, (int) ($row->wilkerstat_kk ?? 0));
             $sheet->setCellValue('V' . $rowIdx, (float) ($row->pct_diff_kk ?? 0));
-            $sheet->setCellValue('W' . $rowIdx, ($row->has_warning_diff_kk ?? false) ? "⚠️ Deviasi > 5%" : "✅ Aman (&le;5%)");
+            $sheet->setCellValue('W' . $rowIdx, ($row->has_warning_diff_kk ?? false) ? "⚠️ KK SE < Wilkerstat (>5%)" : "✅ Aman (≥ Wilkerstat / Tol. 5%)");
             $sheet->setCellValue('X' . $rowIdx, (int) $row->keluarga_tidak_ditemukan);
 
             $sheet->getStyle('A' . $rowIdx . ':B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
@@ -205,7 +205,7 @@ class PengolahanExportService
             'Muatan Murni ⭐', 'Belum Dikerjakan', 'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)',
             'Bangunan Kosong/Lainnya', '% Bangunan Lainnya', 'Warning Bangunan Lainnya (&ge;5%)',
             'BKU Ditemukan (SE)', 'BKU Tdk Ditemukan', 'UK Ditemukan (SE)', 'Total Usaha SE (BKU+UK)', 'Usaha Wilkerstat 2025',
-            'Keluarga Ditemukan (SE)', 'KK Wilkerstat 2025', 'Deviasi KK (%)', 'Warning Deviasi KK (>5%)', 'Keluarga Tdk Ditemukan'
+            'Keluarga Ditemukan (SE)', 'KK Wilkerstat 2025', 'Perbandingan KK SE vs Wilkerstat (%)', 'Status KK SE vs Wilkerstat', 'Keluarga Tdk Ditemukan'
         ];
 
         foreach ($headers as $colIdx => $header) {
@@ -244,7 +244,7 @@ class PengolahanExportService
             $sheet->setCellValue('U' . $rowIdx, (int) $row->jumlah_keluarga_ditemukan);
             $sheet->setCellValue('V' . $rowIdx, (int) ($row->wilkerstat_kk ?? 0));
             $sheet->setCellValue('W' . $rowIdx, (float) ($row->pct_diff_kk ?? 0));
-            $sheet->setCellValue('X' . $rowIdx, ($row->has_warning_diff_kk ?? false) ? "⚠️ Deviasi > 5%" : "✅ Aman (&le;5%)");
+            $sheet->setCellValue('X' . $rowIdx, ($row->has_warning_diff_kk ?? false) ? "⚠️ KK SE < Wilkerstat (>5%)" : "✅ Aman (≥ Wilkerstat / Tol. 5%)");
             $sheet->setCellValue('Y' . $rowIdx, (int) $row->keluarga_tidak_ditemukan);
 
             $sheet->getStyle('A' . $rowIdx . ':B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
@@ -318,7 +318,7 @@ class PengolahanExportService
             'No', 'Kode Kec', 'Nama Kecamatan', 'Kode SLS (16 Digit)', 'Nama SLS / Sub-SLS', 'Nama Pencacah', 'Email Pencacah', 'Nama Pengawas',
             'Beban Saat Ini', 'Total Submit', 'Belum Disentuh (Open)', 'Capaian Submit (%)',
             'BKU Ditemukan (SE)', 'BKU Tdk/Tutup/Ganda', 'UK Ditemukan (SE)', 'Total Usaha SE (BKU+UK)', 'Usaha Wilkerstat 2025', 'UK Tdk/Tutup/Ganda',
-            'Keluarga Ditemukan (SE)', 'KK Wilkerstat 2025', 'Deviasi KK (%)', 'Warning Deviasi KK (>5%)', 'Keluarga Tdk/Meninggal',
+            'Keluarga Ditemukan (SE)', 'KK Wilkerstat 2025', 'Perbandingan KK SE vs Wilkerstat (%)', 'Status KK SE vs Wilkerstat', 'Keluarga Tdk/Meninggal',
             'TOTAL DITEMUKAN', 'TOTAL TDK DITEMUKAN / TUTUP / GANDA',
             'Bangunan Kosong/Lainnya', '% Bangunan Lainnya', 'Warning Bangunan Lainnya (&ge;5%)'
         ];
@@ -357,7 +357,7 @@ class PengolahanExportService
             $sheet->setCellValue('S' . $rowIdx, (int) $row->pk_ditemukan);
             $sheet->setCellValue('T' . $rowIdx, (int) ($row->wilkerstat_kk ?? 0));
             $sheet->setCellValue('U' . $rowIdx, (float) ($row->pct_diff_kk ?? 0));
-            $sheet->setCellValue('V' . $rowIdx, ($row->has_warning_diff_kk ?? false) ? "⚠️ Deviasi > 5%" : "✅ Aman (&le;5%)");
+            $sheet->setCellValue('V' . $rowIdx, ($row->has_warning_diff_kk ?? false) ? "⚠️ KK SE < Wilkerstat (>5%)" : "✅ Aman (≥ Wilkerstat / Tol. 5%)");
             $sheet->setCellValue('W' . $rowIdx, (int) $row->pk_tdk);
             $sheet->setCellValue('X' . $rowIdx, (int) $row->total_ditemukan);
             $sheet->setCellValue('Y' . $rowIdx, (int) $row->total_tdk);

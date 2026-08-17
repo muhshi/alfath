@@ -180,18 +180,20 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 ### 2026-08-17
 - **Penyandingan Data Patokan Wilkerstat 2025 (KK & Usaha) dengan Hasil Pendataan SE2026 & Integrasi Anomali SLS**:
-  - **Penyandingan Data 1 Kolom (Stacked / Sub-Metric)**:
-    - **Data Keluarga**: Menyandingkan Keluarga Ditemukan hasil SE2026 (`pk_ditemukan`) dengan data KK Wilkerstat 2025 (`muatan_kk`) dalam 1 kolom vertikal ringkas (`vs KK: X`).
-    - **Indikator Warning Deviasi Keluarga (> 5%)**: Menghitung selisih persentase deviasi `pct_diff_kk = ((pk_ditemukan - wilkerstat_kk) / wilkerstat_kk) * 100`. Apabila deviasi melebihi toleransi wajar (`|pct_diff_kk| > 5.0%`), sistem memunculkan warning badge `⚠️ [+/-]X.X%` (dan `✅ [+/-]X.X%` jika berada dalam batas wajar &le; 5%).
-    - **Data Usaha (Total Usaha SE vs Usaha Wilkerstat)**: Menyandingkan Total Usaha SE2026 (`BKU + UK` = `up_ditemukan + uk_ditemukan`) dengan patokan Usaha Wilkerstat 2025 (`muatan_usaha`). Sesuai ketentuan, patokan Usaha Wilkerstat seharusnya &le; Total Usaha SE2026. Sistem menampilkan badge hijau `✅ &ge; Wilkerstat (+X.X%)` jika hasil SE2026 lebih besar/sama (optimal) dan badge peringatan `⚠️ < Wilkerstat (-X.X%)` jika hasil SE2026 lebih kecil.
-    - **Peniadaan BKU Wilkerstat**: Mengabaikan data BKU Wilkerstat dari tabel tampilan dan perbandingan karena perbedaan persepsi saat survei Wilkerstat sebelumnya.
+  - **Penyandingan Data & Indikator Komparasi Intuitif**:
+    - **Data Keluarga (KK)**: Menyandingkan Muatan Keluarga Ditemukan + Baru SE2026 (`pk_ditemukan`) dengan data KK Wilkerstat 2025 (`muatan_kk`).
+      - Jika `KK SE ≥ KK Wilkerstat`: Status **Aman / Lebih Baik** (`✅ +X.X%`).
+      - Jika `KK SE < KK Wilkerstat`: Warning `⚠️ -X.X%` **hanya muncul jika penurunannya > 5%**. Jika selisih ≤ 5%, tetap dianggap wajar/aman (`✅ -X.X%`).
+    - **Data Usaha (BKU + UK)**: Menyandingkan Total Usaha SE2026 (`BKU + UK`) dengan patokan Usaha Wilkerstat 2025 (`muatan_usaha`).
+      - Jika `Usaha SE ≥ Usaha Wilkerstat`: Status **Aman / Lebih Baik (Optimal)** (`✅ ≥ Wilkerstat (+X.X%)`).
+      - Jika `Usaha SE < Usaha Wilkerstat`: Warning `⚠️ < Wilkerstat (-X.X%)` **hanya muncul jika penurunannya > 5%**.
+    - **Penyesuaian Bahasa**: Mengeliminasi istilah teknis "Deviasi" menjadi perbandingan langsung yang mudah dipahami oleh pengguna umum.
   - **Integrasi Penuh ke Modal Detail & Tindak Lanjut Anomali SLS (`#modalAnomaliDetail`)**:
     - Memperluas modal dialog menjadi `modal-xl` agar informasi perbandingan tertata lega dan mudah dianalisis.
-    - Menampilkan tabel komparasi detail berisi: Hasil Pendataan SE2026 (Muatan Murni, BKU, UK, Total Usaha `BKU+UK`, Keluarga), Patokan Wilkerstat 2025 (KK & Usaha), serta kolom Indikator Komparasi & Warning Anomali (Deviasi KK dengan batas toleransi 5%, perbandingan capaian total usaha SE vs Wilkerstat, dan rasio probing BKU < 5% / UK < 10%).
-    - Memberikan panduan dan konteks valid bagi petugas dan pengawas saat menindaklanjuti dan mengajukan catatan klarifikasi lapangan.
-  - **Visualisasi UI Dashboard Pengolahan (`/dashboard-pengolahan`)**:
+    - Menampilkan tabel komparasi detail berisi: Hasil Pendataan SE2026 (Muatan Murni, BKU, UK, Total Usaha `BKU+UK`, Keluarga Ditemukan), Patokan Wilkerstat 2025 (KK & Usaha), serta kolom Indikator Komparasi & Warning Anomali.
+    - Memperbaiki bug penggabungan string (`00`) pada kolom Total Usaha JavaScript di modal.
   - **Pembaruan Multi-Sheet Excel Export (`.xlsx`)**:
-    - Menambahkan kolom pembanding Wilkerstat 2025 (KK & Usaha), Total Usaha SE (`BKU+UK`), persentase deviasi KK, dan status warning deviasi KK pada sheet PPL, PML, dan SLS lengkap dengan rumus kalkulasi total summary baris bawah.
+    - Menambahkan kolom pembanding Wilkerstat 2025 (KK & Usaha), Total Usaha SE (`BKU+UK`), persentase selisih KK, dan status perbandingan KK pada sheet PPL, PML, dan SLS.
   - **Perbaikan Metabase Embed JWT Validation (`DomainException: Provided key is too short`)**:
     - Menambahkan validasi panjang dan keberadaan `services.metabase.secret_key` pada `WilkerstatMetabase` dan `MetabaseEmbed`. Algoritma `HS256` pada `firebase/php-jwt` mensyaratkan secret key minimal 256-bit (32 karakter).
     - Mencegah error fatal 500 jika `METABASE_SECRET_KEY` pada `.env` belum diisi atau kurang dari 32 karakter dengan memberikan graceful fallback serta logging peringatan.
