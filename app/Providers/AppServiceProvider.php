@@ -21,6 +21,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (class_exists(\Laravel\Socialite\SocialiteServiceProvider::class)) {
+            try {
+                $socialite = $this->app->make(\Laravel\Socialite\Contracts\Factory::class);
+                $socialite->extend('sipetra', function ($app) use ($socialite) {
+                    $config = $app['config']['services.sipetra'] ?? [];
+                    return $socialite->buildProvider(\App\Providers\SipetraSocialiteProvider::class, $config);
+                });
+            } catch (\Throwable $e) {
+                // Ignore if container is building during package discovery
+            }
+        }
+
         // Dynamic APP_URL matching to eliminate 401 signature mismatches
         if (!app()->runningInConsole() && request()->header('host')) {
             $scheme = request()->getScheme() ?: 'http';

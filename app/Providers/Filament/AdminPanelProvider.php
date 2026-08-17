@@ -27,6 +27,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
+                fn (): string => \Illuminate\Support\Facades\Blade::render('@include("auth.sso-button")'),
+            )
             ->colors([
                 'primary' => Color::Amber,
             ])

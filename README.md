@@ -197,6 +197,12 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - **Perbaikan Metabase Embed JWT Validation (`DomainException: Provided key is too short`)**:
     - Menambahkan validasi panjang dan keberadaan `services.metabase.secret_key` pada `WilkerstatMetabase` dan `MetabaseEmbed`. Algoritma `HS256` pada `firebase/php-jwt` mensyaratkan secret key minimal 256-bit (32 karakter).
     - Mencegah error fatal 500 jika `METABASE_SECRET_KEY` pada `.env` belum diisi atau kurang dari 32 karakter dengan memberikan graceful fallback serta logging peringatan.
+  - **Integrasi SIPETRA SSO (Single Sign-On OAuth2)**:
+    - Memasang dependensi `laravel/socialite` dan membuat custom provider `SipetraSocialiteProvider` untuk protokol OAuth2 SIPETRA BPS Demak (`oauth/authorize`, `oauth/token`, `api/user`).
+    - Menambahkan konfigurasi environment `.env` dan `config/services.php` dengan scopes `['identity_pegawai:read', 'employee:read', 'contact:read', 'roles:read']`.
+    - Menambahkan migrasi database `2026_08_17_000001_add_sipetra_columns_to_users_table` untuk kolom `sipetra_id`, `sipetra_token`, `sipetra_refresh_token`, `nip`, `jabatan`, `avatar` dan relaksasi kolom `password` (nullable).
+    - Menambahkan `SsoController` untuk alur autentikasi login terpusat (`/auth/sipetra/redirect` dan `/auth/sipetra/callback`).
+    - Mengintegrasikan tombol login SSO SIPETRA dengan branding logo resmi BPS Demak pada form login Filament Admin Panel (`PanelsRenderHook::AUTH_LOGIN_FORM_AFTER`) dan form login Tablar (`/login`).
 
 
 
