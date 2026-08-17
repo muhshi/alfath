@@ -17,6 +17,8 @@ Route::get('/surveys', [SurveyController::class , 'index'])->name('surveys.index
 Route::get('/surveys/category/{category}', [SurveyController::class , 'index'])
     ->name('surveys.byCategory');
 
+Route::get('/surveys/{survey}/embed', [SurveyController::class , 'embed'])->name('surveys.embed');
+
 Route::get('/auth/sipetra/redirect', [\App\Http\Controllers\Auth\SsoController::class, 'redirect'])->name('sipetra.login');
 Route::get('/auth/sipetra/callback', [\App\Http\Controllers\Auth\SsoController::class, 'callback'])->name('sipetra.callback');
 
