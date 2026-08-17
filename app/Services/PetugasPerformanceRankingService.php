@@ -111,7 +111,13 @@ class PetugasPerformanceRankingService
             $pkDate = $monitoringService->getTargetDateForTable('se2026_pemutakhiran_keluarga', $selectedDate);
 
             $sipwSub = $db->table('sipw')
-                ->select('id_subsls', DB::raw('MAX(nama_sls) as nama_sls'))
+                ->select(
+                    'id_subsls',
+                    DB::raw('MAX(nama_sls) as nama_sls'),
+                    DB::raw('MAX(CAST(muatan_kk AS SIGNED)) as wilkerstat_kk'),
+                    DB::raw('MAX(CAST(bku AS SIGNED)) as wilkerstat_bku'),
+                    DB::raw('MAX(CAST(muatan_usaha AS SIGNED)) as wilkerstat_usaha')
+                )
                 ->groupBy('id_subsls');
 
             $pkSub = $db->table('se2026_pemutakhiran_keluarga')
@@ -151,12 +157,16 @@ class PetugasPerformanceRankingService
                     DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as submit_sls'),
                     DB::raw('IFNULL(SUM(up.up_ditemukan), 0) as up_sls'),
                     DB::raw('IFNULL(SUM(uk.uk_ditemukan), 0) as uk_sls'),
+                    DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as pk_sls'),
                     DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni_sls'),
+                    DB::raw('IFNULL(sipw.wilkerstat_kk, 0) as wilkerstat_kk'),
+                    DB::raw('IFNULL(sipw.wilkerstat_bku, 0) as wilkerstat_bku'),
+                    DB::raw('IFNULL(sipw.wilkerstat_usaha, 0) as wilkerstat_usaha'),
                 ])
                 ->when(!empty($selectedDate), function ($q) use ($selectedDate) {
                     $q->where('m.tanggal_tarik', '=', $selectedDate);
                 })
-                ->groupBy('m.email_pencacah', 'm.region_code', 'sipw.nama_sls', 'pk.sub_sls')
+                ->groupBy('m.email_pencacah', 'm.region_code', 'sipw.nama_sls', 'sipw.wilkerstat_kk', 'sipw.wilkerstat_bku', 'sipw.wilkerstat_usaha', 'pk.sub_sls')
                 ->get();
 
             foreach ($slsRows as $sr) {
@@ -171,6 +181,17 @@ class PetugasPerformanceRankingService
                     // Warning if Usaha Perusahaan < 5% OR Usaha Keluarga < 10% of Muatan Murni
                     if ($isLowUp || $isLowUk) {
                         $catatanObj = $catatanMap[$sr->region_code] ?? null;
+                        $totalUsahaSe = (int) $sr->up_sls + (int) $sr->uk_sls;
+
+                        $diffKkPct = $sr->wilkerstat_kk > 0
+                            ? round((($sr->pk_sls - $sr->wilkerstat_kk) / $sr->wilkerstat_kk) * 100, 1)
+                            : 0;
+
+                        $diffUsahaPct = $sr->wilkerstat_usaha > 0
+                            ? round((($totalUsahaSe - $sr->wilkerstat_usaha) / $sr->wilkerstat_usaha) * 100, 1)
+                            : 0;
+
+                        $hasWarningDiffKk = $sr->wilkerstat_kk > 0 && abs($diffKkPct) > 5.0;
 
                         $slsAnomaliMap[$sr->email_pencacah][] = [
                             'region_code' => $sr->region_code,
@@ -179,6 +200,14 @@ class PetugasPerformanceRankingService
                             'muatan_murni' => $sr->muatan_murni_sls,
                             'up_sls' => $sr->up_sls,
                             'uk_sls' => $sr->uk_sls,
+                            'pk_sls' => $sr->pk_sls,
+                            'total_usaha_se' => $totalUsahaSe,
+                            'wilkerstat_kk' => (int) $sr->wilkerstat_kk,
+                            'wilkerstat_bku' => (int) $sr->wilkerstat_bku,
+                            'wilkerstat_usaha' => (int) $sr->wilkerstat_usaha,
+                            'diff_kk_pct' => $diffKkPct,
+                            'diff_usaha_pct' => $diffUsahaPct,
+                            'has_warning_diff_kk' => $hasWarningDiffKk,
                             'pct_up' => $pctUp,
                             'pct_uk' => $pctUk,
                             'is_low_up' => $isLowUp,

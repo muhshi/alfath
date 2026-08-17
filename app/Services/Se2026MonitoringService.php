@@ -70,6 +70,17 @@ class Se2026MonitoringService
         $ukDate = $this->getTargetDateForTable('se2026_usaha_keluarga', $selectedDate);
         $pkDate = $this->getTargetDateForTable('se2026_pemutakhiran_keluarga', $selectedDate);
 
+        // Subquery for SIPW (Wilkerstat 2025)
+        $sipwSubquery = $db->table('sipw')
+            ->select(
+                'id_subsls',
+                DB::raw('MAX(nama_sls) as nama_sls'),
+                DB::raw('MAX(CAST(muatan_kk AS SIGNED)) as wilkerstat_kk'),
+                DB::raw('MAX(CAST(bku AS SIGNED)) as wilkerstat_bku'),
+                DB::raw('MAX(CAST(muatan_usaha AS SIGNED)) as wilkerstat_usaha')
+            )
+            ->groupBy('id_subsls');
+
         // Subquery for Usaha Perusahaan
         $upSubquery = $db->table('se2026_usaha_perusahaan')
             ->when($upDate, fn ($q) => $q->where('tanggal_data', $upDate))
@@ -105,6 +116,7 @@ class Se2026MonitoringService
             ->leftJoin('alokasi_pengawas as a', 'm.region_code', '=', 'a.region_code')
             ->leftJoin('master_petugas as p_cacah', 'm.email_pencacah', '=', 'p_cacah.email')
             ->leftJoin('master_petugas as p_awas', 'a.email_pengawas', '=', 'p_awas.email')
+            ->leftJoinSub($sipwSubquery, 'sipw', 'm.region_code', '=', 'sipw.id_subsls')
             ->leftJoinSub($upSubquery, 'up', 'm.region_code', '=', 'up.kode')
             ->leftJoinSub($ukSubquery, 'uk', 'm.region_code', '=', 'uk.kode')
             ->leftJoinSub($pkSubquery, 'pk', 'm.region_code', '=', 'pk.kode')
@@ -127,6 +139,13 @@ class Se2026MonitoringService
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as jumlah_keluarga_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as keluarga_tidak_ditemukan'),
                 DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni'),
+                DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) as total_usaha_se'),
+                DB::raw('IFNULL(SUM(sipw.wilkerstat_kk), 0) as wilkerstat_kk'),
+                DB::raw('IFNULL(SUM(sipw.wilkerstat_bku), 0) as wilkerstat_bku'),
+                DB::raw('IFNULL(SUM(sipw.wilkerstat_usaha), 0) as wilkerstat_usaha'),
+                DB::raw('CASE WHEN IFNULL(SUM(sipw.wilkerstat_kk), 0) > 0 THEN ROUND(((IFNULL(SUM(pk.pk_ditemukan), 0) - IFNULL(SUM(sipw.wilkerstat_kk), 0)) / IFNULL(SUM(sipw.wilkerstat_kk), 0)) * 100, 1) ELSE 0 END as pct_diff_kk'),
+                DB::raw('CASE WHEN IFNULL(SUM(sipw.wilkerstat_kk), 0) > 0 AND ABS(((IFNULL(SUM(pk.pk_ditemukan), 0) - IFNULL(SUM(sipw.wilkerstat_kk), 0)) / IFNULL(SUM(sipw.wilkerstat_kk), 0)) * 100) > 5.0 THEN 1 ELSE 0 END as has_warning_diff_kk'),
+                DB::raw('CASE WHEN IFNULL(SUM(sipw.wilkerstat_usaha), 0) > 0 THEN ROUND((((IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) - IFNULL(SUM(sipw.wilkerstat_usaha), 0)) / IFNULL(SUM(sipw.wilkerstat_usaha), 0)) * 100, 1) ELSE 0 END as pct_diff_usaha'),
                 DB::raw('GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) as bangunan_lainnya'),
                 DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 THEN ROUND((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100, 2) ELSE 0 END as pct_bangunan_lainnya'),
                 DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 AND ((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100) >= 5.0 THEN 1 ELSE 0 END as has_warning_bangunan_lainnya'),
@@ -199,7 +218,13 @@ class Se2026MonitoringService
         $pkDate = $this->getTargetDateForTable('se2026_pemutakhiran_keluarga', $selectedDate);
 
         $sipwSub = $db->table('sipw')
-            ->select('id_subsls', DB::raw('MAX(nama_sls) as nama_sls'))
+            ->select(
+                'id_subsls',
+                DB::raw('MAX(nama_sls) as nama_sls'),
+                DB::raw('MAX(CAST(muatan_kk AS SIGNED)) as wilkerstat_kk'),
+                DB::raw('MAX(CAST(bku AS SIGNED)) as wilkerstat_bku'),
+                DB::raw('MAX(CAST(muatan_usaha AS SIGNED)) as wilkerstat_usaha')
+            )
             ->groupBy('id_subsls');
 
         $pkSub = $db->table('se2026_pemutakhiran_keluarga')
@@ -264,6 +289,13 @@ class Se2026MonitoringService
                 DB::raw('IFNULL(SUM(uk.uk_tdk), 0) as uk_tdk'),
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as pk_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as pk_tdk'),
+                DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) as total_usaha_se'),
+                DB::raw('IFNULL(sipw.wilkerstat_kk, 0) as wilkerstat_kk'),
+                DB::raw('IFNULL(sipw.wilkerstat_bku, 0) as wilkerstat_bku'),
+                DB::raw('IFNULL(sipw.wilkerstat_usaha, 0) as wilkerstat_usaha'),
+                DB::raw('CASE WHEN IFNULL(sipw.wilkerstat_kk, 0) > 0 THEN ROUND(((IFNULL(SUM(pk.pk_ditemukan), 0) - IFNULL(sipw.wilkerstat_kk, 0)) / IFNULL(sipw.wilkerstat_kk, 0)) * 100, 1) ELSE 0 END as pct_diff_kk'),
+                DB::raw('CASE WHEN IFNULL(sipw.wilkerstat_kk, 0) > 0 AND ABS(((IFNULL(SUM(pk.pk_ditemukan), 0) - IFNULL(sipw.wilkerstat_kk, 0)) / IFNULL(sipw.wilkerstat_kk, 0)) * 100) > 5.0 THEN 1 ELSE 0 END as has_warning_diff_kk'),
+                DB::raw('CASE WHEN IFNULL(sipw.wilkerstat_usaha, 0) > 0 THEN ROUND((((IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) - IFNULL(sipw.wilkerstat_usaha, 0)) / IFNULL(sipw.wilkerstat_usaha, 0)) * 100, 1) ELSE 0 END as pct_diff_usaha'),
                 DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as total_ditemukan'),
                 DB::raw('(IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(uk.uk_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0)) as total_tdk'),
                 DB::raw('GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) as bangunan_lainnya'),
@@ -276,6 +308,9 @@ class Se2026MonitoringService
                 DB::raw('LEFT(m.region_code, 7)'),
                 'sls.nmsls',
                 'sipw.nama_sls',
+                'sipw.wilkerstat_kk',
+                'sipw.wilkerstat_bku',
+                'sipw.wilkerstat_usaha',
                 'pk.sub_sls',
                 'm.email_pencacah',
                 'p_cacah.nama_lengkap',
@@ -318,6 +353,16 @@ class Se2026MonitoringService
         $ukDate = $this->getTargetDateForTable('se2026_usaha_keluarga', $selectedDate);
         $pkDate = $this->getTargetDateForTable('se2026_pemutakhiran_keluarga', $selectedDate);
 
+        $sipwSubquery = $db->table('sipw')
+            ->select(
+                'id_subsls',
+                DB::raw('MAX(nama_sls) as nama_sls'),
+                DB::raw('MAX(CAST(muatan_kk AS SIGNED)) as wilkerstat_kk'),
+                DB::raw('MAX(CAST(bku AS SIGNED)) as wilkerstat_bku'),
+                DB::raw('MAX(CAST(muatan_usaha AS SIGNED)) as wilkerstat_usaha')
+            )
+            ->groupBy('id_subsls');
+
         $upSubquery = $db->table('se2026_usaha_perusahaan')
             ->when($upDate, fn ($q) => $q->where('tanggal_data', $upDate))
             ->select(
@@ -348,6 +393,7 @@ class Se2026MonitoringService
             ->leftJoin('alokasi_pengawas as a', 'm.region_code', '=', 'a.region_code')
             ->leftJoin('master_petugas as p_cacah', 'm.email_pencacah', '=', 'p_cacah.email')
             ->leftJoin('master_petugas as p_awas', 'a.email_pengawas', '=', 'p_awas.email')
+            ->leftJoinSub($sipwSubquery, 'sipw', 'm.region_code', '=', 'sipw.id_subsls')
             ->leftJoinSub($upSubquery, 'up', 'm.region_code', '=', 'up.kode')
             ->leftJoinSub($ukSubquery, 'uk', 'm.region_code', '=', 'uk.kode')
             ->leftJoinSub($pkSubquery, 'pk', 'm.region_code', '=', 'pk.kode')
@@ -370,6 +416,13 @@ class Se2026MonitoringService
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as jumlah_keluarga_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as keluarga_tidak_ditemukan'),
                 DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni'),
+                DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) as total_usaha_se'),
+                DB::raw('IFNULL(SUM(sipw.wilkerstat_kk), 0) as wilkerstat_kk'),
+                DB::raw('IFNULL(SUM(sipw.wilkerstat_bku), 0) as wilkerstat_bku'),
+                DB::raw('IFNULL(SUM(sipw.wilkerstat_usaha), 0) as wilkerstat_usaha'),
+                DB::raw('CASE WHEN IFNULL(SUM(sipw.wilkerstat_kk), 0) > 0 THEN ROUND(((IFNULL(SUM(pk.pk_ditemukan), 0) - IFNULL(SUM(sipw.wilkerstat_kk), 0)) / IFNULL(SUM(sipw.wilkerstat_kk), 0)) * 100, 1) ELSE 0 END as pct_diff_kk'),
+                DB::raw('CASE WHEN IFNULL(SUM(sipw.wilkerstat_kk), 0) > 0 AND ABS(((IFNULL(SUM(pk.pk_ditemukan), 0) - IFNULL(SUM(sipw.wilkerstat_kk), 0)) / IFNULL(SUM(sipw.wilkerstat_kk), 0)) * 100) > 5.0 THEN 1 ELSE 0 END as has_warning_diff_kk'),
+                DB::raw('CASE WHEN IFNULL(SUM(sipw.wilkerstat_usaha), 0) > 0 THEN ROUND((((IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) - IFNULL(SUM(sipw.wilkerstat_usaha), 0)) / IFNULL(SUM(sipw.wilkerstat_usaha), 0)) * 100, 1) ELSE 0 END as pct_diff_usaha'),
                 DB::raw('GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) as bangunan_lainnya'),
                 DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 THEN ROUND((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100, 2) ELSE 0 END as pct_bangunan_lainnya'),
                 DB::raw('CASE WHEN (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) > 0 AND ((GREATEST(0, (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) - (IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) - (IFNULL(SUM(up.up_tdk), 0) + IFNULL(SUM(pk.pk_tdk), 0))) / (IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0))) * 100) >= 5.0 THEN 1 ELSE 0 END as has_warning_bangunan_lainnya'),
@@ -414,7 +467,12 @@ class Se2026MonitoringService
             'total_belum_dikerjakan' => $records->sum('belum_dikerjakan'),
             'total_usaha_ditemukan' => $records->sum('jumlah_usaha_ditemukan'),
             'total_usaha_keluarga' => $records->sum('jumlah_usaha_keluarga'),
+            'total_usaha_se' => $records->sum('total_usaha_se'),
             'total_keluarga_ditemukan' => $records->sum('jumlah_keluarga_ditemukan'),
+            'total_wilkerstat_kk' => $records->sum('wilkerstat_kk'),
+            'total_wilkerstat_bku' => $records->sum('wilkerstat_bku'),
+            'total_wilkerstat_usaha' => $records->sum('wilkerstat_usaha'),
+            'cnt_warning_diff_kk' => $records->where('has_warning_diff_kk', 1)->count(),
             'total_muatan_murni' => $records->sum('muatan_murni'),
             'total_bangunan_lainnya' => $records->sum('bangunan_lainnya'),
             'cnt_warning_bangunan_lainnya' => $records->where('has_warning_bangunan_lainnya', 1)->count(),

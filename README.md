@@ -178,17 +178,21 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - **Apresiasi Data Draft & Persentase Gabungan**: Menghitung `total_draft`, `pct_draft`, dan persentase gabungan `pct_submit_draft` (`(Submit + Draft) / Beban * 100`). Menampilkan statistik `+Draft: X%` pada kartu KPI utama "TOTAL SUBMIT" serta pada kolom persentase capaian di tabel PPL, PML, dan Ranking Kinerja Petugas agar progres draft petugas mendapatkan apresiasi.
   - **Pembaruan Ekspor Excel**: Memperbarui format ekspor Excel Sheet Ranking Kinerja untuk menyertakan angka submit harian, pertambahan draft harian, dan durasi hari stagnan secara bersih tanpa teks membingungkan (`stagnan 0 hari`).
 
-### 2026-08-14
-- **Kalkulasi & Warning Bangunan Kosong / Bangunan Lainnya di Dashboard Pengolahan (`/dashboard-pengolahan`)**:
-  - **Rumus Bangunan Kosong / Bangunan Lainnya**: Menghitung `bangunan_lainnya = total_submit - muatan_murni - muatan_tidak_ditemukan` untuk mendeteksi unit yang disubmit tanpa wawancara murni (bangunan kosong/fasum/pasar yang keliru diisi sebagai non-BKU).
-  - **Kriteria Warning &ge; 5% Total Submit**: Memicu warning otomatis `⚠️ Bangunan Kosong/Lainnya (>=5%)` apabila persentase `bangunan_lainnya` terhadap `total_submit` mencapai atau melebihi **5.0%**.
-  - **Visualisasi UI Dashboard Pengolahan**:
-    - Kartu KPI ke-7 `BANGUNAN KOSONG / LAINNYA` pada header utama dashboard.
-    - Mini metric badge `⚠️ X Petugas Warning Bangunan Lainnya (>=5%)` pada Tab Ranking Kinerja.
-    - Kolom `Bangunan Kosong / Lainnya` dengan highlight badge warning orange pada seluruh 4 Tab (**Tab 1: Ranking Kinerja**, **Tab 2: Ringkasan PPL**, **Tab 3: Ringkasan PML**, dan **Tab 4: Alokasi Per SLS**).
-  - **Indikator Progres Seharusnya Hari Ini (1.33%/hari)**:
-    - Menambahkan kartu KPI khusus **`PROGRESS SEHARUSNYA`** (`dynamicTargetPct`%, misal 1.33% / hari) pada jajaran kartu statistik utama.
-    - Menambahkan badge target `Target: X%` pada kartu **TOTAL SUBMIT** serta badge header `🎯 Target Standar Hari Ini: X% (1.33%/hari)` pada banner utama dashboard.
-  - **Dukungan Multi-Sheet Excel Export**: Menambahkan kolom `Bangunan Kosong/Lainnya`, `% Bangunan Lainnya`, dan `Warning Bangunan Lainnya (>=5%)` pada ke-4 sheet file Excel (`.xlsx`).
-  - **Penataan Grid Stat Overview (2 Baris: 4 Atas, 4 Bawah)**: Menata ulang 8 kartu ringkasan KPI di bagian header dashboard menjadi format grid 4 kolom (`col-6 col-lg-3`), sehingga pada layar desktop tersusun rapi menjadi 2 baris proporsional (4 card di atas dan 4 card di bawah) tanpa ada card yang memanjang kosong.
+### 2026-08-17
+- **Penyandingan Data Patokan Wilkerstat 2025 (KK, BKU, Usaha) dengan Hasil Pendataan SE2026 & Integrasi Anomali SLS**:
+  - **Penyandingan Data 1 Kolom (Stacked / Sub-Metric)**:
+    - **Data Keluarga**: Menyandingkan Keluarga Ditemukan hasil SE2026 (`pk_ditemukan`) dengan data KK Wilkerstat 2025 (`muatan_kk`) dalam 1 kolom vertikal ringkas (`vs KK: X`).
+    - **Indikator Warning Deviasi Keluarga (> 5%)**: Menghitung selisih persentase deviasi `pct_diff_kk = ((pk_ditemukan - wilkerstat_kk) / wilkerstat_kk) * 100`. Apabila deviasi melebihi toleransi wajar (`|pct_diff_kk| > 5.0%`), sistem memunculkan warning badge `⚠️ [+/-]X.X%` (dan `✅ [+/-]X.X%` jika berada dalam batas wajar &le; 5%).
+    - **Data BKU**: Menyandingkan BKU Ditemukan SE2026 (`up_ditemukan`) dengan BKU Wilkerstat 2025 (`bku`) (`vs BKU: X`).
+    - **Data Usaha (Total Usaha BKU + UK)**: Menggabungkan total usaha SE2026 (`BKU + UK`) dan menyandingkannya dengan data Usaha Wilkerstat 2025 (`muatan_usaha`) (`vs Usaha: X`).
+  - **Integrasi Penuh ke Modal Detail & Tindak Lanjut Anomali SLS (`#modalAnomaliDetail`)**:
+    - Memperluas modal dialog menjadi `modal-xl` agar informasi perbandingan tertata lega dan mudah dianalisis.
+    - Menampilkan tabel komparasi detail berisi: Hasil Pendataan SE2026 (Muatan Murni, BKU, UK, Total Usaha `BKU+UK`, Keluarga), Patokan Wilkerstat 2025 (KK, BKU, Usaha), serta kolom Indikator Komparasi & Warning Anomali (Deviasi KK dengan batas toleransi 5%, perbandingan rasio total usaha, dan rasio probing BKU < 5% / UK < 10%).
+    - Memberikan panduan dan konteks valid bagi petugas dan pengawas saat menindaklanjuti dan mengajukan catatan klarifikasi lapangan.
+  - **Visualisasi UI Dashboard Pengolahan (`/dashboard-pengolahan`)**:
+    - Diterapkan pada **Tab 1: Ringkasan Per PPL**, **Tab 2: Ringkasan Per PML**, dan **Tab 3: Alokasi Per SLS / Sub-SLS**.
+    - Memperbarui kartu KPI header dengan data agregasi total Wilkerstat KK, BKU, dan Usaha.
+  - **Pembaruan Multi-Sheet Excel Export (`.xlsx`)**:
+    - Menambahkan kolom pembanding Wilkerstat 2025 (KK, BKU, Usaha), Total Usaha SE (`BKU+UK`), persentase deviasi KK, dan status warning deviasi KK pada sheet PPL, PML, dan SLS lengkap dengan rumus kalkulasi total summary baris bawah.
+
 
