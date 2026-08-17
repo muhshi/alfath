@@ -470,7 +470,6 @@ class Se2026MonitoringService
             'total_usaha_se' => $records->sum('total_usaha_se'),
             'total_keluarga_ditemukan' => $records->sum('jumlah_keluarga_ditemukan'),
             'total_wilkerstat_kk' => $records->sum('wilkerstat_kk'),
-            'total_wilkerstat_bku' => $records->sum('wilkerstat_bku'),
             'total_wilkerstat_usaha' => $records->sum('wilkerstat_usaha'),
             'cnt_warning_diff_kk' => $records->where('has_warning_diff_kk', 1)->count(),
             'total_muatan_murni' => $records->sum('muatan_murni'),

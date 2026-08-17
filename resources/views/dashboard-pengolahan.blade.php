@@ -763,7 +763,7 @@
                                         <th class="text-end">Total<br>Submit</th>
                                         <th class="text-end">% Progres</th>
                                         <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
-                                        <th class="text-end">BKU Ditemukan<br><span class="text-muted font-weight-normal small">vs BKU Wilkerstat</span></th>
+                                        <th class="text-end">BKU Ditemukan</th>
                                         <th class="text-end">BKU<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
                                         <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">Total SE vs Usaha Wilkerstat</span></th>
                                         <th class="text-end">Keluarga Ditemukan<br><span class="text-warning font-weight-normal small">vs Wilkerstat KK (Tol. 5%)</span></th>
@@ -812,15 +812,23 @@
                                              </td>
                                              <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">
                                                  {{ number_format($row->jumlah_usaha_ditemukan) }}
-                                                 <div class="small text-muted font-weight-normal" style="font-size: 0.72rem;" title="Patokan BKU Wilkerstat: {{ number_format($row->wilkerstat_bku) }}">
-                                                     vs BKU: {{ number_format($row->wilkerstat_bku) }}
-                                                 </div>
                                              </td>
                                              <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
                                              <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">
                                                  {{ number_format($row->jumlah_usaha_keluarga) }}
-                                                 <div class="small text-muted font-weight-normal" style="font-size: 0.72rem;" title="Total Usaha SE (BKU+UK): {{ number_format($row->total_usaha_se) }} vs Wilkerstat Usaha: {{ number_format($row->wilkerstat_usaha) }}">
-                                                     Total: {{ number_format($row->total_usaha_se) }} <span class="text-muted">(vs {{ number_format($row->wilkerstat_usaha) }})</span>
+                                                 <div class="d-flex flex-column align-items-end mt-0.5" style="font-size: 0.72rem;">
+                                                     <span class="text-muted font-weight-normal">Total: {{ number_format($row->total_usaha_se) }} vs {{ number_format($row->wilkerstat_usaha) }}</span>
+                                                     @if($row->wilkerstat_usaha > 0)
+                                                         @if($row->total_usaha_se >= $row->wilkerstat_usaha)
+                                                             <span class="badge bg-success-lt text-success font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) &ge; Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }}) (Optimal)">
+                                                                 ✅ &ge; Wilkerstat (+{{ number_format(max(0, $row->pct_diff_usaha), 1) }}%)
+                                                             </span>
+                                                         @else
+                                                             <span class="badge bg-warning-lt text-warning font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) < Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }})">
+                                                                 ⚠️ < Wilkerstat ({{ number_format($row->pct_diff_usaha, 1) }}%)
+                                                             </span>
+                                                         @endif
+                                                     @endif
                                                  </div>
                                              </td>
                                              <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">
@@ -873,7 +881,7 @@
                                         <th class="text-end">Total<br>Submit</th>
                                         <th class="text-end">% Progres</th>
                                         <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
-                                        <th class="text-end">BKU Ditemukan<br><span class="text-muted font-weight-normal small">vs BKU Wilkerstat</span></th>
+                                        <th class="text-end">BKU Ditemukan</th>
                                         <th class="text-end">BKU<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
                                         <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">Total SE vs Usaha Wilkerstat</span></th>
                                         <th class="text-end">Keluarga Ditemukan<br><span class="text-warning font-weight-normal small">vs Wilkerstat KK (Tol. 5%)</span></th>
@@ -925,15 +933,23 @@
                                             </td>
                                             <td class="text-end font-weight-bold text-info" data-order="{{ $row->jumlah_usaha_ditemukan }}">
                                                 {{ number_format($row->jumlah_usaha_ditemukan) }}
-                                                <div class="small text-muted font-weight-normal" style="font-size: 0.72rem;" title="Patokan BKU Wilkerstat: {{ number_format($row->wilkerstat_bku) }}">
-                                                    vs BKU: {{ number_format($row->wilkerstat_bku) }}
-                                                </div>
                                             </td>
                                             <td class="text-end text-muted" data-order="{{ $row->usaha_tidak_ditemukan }}">{{ number_format($row->usaha_tidak_ditemukan) }}</td>
                                             <td class="text-end font-weight-bold text-purple" data-order="{{ $row->jumlah_usaha_keluarga }}">
                                                 {{ number_format($row->jumlah_usaha_keluarga) }}
-                                                <div class="small text-muted font-weight-normal" style="font-size: 0.72rem;" title="Total Usaha SE (BKU+UK): {{ number_format($row->total_usaha_se) }} vs Wilkerstat Usaha: {{ number_format($row->wilkerstat_usaha) }}">
-                                                    Total: {{ number_format($row->total_usaha_se) }} <span class="text-muted">(vs {{ number_format($row->wilkerstat_usaha) }})</span>
+                                                <div class="d-flex flex-column align-items-end mt-0.5" style="font-size: 0.72rem;">
+                                                    <span class="text-muted font-weight-normal">Total: {{ number_format($row->total_usaha_se) }} vs {{ number_format($row->wilkerstat_usaha) }}</span>
+                                                    @if($row->wilkerstat_usaha > 0)
+                                                        @if($row->total_usaha_se >= $row->wilkerstat_usaha)
+                                                            <span class="badge bg-success-lt text-success font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) &ge; Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }}) (Optimal)">
+                                                                ✅ &ge; Wilkerstat (+{{ number_format(max(0, $row->pct_diff_usaha), 1) }}%)
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-warning-lt text-warning font-weight-bold px-1 py-0.2" style="font-size: 0.68rem;" title="Total Usaha SE ({{ number_format($row->total_usaha_se) }}) < Usaha Wilkerstat ({{ number_format($row->wilkerstat_usaha) }})">
+                                                                ⚠️ < Wilkerstat ({{ number_format($row->pct_diff_usaha, 1) }}%)
+                                                            </span>
+                                                        @endif
+                                                    @endif
                                                 </div>
                                             </td>
                                             <td class="text-end font-weight-bold text-warning" data-order="{{ $row->jumlah_keluarga_ditemukan }}">
@@ -984,7 +1000,7 @@
                                         <th class="text-end">Total<br>Submit</th>
                                         <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum Disentuh<br>(Open)</th>
                                         <th class="text-end">% Progres</th>
-                                        <th class="text-end text-info font-weight-bold">BKU Ditemukan<br><span class="font-weight-normal small">vs BKU Wilkerstat</span></th>
+                                        <th class="text-end text-info font-weight-bold">BKU Ditemukan</th>
                                         <th class="text-end text-danger font-weight-bold" style="background-color: #fef2f2 !important;">BKU<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
                                         <th class="text-end text-purple font-weight-bold">UK Ditemukan<br><span class="font-weight-normal small">Total SE vs Usaha Wilkerstat</span></th>
                                         <th class="text-end text-orange font-weight-bold" style="background-color: #fff7ed !important;">UK<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
@@ -1026,9 +1042,6 @@
                                             </td>
                                             <td class="text-end font-weight-bold text-info" data-order="{{ $row->up_ditemukan }}">
                                                 {{ number_format($row->up_ditemukan) }}
-                                                <div class="small text-muted font-weight-normal" style="font-size: 0.72rem;">
-                                                    vs BKU: {{ number_format($row->wilkerstat_bku) }}
-                                                </div>
                                             </td>
                                             <td class="text-end font-weight-bold text-danger" style="background-color: #fef2f2 !important;" data-order="{{ $row->up_tdk }}">{{ number_format($row->up_tdk) }}</td>
                                             <td class="text-end font-weight-bold text-purple" data-order="{{ $row->uk_ditemukan }}">
@@ -1112,8 +1125,8 @@
                     <div class="alert alert-info border-0 bg-info-lt text-dark mb-3 p-3 rounded-3 small">
                         <div class="font-weight-bold mb-1">ℹ️ Panduan Tindak Lanjut Anomali & Patokan Wilkerstat:</div>
                         <ul class="mb-0 ps-3">
-                            <li><b>Patokan Data Wilkerstat 2025:</b> Gunakan data KK, BKU, dan Usaha Wilkerstat 2025 sebagai acuan pembanding hasil lapangan SE2026.</li>
-                            <li><b>Toleransi Keluarga (KK):</b> Deviasi keluarga SE2026 terhadap KK Wilkerstat diharapkan tidak jauh berbeda (&le; 5%). Sistem memberikan peringatan <code>⚠️ Deviasi > 5%</code> jika melebihi batas.</li>
+                            <li><b>Patokan Usaha Wilkerstat 2025:</b> Usaha Wilkerstat 2025 seharusnya &le; Total Usaha SE2026 (BKU + UK). Jika hasil SE2026 lebih besar, itu sangat baik (optimal).</li>
+                            <li><b>Toleransi Keluarga (KK):</b> Deviasi keluarga SE2026 terhadap KK Wilkerstat diharapkan tidak jauh berbeda (&le; 5%). Sistem memberikan peringatan <code>⚠️ Deviasi > 5%</code> jika melebihi batas toleransi.</li>
                             <li><b>Perubahan Data (Probing Usaha Nambah):</b> Jika hasil pendataan bertambah usahanya (sehingga BKU &ge; 5% / UK &ge; 10%), anomali akan <b>hilang otomatis</b> saat data diperbarui.</li>
                             <li><b>Data Tetap / Tidak Berubah:</b> Petugas dapat memberikan <b>catatan klarifikasi</b> (misal: SLS kawasan persawahan / pemukiman non-usaha). Catatan akan diajukan ke Admin untuk disetujui (Approval).</li>
                         </ul>
@@ -1126,8 +1139,8 @@
                                 <tr>
                                     <th>Nama SLS & Kode</th>
                                     <th>Hasil Pendataan SE2026<br><span class="text-muted font-weight-normal small">Murni | BKU | UK | Total Usaha | KK</span></th>
-                                    <th>Patokan Wilkerstat 2025<br><span class="text-muted font-weight-normal small">KK | BKU | Usaha</span></th>
-                                    <th>Perbandingan & Indikator Warning<br><span class="text-muted font-weight-normal small">Keluarga (Tol. 5%) | BKU & UK</span></th>
+                                    <th>Patokan Wilkerstat 2025<br><span class="text-muted font-weight-normal small">KK | Usaha</span></th>
+                                    <th>Perbandingan & Indikator Warning<br><span class="text-muted font-weight-normal small">Keluarga (Tol. 5%) | Total Usaha | BKU & UK</span></th>
                                     <th class="text-center">Status & Catatan Admin</th>
                                     <th class="text-center">Aksi / Tindak Lanjut</th>
                                 </tr>
@@ -1400,8 +1413,12 @@
 
                             var diffUsahaHtml = '';
                             if ((sls.wilkerstat_usaha || 0) > 0) {
-                                var prefixUsaha = sls.diff_usaha_pct > 0 ? '+' : '';
-                                diffUsahaHtml = '<span class="badge bg-blue-lt text-blue px-1.5 py-0.5" title="Perbandingan Total Usaha SE (BKU+UK) vs Usaha Wilkerstat">Usaha SE vs Wilkerstat: ' + prefixUsaha + sls.diff_usaha_pct + '%</span>';
+                                if ((sls.total_usaha_se || 0) >= sls.wilkerstat_usaha) {
+                                    var prefixUsaha = sls.diff_usaha_pct > 0 ? '+' : '';
+                                    diffUsahaHtml = '<span class="badge bg-success-lt text-success px-1.5 py-0.5" title="Total Usaha SE (BKU+UK) &ge; Usaha Wilkerstat (Optimal)">✅ Usaha SE &ge; Wilkerstat (' + prefixUsaha + sls.diff_usaha_pct + '%)</span>';
+                                } else {
+                                    diffUsahaHtml = '<span class="badge bg-warning-lt text-warning px-1.5 py-0.5" title="Total Usaha SE (BKU+UK) < Usaha Wilkerstat">⚠️ Usaha SE < Wilkerstat (' + sls.diff_usaha_pct + '%)</span>';
+                                }
                             }
 
                             var seDetail = '<div class="d-flex flex-column gap-0.5">' +
@@ -1413,7 +1430,6 @@
 
                             var wilkerstatDetail = '<div class="d-flex flex-column gap-0.5 small">' +
                                 '<div><b>KK Wilkerstat:</b> <span class="font-weight-bold text-dark">' + (sls.wilkerstat_kk || 0) + '</span></div>' +
-                                '<div><b>BKU Wilkerstat:</b> <span class="font-weight-bold text-dark">' + (sls.wilkerstat_bku || 0) + '</span></div>' +
                                 '<div><b>Usaha Wilkerstat:</b> <span class="font-weight-bold text-dark">' + (sls.wilkerstat_usaha || 0) + '</span></div>' +
                                 '</div>';
 
