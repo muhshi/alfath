@@ -563,8 +563,12 @@ class PengolahanExportService
         ];
         $sheet->getStyle($range)->applyFromArray($borderStyle);
 
-        foreach (range($startCol, $endCol) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
+        $startIdx = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($startCol);
+        $endIdx = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($endCol);
+
+        for ($colIdx = $startIdx; $colIdx <= $endIdx; $colIdx++) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
         }
     }
 }

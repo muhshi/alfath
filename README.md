@@ -204,5 +204,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Menambahkan `SsoController` untuk alur autentikasi login terpusat (`/auth/sipetra/redirect` dan `/auth/sipetra/callback`).
     - Mengintegrasikan tombol login SSO SIPETRA dengan branding logo resmi BPS Demak pada form login Filament Admin Panel (`PanelsRenderHook::AUTH_LOGIN_FORM_AFTER`) dan form login Tablar (`/login`).
 
-
-
+### 2026-08-18
+- **Perbaikan Export Excel Multi-Sheet (`PengolahanExportService`)**:
+  - Mengganti fungsi `range($startCol, $endCol)` pada method `applyBordersAndAutoWidth()` dengan `Coordinate::columnIndexFromString()` dan `Coordinate::stringFromColumnIndex()`.
+  - Mengatasi error `Argument #2 ($end) must be a single byte, subsequent bytes are ignored` pada PHP 8 saat melakukan autosize kolom Excel lebih dari 26 kolom (seperti kolom `AA`, `AB` pada Sheet Alokasi SLS).
