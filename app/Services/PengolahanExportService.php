@@ -11,9 +11,9 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 class PengolahanExportService
 {
     /**
-     * Export the filtered SE2026 Data Petugas across all 4 Tabs to a multi-sheet native Excel (.xlsx).
+     * Export the filtered SE2026 Data Petugas per Tab or all 4 Tabs to native Excel (.xlsx).
      */
-    public function exportToExcel(array $filteredData, array $kecNameMap)
+    public function exportToExcel(array $filteredData, array $kecNameMap, string $tab = 'ranking')
     {
         ini_set('memory_limit', '512M');
         set_time_limit(300);
@@ -21,48 +21,73 @@ class PengolahanExportService
         $monitoringService = app(Se2026MonitoringService::class);
         $rankingService = app(PetugasPerformanceRankingService::class);
 
-        $records = $filteredData['query']->get();
         $selectedDate = $filteredData['selectedDate'];
         $kodekec = $filteredData['kodekec'];
         $search = $filteredData['search'];
 
-        $pmlRecords = $monitoringService->getPmlQuery(request(), $selectedDate);
-        $slsRecords = $monitoringService->getSlsQuery(request(), $selectedDate);
-        $rankingData = $rankingService->calculateRankingData($records, $selectedDate);
-        $rankingRecords = $rankingData['rankingRecords'];
-
         $dateSuffix = !empty($selectedDate) ? '_' . str_replace('-', '', $selectedDate) : '_' . date('Ymd');
-        $filename = "Export_Dashboard_SE2026{$dateSuffix}.xlsx";
-
         $spreadsheet = new Spreadsheet();
 
-        // -------------------------------------------------------------
-        // SHEET 1: RANKING KINERJA PETUGAS
-        // -------------------------------------------------------------
-        $sheet1 = $spreadsheet->getActiveSheet();
-        $sheet1->setTitle('Ranking Kinerja Petugas');
-        $this->buildRankingSheet($sheet1, $rankingRecords, $kecNameMap, $selectedDate, $rankingData['dynamicTargetPct']);
+        switch (strtolower($tab)) {
+            case 'ranking':
+                $records = $filteredData['query']->get();
+                $rankingData = $rankingService->calculateRankingData($records, $selectedDate);
+                $sheet = $spreadsheet->getActiveSheet();
+                $sheet->setTitle('Ranking Kinerja Petugas');
+                $this->buildRankingSheet($sheet, $rankingData['rankingRecords'], $kecNameMap, $selectedDate, $rankingData['dynamicTargetPct']);
+                $filename = "Export_Ranking_Kinerja_SE2026{$dateSuffix}.xlsx";
+                break;
 
-        // -------------------------------------------------------------
-        // SHEET 2: DATA PETUGAS (PPL)
-        // -------------------------------------------------------------
-        $sheet2 = $spreadsheet->createSheet();
-        $sheet2->setTitle('Data Petugas (PPL)');
-        $this->buildPplSheet($sheet2, $records, $kecNameMap, $selectedDate, $kodekec, $search);
+            case 'ppl':
+                $records = $filteredData['query']->get();
+                $sheet = $spreadsheet->getActiveSheet();
+                $sheet->setTitle('Data Petugas (PPL)');
+                $this->buildPplSheet($sheet, $records, $kecNameMap, $selectedDate, $kodekec, $search);
+                $filename = "Export_Data_PPL_SE2026{$dateSuffix}.xlsx";
+                break;
 
-        // -------------------------------------------------------------
-        // SHEET 3: AGREGASI PENGAWAS (PML)
-        // -------------------------------------------------------------
-        $sheet3 = $spreadsheet->createSheet();
-        $sheet3->setTitle('Agregasi Pengawas (PML)');
-        $this->buildPmlSheet($sheet3, $pmlRecords, $kecNameMap, $selectedDate, $kodekec, $search);
+            case 'pml':
+                $pmlRecords = $monitoringService->getPmlQuery(request(), $selectedDate);
+                $sheet = $spreadsheet->getActiveSheet();
+                $sheet->setTitle('Agregasi Pengawas (PML)');
+                $this->buildPmlSheet($sheet, $pmlRecords, $kecNameMap, $selectedDate, $kodekec, $search);
+                $filename = "Export_Agregasi_PML_SE2026{$dateSuffix}.xlsx";
+                break;
 
-        // -------------------------------------------------------------
-        // SHEET 4: ALOKASI PER SLS / SUB-SLS
-        // -------------------------------------------------------------
-        $sheet4 = $spreadsheet->createSheet();
-        $sheet4->setTitle('Alokasi Per SLS');
-        $this->buildSlsSheet($sheet4, $slsRecords, $kecNameMap, $selectedDate, $kodekec, $search);
+            case 'sls':
+                $slsRecords = $monitoringService->getSlsQuery(request(), $selectedDate);
+                $sheet = $spreadsheet->getActiveSheet();
+                $sheet->setTitle('Alokasi Per SLS');
+                $this->buildSlsSheet($sheet, $slsRecords, $kecNameMap, $selectedDate, $kodekec, $search);
+                $filename = "Export_Alokasi_SLS_SE2026{$dateSuffix}.xlsx";
+                break;
+
+            case 'all':
+            default:
+                $records = $filteredData['query']->get();
+                $pmlRecords = $monitoringService->getPmlQuery(request(), $selectedDate);
+                $slsRecords = $monitoringService->getSlsQuery(request(), $selectedDate);
+                $rankingData = $rankingService->calculateRankingData($records, $selectedDate);
+
+                $sheet1 = $spreadsheet->getActiveSheet();
+                $sheet1->setTitle('Ranking Kinerja Petugas');
+                $this->buildRankingSheet($sheet1, $rankingData['rankingRecords'], $kecNameMap, $selectedDate, $rankingData['dynamicTargetPct']);
+
+                $sheet2 = $spreadsheet->createSheet();
+                $sheet2->setTitle('Data Petugas (PPL)');
+                $this->buildPplSheet($sheet2, $records, $kecNameMap, $selectedDate, $kodekec, $search);
+
+                $sheet3 = $spreadsheet->createSheet();
+                $sheet3->setTitle('Agregasi Pengawas (PML)');
+                $this->buildPmlSheet($sheet3, $pmlRecords, $kecNameMap, $selectedDate, $kodekec, $search);
+
+                $sheet4 = $spreadsheet->createSheet();
+                $sheet4->setTitle('Alokasi Per SLS');
+                $this->buildSlsSheet($sheet4, $slsRecords, $kecNameMap, $selectedDate, $kodekec, $search);
+
+                $filename = "Export_Dashboard_SE2026_SemuaTab{$dateSuffix}.xlsx";
+                break;
+        }
 
         $spreadsheet->setActiveSheetIndex(0);
 

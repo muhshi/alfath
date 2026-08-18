@@ -87,7 +87,9 @@ class PengolahanController extends Controller
     {
         ini_set('memory_limit', '512M');
 
+        $tab = (string) $request->get('tab', 'ranking');
         $filtered = $this->monitoringService->getFilteredQuery($request);
-        return $this->exportService->exportToExcel($filtered, $this->monitoringService->getKecNameMap());
+
+        return $this->exportService->exportToExcel($filtered, $this->monitoringService->getKecNameMap(), $tab);
     }
 }

@@ -222,10 +222,31 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M12 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M4 20l14 0"/></svg>
                 Executive Dashboard
             </a>
-            <a href="{{ route('dashboard.pengolahan.export', request()->query()) }}" class="btn btn-success font-weight-bold shadow-sm" style="border-radius: 10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-spreadsheet me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M8 11h8" /><path d="M8 15h8" /><path d="M11 11v8" /></svg>
-                Export Excel
-            </a>
+            <div class="dropdown">
+                <button class="btn btn-success font-weight-bold dropdown-toggle shadow-sm" type="button" id="dropdownExportHeader" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 10px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-spreadsheet me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M8 11h8" /><path d="M8 15h8" /><path d="M11 11v8" /></svg>
+                    Export Excel (<span class="export-active-tab-name">Ranking</span>)
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownExportHeader">
+                    <li>
+                        <a class="dropdown-item fw-bold btn-export-active-tab" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'ranking'])) }}">
+                            ⚡ Export Tab Aktif (<span class="export-active-tab-name">Ranking</span>)
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header">Export Per Tab</h6></li>
+                    <li><a class="dropdown-item" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'ranking'])) }}">🏆 Sheet Ranking Kinerja</a></li>
+                    <li><a class="dropdown-item" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'ppl'])) }}">👤 Sheet Data Petugas (PPL)</a></li>
+                    <li><a class="dropdown-item" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'pml'])) }}">👥 Sheet Agregasi Pengawas (PML)</a></li>
+                    <li><a class="dropdown-item" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'sls'])) }}">📍 Sheet Alokasi SLS</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item text-muted" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'all'])) }}">
+                            📦 Export Semua Tab (4 Sheet - Lambat)
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </x-page-header>
 
@@ -457,10 +478,31 @@
                         </li>
                     </ul>
                     <div class="d-flex align-items-center gap-2">
-                        <a href="{{ route('dashboard.pengolahan.export', request()->query()) }}" class="btn btn-sm btn-success font-weight-bold" style="border-radius: 8px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-spreadsheet me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M8 11h8" /><path d="M8 15h8" /><path d="M11 11v8" /></svg>
-                            Export Excel
-                        </a>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-success font-weight-bold dropdown-toggle shadow-sm" type="button" id="dropdownExportCard" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-spreadsheet me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M8 11h8" /><path d="M8 15h8" /><path d="M11 11v8" /></svg>
+                                Export Excel (<span class="export-active-tab-name">Ranking</span>)
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownExportCard">
+                                <li>
+                                    <a class="dropdown-item fw-bold btn-export-active-tab" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'ranking'])) }}">
+                                        ⚡ Export Tab Aktif (<span class="export-active-tab-name">Ranking</span>)
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Export Per Tab</h6></li>
+                                <li><a class="dropdown-item" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'ranking'])) }}">🏆 Sheet Ranking Kinerja</a></li>
+                                <li><a class="dropdown-item" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'ppl'])) }}">👤 Sheet Data Petugas (PPL)</a></li>
+                                <li><a class="dropdown-item" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'pml'])) }}">👥 Sheet Agregasi Pengawas (PML)</a></li>
+                                <li><a class="dropdown-item" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'sls'])) }}">📍 Sheet Alokasi SLS</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-muted" href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'all'])) }}">
+                                        📦 Export Semua Tab (4 Sheet - Lambat)
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -1574,6 +1616,36 @@
                             }
                         });
                     });
+
+                    // Dynamic Export Active Tab URL updates
+                    var tabMap = {
+                        'ranking-tab': { tab: 'ranking', name: 'Ranking' },
+                        'ppl-tab': { tab: 'ppl', name: 'PPL' },
+                        'pml-tab': { tab: 'pml', name: 'PML' },
+                        'sls-tab': { tab: 'sls', name: 'SLS' }
+                    };
+
+                    function updateExportActiveTab(tabId) {
+                        var info = tabMap[tabId] || tabMap['ranking-tab'];
+                        $('.export-active-tab-name').text(info.name);
+
+                        $('.btn-export-active-tab').each(function() {
+                            var currentUrl = new URL($(this).attr('href'), window.location.origin);
+                            currentUrl.searchParams.set('tab', info.tab);
+                            $(this).attr('href', currentUrl.toString());
+                        });
+                    }
+
+                    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                        var targetId = $(e.target).attr('id');
+                        updateExportActiveTab(targetId);
+                    });
+
+                    // Initialize active tab on load
+                    var initialActiveTab = $('.custom-pill-tabs .nav-link.active').attr('id');
+                    if (initialActiveTab) {
+                        updateExportActiveTab(initialActiveTab);
+                    }
 
                     setTimeout(revealDataTables, 150);
                 } else {

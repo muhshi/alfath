@@ -18,4 +18,12 @@ class DashboardPengolahanTest extends TestCase
         $response->assertSee('Bangunan Kosong / Lainnya');
         $response->assertSee('PROGRESS SEHARUSNYA');
     }
+
+    public function test_export_excel_ranking_tab_returns_spreadsheet(): void
+    {
+        $response = $this->get('/dashboard-pengolahan/export?tab=ranking');
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
 }
