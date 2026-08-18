@@ -208,3 +208,5 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 - **Perbaikan Export Excel Multi-Sheet (`PengolahanExportService`)**:
   - Mengganti fungsi `range($startCol, $endCol)` pada method `applyBordersAndAutoWidth()` dengan `Coordinate::columnIndexFromString()` dan `Coordinate::stringFromColumnIndex()`.
   - Mengatasi error `Argument #2 ($end) must be a single byte, subsequent bytes are ignored` pada PHP 8 saat melakukan autosize kolom Excel lebih dari 26 kolom (seperti kolom `AA`, `AB` pada Sheet Alokasi SLS).
+- **Penyesuaian Namespace Action Filament v5 (`SurveyResource`, `TeamResource`, `CategoryResource`)**:
+  - Memperbarui import action tabel dari `Filament\Tables\Actions` menjadi `Filament\Actions` (`EditAction`, `BulkActionGroup`, `DeleteBulkAction`) sesuai standar Filament v5.
