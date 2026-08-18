@@ -222,10 +222,19 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M12 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M4 20l14 0"/></svg>
                 Executive Dashboard
             </a>
-            <div class="dropdown">
-                <button class="btn btn-success font-weight-bold dropdown-toggle shadow-sm" type="button" id="dropdownExportHeader" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 10px;">
+            <div class="btn-group shadow-sm" style="border-radius: 10px;">
+                <a href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'ranking'])) }}" 
+                   class="btn btn-success font-weight-bold btn-export-active-tab" 
+                   style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-spreadsheet me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M8 11h8" /><path d="M8 15h8" /><path d="M11 11v8" /></svg>
                     Export Excel (<span class="export-active-tab-name">Ranking</span>)
+                </a>
+                <button type="button" 
+                        class="btn btn-success dropdown-toggle dropdown-toggle-split" 
+                        data-bs-toggle="dropdown" 
+                        aria-expanded="false" 
+                        style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
+                    <span class="visually-hidden">Toggle Dropdown</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownExportHeader">
                     <li>
@@ -478,10 +487,19 @@
                         </li>
                     </ul>
                     <div class="d-flex align-items-center gap-2">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-success font-weight-bold dropdown-toggle shadow-sm" type="button" id="dropdownExportCard" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px;">
+                        <div class="btn-group shadow-sm" style="border-radius: 8px;">
+                            <a href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'ranking'])) }}" 
+                               class="btn btn-sm btn-success font-weight-bold btn-export-active-tab" 
+                               style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-spreadsheet me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M8 11h8" /><path d="M8 15h8" /><path d="M11 11v8" /></svg>
                                 Export Excel (<span class="export-active-tab-name">Ranking</span>)
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-sm btn-success dropdown-toggle dropdown-toggle-split" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false" 
+                                    style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
+                                <span class="visually-hidden">Toggle Dropdown</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownExportCard">
                                 <li>
@@ -1639,6 +1657,25 @@
                     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
                         var targetId = $(e.target).attr('id');
                         updateExportActiveTab(targetId);
+                    });
+
+                    // Fallback Dropdown Toggle (works even if Bootstrap JS fails/blocked on server)
+                    $(document).on('click', '[data-bs-toggle="dropdown"]', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var parent = $(this).closest('.dropdown, .btn-group');
+                        var menu = parent.find('.dropdown-menu');
+                        var isShown = menu.hasClass('show');
+                        $('.dropdown-menu.show').removeClass('show');
+                        if (!isShown) {
+                            menu.addClass('show');
+                        }
+                    });
+
+                    $(document).on('click', function(e) {
+                        if (!$(e.target).closest('.dropdown, .btn-group').length) {
+                            $('.dropdown-menu.show').removeClass('show');
+                        }
                     });
 
                     // Initialize active tab on load
