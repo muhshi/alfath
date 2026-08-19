@@ -568,8 +568,9 @@
                                                 <div class="p-2.5 border rounded bg-light h-100">
                                                     <div class="font-weight-bold text-success mb-1">2. Skor Kinerja (Skala 0 - 100)</div>
                                                     <ul class="ps-3 text-muted mb-0">
-                                                        <li><strong>Progress Score (Maks 45)</strong>: Rasio capaian submit vs target harian.</li>
-                                                        <li><strong>Volume Score (Maks 55)</strong>: Volume muatan murni (usaha + keluarga terdata).</li>
+                                                        <li><strong>Progress Score (Maks 35)</strong>: Rasio capaian submit vs target harian.</li>
+                                                        <li><strong>Usaha Score (Maks 35)</strong>: Total usaha terdata (BKU + UK).</li>
+                                                        <li><strong>Muatan Murni (Maks 30)</strong>: Cakupan volume keluarga & BKU.</li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -783,6 +784,11 @@
                                             </td>
                                             <td class="text-end font-weight-extrabold text-amber bg-amber-lt fs-2" data-order="{{ $row->skor_kinerja }}">
                                                 {{ number_format($row->skor_kinerja, 1) }}
+                                                <div class="small font-weight-normal text-muted" style="font-size: 0.70rem;" title="Progres: {{ $row->progress_score }}/35 | Usaha: {{ $row->usaha_score }}/35 | Muatan Murni: {{ $row->volume_score }}/30">
+                                                    <span class="text-primary" title="Skor Progres (Maks 35)">P:{{ number_format($row->progress_score, 1) }}</span> |
+                                                    <span class="text-azure" title="Skor Usaha BKU+UK (Maks 35)">U:{{ number_format($row->usaha_score, 1) }}</span> |
+                                                    <span class="text-teal" title="Skor Muatan Murni (Maks 30)">M:{{ number_format($row->volume_score, 1) }}</span>
+                                                </div>
                                             </td>
                                             <td class="text-center" data-order="{{ $row->kat_code }}">
                                                 <span class="badge {{ $row->kat_badge }} px-2.5 py-1 font-weight-bold">

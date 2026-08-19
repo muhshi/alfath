@@ -251,21 +251,25 @@ class PetugasPerformanceRankingService
             }
             $hasWarningUsaha = count($anomaliSlsList) > 0;
 
-            // Progress Score (Max 45)
+            // 1. Progress Score (Max 35)
             if ($capaianPct < $dynamicTargetPct) {
-                $progressScore = ($dynamicTargetPct > 0) ? ($capaianPct / $dynamicTargetPct) * 31.5 : 0;
+                $progressScore = ($dynamicTargetPct > 0) ? ($capaianPct / $dynamicTargetPct) * 24.5 : 0;
             } else {
                 $denom = max(0.01, 100.0 - $dynamicTargetPct);
                 $extra = min(1.0, ($capaianPct - $dynamicTargetPct) / $denom);
-                $progressScore = 31.5 + ($extra * 13.5);
+                $progressScore = 24.5 + ($extra * 10.5);
             }
-            $progressScore = min(45.0, max(0.0, $progressScore));
+            $progressScore = min(35.0, max(0.0, $progressScore));
 
-            // Volume Score (Max 55)
-            $volumeScore = min(55.0, ($muatanMurni / 350.0) * 55.0);
+            // 2. Usaha Score (Max 35) - BKU + UK Ditemukan
+            $totalUsaha = (int) ($row->total_usaha_se ?? ((int) ($row->jumlah_usaha_ditemukan ?? 0) + (int) ($row->jumlah_usaha_keluarga ?? 0)));
+            $usahaScore = min(35.0, ($totalUsaha / 100.0) * 35.0);
 
-            // Total Score
-            $skorKinerja = round($progressScore + $volumeScore, 1);
+            // 3. Volume Score (Max 30) - Muatan Murni (KK + BKU)
+            $volumeScore = min(30.0, ($muatanMurni / 350.0) * 30.0);
+
+            // Total Score (0 - 100)
+            $skorKinerja = round($progressScore + $usahaScore + $volumeScore, 1);
 
             $submitToday = $submitTodayMap[$row->email_pencacah] ?? 0;
             $draftToday = $draftTodayMap[$row->email_pencacah] ?? 0;
@@ -290,12 +294,12 @@ class PetugasPerformanceRankingService
 
             // Safety Rule: Capaian >= Dynamic Target cannot be Malas
             if ($capaianPct >= $dynamicTargetPct) {
-                if ($muatanMurni >= 330) {
+                if ($skorKinerja >= 80.0 || ($muatanMurni >= 300 && $totalUsaha >= 60)) {
                     $katCode = '1_SANGAT_RAJIN';
                     $katLabel = '1. Sangat Rajin (Appreciated 🌟)';
                     $katBadge = 'bg-success text-white';
                     $rekomendasi = 'Apresiasi & Bebas Beban Tambahan';
-                } elseif ($muatanMurni >= 280) {
+                } elseif ($skorKinerja >= 65.0 || ($muatanMurni >= 250 && $totalUsaha >= 40)) {
                     $katCode = '2_RAJIN';
                     $katLabel = '2. Rajin (Good Performer 🟢)';
                     $katBadge = 'bg-success-lt text-success';
@@ -304,15 +308,15 @@ class PetugasPerformanceRankingService
                     $katCode = '3_CUKUP';
                     $katLabel = '3. Cukup / Standar (Moderate 🟡)';
                     $katBadge = 'bg-warning-lt text-warning';
-                    $rekomendasi = 'Monitoring Regular PML (On-Track)';
+                    $rekomendasi = 'Monitoring Regular PML (Tingkatkan Usaha/Volume)';
                 }
             } else {
-                if ($muatanMurni >= 330 && $capaianPct >= max(0, $dynamicTargetPct - 5.0)) {
+                if ($skorKinerja >= 75.0 && $capaianPct >= max(0, $dynamicTargetPct - 5.0)) {
                     $katCode = '2_RAJIN';
                     $katLabel = '2. Rajin (Good Performer 🟢)';
                     $katBadge = 'bg-success-lt text-success';
                     $rekomendasi = 'Tingkatkan Progres ke Target Harian';
-                } elseif ($capaianPct >= max(0, $dynamicTargetPct - 10.0)) {
+                } elseif ($capaianPct >= max(0, $dynamicTargetPct - 10.0) || $skorKinerja >= 60.0) {
                     $katCode = '3_CUKUP';
                     $katLabel = '3. Cukup / Standar (Moderate 🟡)';
                     $katBadge = 'bg-warning-lt text-warning';
@@ -337,6 +341,10 @@ class PetugasPerformanceRankingService
 
             $item = clone $row;
             $item->dynamic_target_pct = $dynamicTargetPct;
+            $item->progress_score = round($progressScore, 1);
+            $item->usaha_score = round($usahaScore, 1);
+            $item->volume_score = round($volumeScore, 1);
+            $item->total_usaha_se = $totalUsaha;
             $item->skor_kinerja = $skorKinerja;
             $item->kat_code = $katCode;
             $item->kat_label = $katLabel;

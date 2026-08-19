@@ -210,3 +210,12 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - Mengatasi error `Argument #2 ($end) must be a single byte, subsequent bytes are ignored` pada PHP 8 saat melakukan autosize kolom Excel lebih dari 26 kolom (seperti kolom `AA`, `AB` pada Sheet Alokasi SLS).
 - **Penyesuaian Namespace Action Filament v5 (`SurveyResource`, `TeamResource`, `CategoryResource`)**:
   - Memperbarui import action tabel dari `Filament\Tables\Actions` menjadi `Filament\Actions` (`EditAction`, `BulkActionGroup`, `DeleteBulkAction`) sesuai standar Filament v5.
+
+### 2026-08-19
+- **Pembaruan Formula Perangkingan Kinerja Petugas SE2026 (`PetugasPerformanceRankingService.php`)**:
+  - **Skema 3 Pilar Proporsional (100 Poin)**:
+    - **Progress Score (Bobot 35 Poin)**: Menilai kedisiplinan dan pencapaian submit relatif terhadap *Dynamic Target* harian.
+    - **Usaha Score (Bobot 35 Poin)**: Menghitung akumulasi temuan usaha (`BKU + UK`) untuk mengapresiasi petugas yang teliti mendata usaha keluarga maupun badan usaha formal di lapangan.
+    - **Muatan Murni Score (Bobot 30 Poin)**: Menilai volume cakupan fisik wilayah (`KK + BKU`).
+  - **Penyempurnaan Klasifikasi Kategori Kinerja**: Menyesuaikan batasan *Sangat Rajin* (Skor $\ge 80$), *Rajin* (Skor $\ge 65$), *Cukup / Standar*, *Malas*, dan *Sangat Malas* secara berkeadilan berbasis skor komposit 3 pilar.
+  - **UI/UX Dashboard Breakdown Indikator**: Menampilkan breakdown sub-skor `P` (Progres), `U` (Usaha), dan `M` (Muatan Murni) di cell Skor Kinerja beserta pembaruan penjelasan metodologi pada kartu panduan Dashboard Pengolahan.
