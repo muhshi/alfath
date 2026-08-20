@@ -671,12 +671,7 @@
                                                 <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
                                             </td>
                                             <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
-                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">
-                                                {{ number_format($row->total_submit) }}
-                                                @if(($row->total_draft ?? 0) > 0)
-                                                    <div class="small text-purple font-weight-normal" style="font-size: 0.72rem;">(+{{ number_format($row->total_draft) }} draft)</div>
-                                                @endif
-                                            </td>
+                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
                                             <td class="text-end font-weight-extrabold text-primary fs-3" data-order="{{ $row->pct_submit }}">
                                                 <span class="badge {{ $row->pct_submit >= $dynamicTargetPct ? 'bg-success-lt text-success' : ($row->pct_submit >= max(0, $dynamicTargetPct - 10) ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
                                                     {{ number_format($row->pct_submit, 1) }}%
@@ -684,7 +679,7 @@
                                                 @if(($row->total_draft ?? 0) > 0)
                                                     <div class="mt-1" style="font-size: 0.72rem;">
                                                         <span class="badge bg-purple-lt text-purple font-weight-bold px-1.5 py-0.5" title="Submit + Draft: {{ number_format($row->total_submit + $row->total_draft) }} (Draft: {{ number_format($row->total_draft) }})">
-                                                            +Draft: {{ number_format($row->pct_submit_draft ?? ($row->pct_submit + ($row->pct_draft ?? 0)), 1) }}%
+                                                            +Draft: {{ number_format($row->pct_submit_draft ?? ($row->pct_submit + ($row->pct_draft ?? 0)), 1) }}% ({{ number_format($row->total_draft) }})
                                                         </span>
                                                     </div>
                                                 @endif
