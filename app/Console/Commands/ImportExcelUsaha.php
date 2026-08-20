@@ -101,36 +101,36 @@ class ImportExcelUsaha extends Command
             $subSls = substr($subSls, 0, 255);
 
             $cawiDitemukan = (int) $this->cleanNumeric($cells[3] ?? null);
-            $capiDitemukan = (int) $this->cleanNumeric($cells[19] ?? null);
+            $capiDitemukan = (int) $this->cleanNumeric($cells[21] ?? null);
 
             $cawiTutup = (int) $this->cleanNumeric($cells[9] ?? null);
-            $capiTutup = (int) $this->cleanNumeric($cells[21] ?? null);
+            $capiTutup = (int) $this->cleanNumeric($cells[23] ?? null);
 
             $cawiGanda = (int) $this->cleanNumeric($cells[11] ?? null);
-            $capiGanda = (int) $this->cleanNumeric($cells[23] ?? null);
+            $capiGanda = (int) $this->cleanNumeric($cells[25] ?? null);
 
             $cawiTidakDitemukan = (int) $this->cleanNumeric($cells[13] ?? null);
-            $capiTidakDitemukan = (int) $this->cleanNumeric($cells[25] ?? null);
+            $capiTidakDitemukan = (int) $this->cleanNumeric($cells[27] ?? null);
 
-            $capiBaru = (int) $this->cleanNumeric($cells[27] ?? null);
-            $bkuTotal = (int) $this->cleanNumeric($cells[33] ?? null);
+            $capiBaru = (int) $this->cleanNumeric($cells[29] ?? null);
+            $bkuTotal = (int) $this->cleanNumeric($cells[39] ?? null);
 
             $batch[] = [
                 'kode' => $kode,
                 'sub_sls' => $subSls,
                 'jumlah_prelist_usaha' => $this->cleanNumeric($cells[2] ?? null),
                 'status___ditemukan' => (string) ($cawiDitemukan + $capiDitemukan),
-                'status___persentase_ditemukan' => $this->cleanNumeric($cells[20] ?? $cells[4] ?? null),
+                'status___persentase_ditemukan' => $this->cleanNumeric($cells[22] ?? $cells[4] ?? null),
                 'status___tutup' => (string) ($cawiTutup + $capiTutup),
-                'status___persentase_tutup' => $this->cleanNumeric($cells[22] ?? $cells[10] ?? null),
+                'status___persentase_tutup' => $this->cleanNumeric($cells[24] ?? $cells[10] ?? null),
                 'status___ganda' => (string) ($cawiGanda + $capiGanda),
-                'status___persentase_ganda' => $this->cleanNumeric($cells[24] ?? $cells[12] ?? null),
+                'status___persentase_ganda' => $this->cleanNumeric($cells[26] ?? $cells[12] ?? null),
                 'status___tidak_ditemukan' => (string) ($cawiTidakDitemukan + $capiTidakDitemukan),
-                'status___persentase_tidak_ditemukan' => $this->cleanNumeric($cells[26] ?? $cells[14] ?? null),
+                'status___persentase_tidak_ditemukan' => $this->cleanNumeric($cells[28] ?? $cells[14] ?? null),
                 'status___baru' => (string) $capiBaru,
-                'status___persentase_baru' => $this->cleanNumeric($cells[28] ?? null),
+                'status___persentase_baru' => $this->cleanNumeric($cells[30] ?? null),
                 'jumlah_usaha_bku' => (string) $bkuTotal,
-                'persentase_usaha_bku' => $this->cleanNumeric($cells[34] ?? null),
+                'persentase_usaha_bku' => $this->cleanNumeric($cells[40] ?? null),
                 'tanggal_data' => $tanggalData,
                 'created_at' => now(),
                 'updated_at' => now(),

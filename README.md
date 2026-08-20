@@ -221,7 +221,12 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
   - **UI/UX Dashboard Breakdown Indikator**: Menampilkan breakdown sub-skor `P` (Progres), `U` (Usaha), dan `M` (Muatan Murni) di cell Skor Kinerja beserta pembaruan penjelasan metodologi pada kartu panduan Dashboard Pengolahan.
 
 ### 2026-08-20
+- **Koreksi Pemetaan Kolom Parser Excel Usaha (`process_usaha_excel.py` & `ImportExcelUsaha.php`) & Re-import Data**:
+  - **Identifikasi Pergeseran Kolom Sheet USAHA PERUSAHAAN**: Mengoreksi pemetaan kolom parser Excel FASIH di mana kolom kategori *UMKM (Non-UB)* berada pada indeks kolom 21 (Ditemukan), 23 (Tutup), 25 (Ganda), 27 (Tidak Ditemukan), 29 (Baru), dan 39 (Total Usaha BKU). Sebelumnya terjadi pergeseran sehingga data *Tidak Ditemukan* (seperti 186 pada SLS `3321070012004400`) tergeser ke status *Baru/Ditemukan*.
+  - **Penggabungan Status UB + UMKM**: Memastikan perhitungan BKU menggabungkan status dari entitas *UB* (Usaha Besar) dan *UMKM* secara presisi.
+  - **Sinkronisasi & Re-import 100% Data Snapshot 19 Agustus**: Menjalankan re-import seluruh 16.706 baris data Usaha Perusahaan dan 16.704 baris data Usaha Keluarga sehingga data di database `se2026_usaha_perusahaan` dan `se2026_usaha_keluarga` 100% identik dengan file Excel sumber FASIH.
 - **Sinkronisasi & Konsistensi Perhitungan Usaha Keluarga (Ditemukan + Baru)**:
   - **Verifikasi Import Excel FASIH**: Memastikan data sheet `USAHA KELUARGA` tersimpan lengkap ke tabel `se2026_usaha_keluarga` dengan rincian status *Ditemukan* (61.920), *Baru* (70.759), dan total *Usaha dalam Keluarga* (132.679).
   - **Penyelarasan Kueri Dashboard (`Se2026MonitoringService` & `PetugasPerformanceRankingService`)**: Memperbarui kueri subquery Usaha Keluarga pada Tab Alokasi SLS (`getSlsQuery`) dan kalkulasi anomali usaha SLS pada Ranking Service agar konsisten menjumlahkan `Ditemukan + Baru` (`uk_ditemukan = jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka + jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru`), selaras dengan Tab PPL dan Tab PML.
+
 
