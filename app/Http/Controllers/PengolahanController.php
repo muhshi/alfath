@@ -41,7 +41,7 @@ class PengolahanController extends Controller
             'sortDir' => $data['sortDir'],
         ]));
 
-        $dashboardData = Cache::remember($cacheKey, now()->addHours(2), function () use ($data, $request) {
+        $dashboardData = Cache::remember($cacheKey, now()->addDay(), function () use ($data, $request) {
             $records = $data['query']->get();
             $pmlRecords = $this->monitoringService->getPmlQuery($request, $data['selectedDate']);
             $slsRecords = $this->monitoringService->getSlsQuery($request, $data['selectedDate']);
