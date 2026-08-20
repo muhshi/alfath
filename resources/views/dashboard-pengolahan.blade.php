@@ -634,7 +634,6 @@
                                         <th>Nama Pengawas<br><span class="text-muted font-weight-normal small">/ PML</span></th>
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end text-success font-weight-bold">Total<br>Submit</th>
-                                        <th class="text-end text-purple font-weight-bold bg-purple-lt">Total<br>Draft</th>
                                         <th class="text-end text-primary font-weight-extrabold">% Capaian<br><span class="text-muted font-weight-normal small">vs {{ number_format($dynamicTargetPct, 1) }}%</span></th>
                                         <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
                                         <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">submit/hari & stagnan</span></th>
@@ -672,14 +671,10 @@
                                                 <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
                                             </td>
                                             <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
-                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
-                                            <td class="text-end font-weight-bold text-purple bg-purple-lt" data-order="{{ $row->total_draft ?? 0 }}">
+                                            <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">
+                                                {{ number_format($row->total_submit) }}
                                                 @if(($row->total_draft ?? 0) > 0)
-                                                    <span class="badge bg-purple text-white font-weight-bold px-2 py-0.5 shadow-xs" title="Ada {{ number_format($row->total_draft) }} data draft">
-                                                        📝 {{ number_format($row->total_draft) }}
-                                                    </span>
-                                                @else
-                                                    <span class="text-muted">0</span>
+                                                    <div class="small text-purple font-weight-normal" style="font-size: 0.72rem;">(+{{ number_format($row->total_draft) }} draft)</div>
                                                 @endif
                                             </td>
                                             <td class="text-end font-weight-extrabold text-primary fs-3" data-order="{{ $row->pct_submit }}">
