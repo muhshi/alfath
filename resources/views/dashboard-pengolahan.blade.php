@@ -953,7 +953,8 @@
                                         <th class="text-end bg-danger-lt text-danger font-weight-bold">Belum<br>Dikerjakan</th>
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end">Total<br>Submit</th>
-                                        <th class="text-end">% Progres</th>
+                                        <th class="text-end">% Progres<br><span class="text-muted font-weight-normal small">Submit PPL</span></th>
+                                        <th class="text-end bg-purple-lt text-purple font-weight-bold">Progres PML ⭐<br><span class="font-weight-normal small">Approved+Reject & Belum Disentuh</span></th>
                                         <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
                                         <th class="text-end">BKU Ditemukan</th>
                                         <th class="text-end">BKU<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
@@ -992,6 +993,24 @@
                                                 <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-1">
                                                     {{ number_format($row->pct_submit, 1) }}%
                                                 </span>
+                                            </td>
+                                            <td class="text-end font-weight-bold bg-purple-lt" data-order="{{ $row->pct_pengerjaan_pml }}">
+                                                <span class="badge {{ $row->pct_pengerjaan_pml >= 80 ? 'bg-purple text-white' : ($row->pct_pengerjaan_pml >= 50 ? 'bg-info text-white' : 'bg-secondary text-white') }} font-weight-bold px-2 py-1 fs-4">
+                                                    {{ number_format($row->pct_pengerjaan_pml, 1) }}%
+                                                </span>
+                                                <div class="small font-weight-normal mt-0.5" style="font-size: 0.72rem;">
+                                                    <span class="text-success" title="Jumlah Disetujui / Approved PML">✅ {{ number_format($row->total_approved_pml) }}</span> | 
+                                                    <span class="text-danger" title="Jumlah Ditolak / Rejected PML">❌ {{ number_format($row->total_rejected_pml) }}</span>
+                                                    <div class="mt-0.5">
+                                                        @if($row->total_submitted_ppl > 0)
+                                                            <span class="badge bg-warning-lt text-warning font-weight-bold px-1.5 py-0.2" style="font-size: 0.68rem;" title="Sudah di-submit PPL tetapi belum diperiksa/disentuh PML">
+                                                                ⏳ Belum Disentuh: {{ number_format($row->total_submitted_ppl) }}
+                                                            </span>
+                                                        @else
+                                                            <span class="text-muted" style="font-size: 0.68rem;">✅ Belum Disentuh: 0</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td class="text-end font-weight-bold {{ $row->has_warning_bangunan_lainnya ? 'text-orange bg-amber-lt' : '' }}" data-order="{{ $row->bangunan_lainnya }}">
                                                 {{ number_format($row->bangunan_lainnya) }}
