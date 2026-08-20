@@ -8,6 +8,7 @@ use App\Services\PetugasPerformanceRankingService;
 use App\Services\Se2026MonitoringService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class PengolahanController extends Controller
 {
@@ -24,13 +25,39 @@ class PengolahanController extends Controller
     {
         ini_set('memory_limit', '512M');
 
-        $data = $this->monitoringService->getFilteredQuery($request);
-        $records = $data['query']->get();
+        // Parameter ?fresh=1 atau ?refresh=1 memaksa invalidasi cache dashboard
+        if ($request->has('fresh') || $request->has('refresh')) {
+            Cache::increment('se2026_dash_version');
+        }
 
-        $pmlRecords = $this->monitoringService->getPmlQuery($request, $data['selectedDate']);
-        $slsRecords = $this->monitoringService->getSlsQuery($request, $data['selectedDate']);
-        $rankingData = $this->rankingService->calculateRankingData($records, $data['selectedDate']);
-        $kpiSummary = $this->monitoringService->getKpiSummary($records, $pmlRecords, $slsRecords);
+        $data = $this->monitoringService->getFilteredQuery($request);
+
+        $cacheVersion = (int) Cache::get('se2026_dash_version', 1);
+        $cacheKey = "se2026_dash_v{$cacheVersion}_" . md5(json_encode([
+            'date' => $data['selectedDate'],
+            'kodekec' => $data['kodekec'],
+            'search' => $data['search'],
+            'sortBy' => $data['sortBy'],
+            'sortDir' => $data['sortDir'],
+        ]));
+
+        $dashboardData = Cache::remember($cacheKey, now()->addHours(2), function () use ($data, $request) {
+            $records = $data['query']->get();
+            $pmlRecords = $this->monitoringService->getPmlQuery($request, $data['selectedDate']);
+            $slsRecords = $this->monitoringService->getSlsQuery($request, $data['selectedDate']);
+            $rankingData = $this->rankingService->calculateRankingData($records, $data['selectedDate']);
+            $kpiSummary = $this->monitoringService->getKpiSummary($records, $pmlRecords, $slsRecords);
+
+            return [
+                'records' => $records,
+                'pmlRecords' => $pmlRecords,
+                'slsRecords' => $slsRecords,
+                'rankingRecords' => $rankingData['rankingRecords'],
+                'dynamicTargetPct' => $rankingData['dynamicTargetPct'],
+                'rankingSummary' => $rankingData['rankingSummary'],
+                'kpiSummary' => $kpiSummary,
+            ];
+        });
 
         return view('dashboard-pengolahan', [
             'kecNameMap' => $this->monitoringService->getKecNameMap(),
@@ -41,13 +68,14 @@ class PengolahanController extends Controller
             'sortBy' => $data['sortBy'],
             'sortDir' => $data['sortDir'],
             'perPage' => $data['perPage'],
-            'records' => $records,
-            'pmlRecords' => $pmlRecords,
-            'slsRecords' => $slsRecords,
-            'rankingRecords' => $rankingData['rankingRecords'],
-            'dynamicTargetPct' => $rankingData['dynamicTargetPct'],
-            'rankingSummary' => $rankingData['rankingSummary'],
-            'kpiSummary' => $kpiSummary,
+            'records' => $dashboardData['records'],
+            'pmlRecords' => $dashboardData['pmlRecords'],
+            'slsRecords' => $dashboardData['slsRecords'],
+            'rankingRecords' => $dashboardData['rankingRecords'],
+            'dynamicTargetPct' => $dashboardData['dynamicTargetPct'],
+            'rankingSummary' => $dashboardData['rankingSummary'],
+            'kpiSummary' => $dashboardData['kpiSummary'],
+            'isCached' => Cache::has($cacheKey),
         ]);
     }
 
@@ -73,6 +101,9 @@ class PengolahanController extends Controller
                 'updated_at' => now(),
             ]
         );
+
+        // Invalidate dashboard cache
+        Cache::increment('se2026_dash_version');
 
         return response()->json([
             'status' => 'success',

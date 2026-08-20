@@ -430,12 +430,15 @@
                             </select>
                         </div>
 
-                        <!-- Submit & Reset Buttons -->
+                        <!-- Submit, Refresh Cache, & Reset Buttons -->
                         <div class="col-12 col-md-2 d-flex gap-2">
                             <button type="submit" class="btn btn-primary font-weight-bold w-100" style="border-radius: 8px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
                                 Filter Snapshot
                             </button>
+                            <a href="{{ route('dashboard.pengolahan', array_merge(request()->query(), ['fresh' => 1])) }}" class="btn btn-outline-info" title="🔄 Refresh & Hitung Ulang Cache Real-time" style="border-radius: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-refresh" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></svg>
+                            </a>
                             @if($kodekec || ($selectedDate && !empty($availableDates) && $selectedDate != $availableDates[0]))
                                 <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-secondary" title="Reset Filter" style="border-radius: 8px;">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-rotate" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M19.95 11a8 8 0 1 0 -.5 4m.5 5v-5h-5"/></svg>

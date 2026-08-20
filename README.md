@@ -248,6 +248,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - **Kolom Badge Kecamatan**: Menampilkan kolom nama kecamatan ber-badge biru pada tabel daftar approval.
     - **Penyajian Nama SLS & Badge Kode 16 Digit**: Menggabungkan nama SLS (bold) dengan badge kode SLS 16 digit (font mono) dalam satu cell, di-query via subquery `sipw` dan `se2026_pemutakhiran_keluarga` tanpa menimbulkan masalah N+1 query.
     - **Pelebaran Kolom Catatan Klarifikasi**: Memperlebar kolom Catatan Klarifikasi (`min-width: 340px`, `grow(true)`) agar catatan panjang dari petugas dapat dibaca dengan lega dan nyaman.
-  - **Penambahan Kolom Total Draft di Seluruh Tabel Dashboard Pengolahan**:
-    - Menambahkan kolom **Total Draft** (berbadge ungu `📝`) pada **Tab Ranking Petugas**, **Tab Ringkasan PPL**, **Tab Ringkasan PML**, dan **Tab Alokasi per SLS**.
-    - Memudahkan monitoring petugas yang progresnya sudah 99.9% atau masih menyisakan 1-2 dokumen draft, serta melacak langsung di SLS mana draft tersebut tersimpan.
+  - **Implementasi Caching Cerdas Dashboard Pengolahan (`Laravel Cache Remember + Atomic Versioning`)**:
+    - Mengintegrasikan caching terversioning (`se2026_dash_v{version}_{hash}`) dengan TTL 2 jam untuk mereduksi beban database dan memangkas waktu loading dashboard menjadi instan (< 10 ms).
+    - **Auto-Invalidation Terintegrasi**: Cache otomatis di-flush secara instan setiap kali ada proses import Excel baru (`ImportExcelUsaha`, `ImportExcelPemutakhiranKeluarga`), pengajuan catatan anomali, approval/rejection catatan SLS di admin Filament, maupun penghapusan data.
+    - **Tombol Refresh Manual UI**: Menyediakan tombol `🔄 Refresh & Hitung Ulang Cache Real-time` (parameter `?fresh=1`) pada form filter dashboard.

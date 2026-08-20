@@ -55,7 +55,8 @@ class ImportExcelUsaha extends Command
         }
 
         $this->newLine();
-        $this->info('✅ Import selesai!');
+        \Illuminate\Support\Facades\Cache::increment('se2026_dash_version');
+        $this->info('✅ Import selesai! Cache dashboard otomatis diperbarui.');
 
         return 0;
     }

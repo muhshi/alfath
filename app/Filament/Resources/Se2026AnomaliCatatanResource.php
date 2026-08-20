@@ -190,6 +190,8 @@ class Se2026AnomaliCatatanResource extends Resource
                             'approved_by' => $user ? $user->name : 'Admin',
                         ]);
 
+                        \Illuminate\Support\Facades\Cache::increment('se2026_dash_version');
+
                         Notification::make()
                             ->title('Catatan Anomali Disetujui')
                             ->body("Catatan untuk SLS {$record->region_code} berhasil disetujui.")
@@ -219,6 +221,8 @@ class Se2026AnomaliCatatanResource extends Resource
                             'approved_by' => $user ? $user->name : 'Admin',
                         ]);
 
+                        \Illuminate\Support\Facades\Cache::increment('se2026_dash_version');
+
                         Notification::make()
                             ->title('Catatan Anomali Ditolak')
                             ->body("Catatan untuk SLS {$record->region_code} telah ditolak.")
@@ -227,7 +231,8 @@ class Se2026AnomaliCatatanResource extends Resource
                     })
                     ->visible(fn(Se2026AnomaliCatatan $record): bool => $record->status !== 'rejected'),
 
-                Actions\DeleteAction::make(),
+                Actions\DeleteAction::make()
+                    ->after(fn () => \Illuminate\Support\Facades\Cache::increment('se2026_dash_version')),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
@@ -260,6 +265,8 @@ class Se2026AnomaliCatatanResource extends Resource
                                 $count++;
                             }
 
+                            \Illuminate\Support\Facades\Cache::increment('se2026_dash_version');
+
                             Notification::make()
                                 ->title('Catatan Berhasil Disetujui')
                                 ->body("Sebanyak {$count} catatan anomali SLS terpilih berhasil disetujui.")
@@ -267,7 +274,8 @@ class Se2026AnomaliCatatanResource extends Resource
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion(),
-                    Actions\DeleteBulkAction::make(),
+                    Actions\DeleteBulkAction::make()
+                        ->after(fn () => \Illuminate\Support\Facades\Cache::increment('se2026_dash_version')),
                 ]),
             ]);
     }
