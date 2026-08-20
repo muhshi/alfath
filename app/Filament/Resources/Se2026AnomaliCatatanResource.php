@@ -190,7 +190,9 @@ class Se2026AnomaliCatatanResource extends Resource
                             'approved_by' => $user ? $user->name : 'Admin',
                         ]);
 
-                        \Illuminate\Support\Facades\Cache::increment('se2026_dash_version');
+                        try {
+                            \Illuminate\Support\Facades\Cache::store('file')->increment('se2026_dash_version');
+                        } catch (\Throwable $e) {}
 
                         Notification::make()
                             ->title('Catatan Anomali Disetujui')
@@ -221,7 +223,9 @@ class Se2026AnomaliCatatanResource extends Resource
                             'approved_by' => $user ? $user->name : 'Admin',
                         ]);
 
-                        \Illuminate\Support\Facades\Cache::increment('se2026_dash_version');
+                        try {
+                            \Illuminate\Support\Facades\Cache::store('file')->increment('se2026_dash_version');
+                        } catch (\Throwable $e) {}
 
                         Notification::make()
                             ->title('Catatan Anomali Ditolak')
@@ -232,7 +236,11 @@ class Se2026AnomaliCatatanResource extends Resource
                     ->visible(fn(Se2026AnomaliCatatan $record): bool => $record->status !== 'rejected'),
 
                 Actions\DeleteAction::make()
-                    ->after(fn () => \Illuminate\Support\Facades\Cache::increment('se2026_dash_version')),
+                    ->after(function () {
+                        try {
+                            \Illuminate\Support\Facades\Cache::store('file')->increment('se2026_dash_version');
+                        } catch (\Throwable $e) {}
+                    }),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
@@ -265,7 +273,9 @@ class Se2026AnomaliCatatanResource extends Resource
                                 $count++;
                             }
 
-                            \Illuminate\Support\Facades\Cache::increment('se2026_dash_version');
+                            try {
+                                \Illuminate\Support\Facades\Cache::store('file')->increment('se2026_dash_version');
+                            } catch (\Throwable $e) {}
 
                             Notification::make()
                                 ->title('Catatan Berhasil Disetujui')
@@ -275,7 +285,11 @@ class Se2026AnomaliCatatanResource extends Resource
                         })
                         ->deselectRecordsAfterCompletion(),
                     Actions\DeleteBulkAction::make()
-                        ->after(fn () => \Illuminate\Support\Facades\Cache::increment('se2026_dash_version')),
+                        ->after(function () {
+                            try {
+                                \Illuminate\Support\Facades\Cache::store('file')->increment('se2026_dash_version');
+                            } catch (\Throwable $e) {}
+                        }),
                 ]),
             ]);
     }

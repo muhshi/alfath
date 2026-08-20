@@ -25,14 +25,22 @@ class PengolahanController extends Controller
     {
         ini_set('memory_limit', '512M');
 
+        $cacheStore = Cache::store('file');
+
         // Parameter ?fresh=1 atau ?refresh=1 memaksa invalidasi cache dashboard
         if ($request->has('fresh') || $request->has('refresh')) {
-            Cache::increment('se2026_dash_version');
+            try {
+                $cacheStore->increment('se2026_dash_version');
+            } catch (\Throwable $e) {}
         }
 
         $data = $this->monitoringService->getFilteredQuery($request);
 
-        $cacheVersion = (int) Cache::get('se2026_dash_version', 1);
+        $cacheVersion = 1;
+        try {
+            $cacheVersion = (int) $cacheStore->get('se2026_dash_version', 1);
+        } catch (\Throwable $e) {}
+
         $cacheKey = "se2026_dash_v{$cacheVersion}_" . md5(json_encode([
             'date' => $data['selectedDate'],
             'kodekec' => $data['kodekec'],
@@ -41,14 +49,34 @@ class PengolahanController extends Controller
             'sortDir' => $data['sortDir'],
         ]));
 
-        $dashboardData = Cache::remember($cacheKey, now()->addDay(), function () use ($data, $request) {
+        $dashboardData = null;
+        try {
+            $dashboardData = $cacheStore->remember($cacheKey, now()->addDay(), function () use ($data, $request) {
+                $records = $data['query']->get();
+                $pmlRecords = $this->monitoringService->getPmlQuery($request, $data['selectedDate']);
+                $slsRecords = $this->monitoringService->getSlsQuery($request, $data['selectedDate']);
+                $rankingData = $this->rankingService->calculateRankingData($records, $data['selectedDate']);
+                $kpiSummary = $this->monitoringService->getKpiSummary($records, $pmlRecords, $slsRecords);
+
+                return [
+                    'records' => $records,
+                    'pmlRecords' => $pmlRecords,
+                    'slsRecords' => $slsRecords,
+                    'rankingRecords' => $rankingData['rankingRecords'],
+                    'dynamicTargetPct' => $rankingData['dynamicTargetPct'],
+                    'rankingSummary' => $rankingData['rankingSummary'],
+                    'kpiSummary' => $kpiSummary,
+                ];
+            });
+        } catch (\Throwable $e) {
+            // Fallback gracefully without database packet limit failure
             $records = $data['query']->get();
             $pmlRecords = $this->monitoringService->getPmlQuery($request, $data['selectedDate']);
             $slsRecords = $this->monitoringService->getSlsQuery($request, $data['selectedDate']);
             $rankingData = $this->rankingService->calculateRankingData($records, $data['selectedDate']);
             $kpiSummary = $this->monitoringService->getKpiSummary($records, $pmlRecords, $slsRecords);
 
-            return [
+            $dashboardData = [
                 'records' => $records,
                 'pmlRecords' => $pmlRecords,
                 'slsRecords' => $slsRecords,
@@ -57,7 +85,7 @@ class PengolahanController extends Controller
                 'rankingSummary' => $rankingData['rankingSummary'],
                 'kpiSummary' => $kpiSummary,
             ];
-        });
+        }
 
         return view('dashboard-pengolahan', [
             'kecNameMap' => $this->monitoringService->getKecNameMap(),
@@ -75,7 +103,7 @@ class PengolahanController extends Controller
             'dynamicTargetPct' => $dashboardData['dynamicTargetPct'],
             'rankingSummary' => $dashboardData['rankingSummary'],
             'kpiSummary' => $dashboardData['kpiSummary'],
-            'isCached' => Cache::has($cacheKey),
+            'isCached' => true,
         ]);
     }
 
@@ -103,7 +131,9 @@ class PengolahanController extends Controller
         );
 
         // Invalidate dashboard cache
-        Cache::increment('se2026_dash_version');
+        try {
+            Cache::store('file')->increment('se2026_dash_version');
+        } catch (\Throwable $e) {}
 
         return response()->json([
             'status' => 'success',

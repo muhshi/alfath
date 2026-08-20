@@ -163,7 +163,9 @@ class ImportExcelPemutakhiranKeluarga extends Command
             }
         }
 
-        \Illuminate\Support\Facades\Cache::increment('se2026_dash_version');
+        try {
+            \Illuminate\Support\Facades\Cache::store('file')->increment('se2026_dash_version');
+        } catch (\Throwable $e) {}
 
         return count($rowsToInsert);
     }
