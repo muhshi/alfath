@@ -531,7 +531,8 @@
                         <div class="tab-pane fade show active" id="tab-ranking" role="tabpanel" aria-labelledby="ranking-tab">
                             
                             <!-- Ranking Summary Cards & Target Info -->
-                                                      <div class="row g-2 align-items-center mb-3">
+                            <div class="p-3 bg-light border-bottom">
+                                <div class="row g-2 align-items-center mb-3">
                                     <div class="col-12 col-md-7">
                                         <div class="d-flex flex-wrap align-items-center gap-2">
                                             <span class="badge font-weight-bold px-3 py-1.5 rounded-pill fs-4 shadow-sm" style="background-color: #d97706 !important; color: #ffffff !important;">

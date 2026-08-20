@@ -243,5 +243,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - **Pilar 4 - Intensitas Spotting Usaha Keluarga / Rasio UK per KK (Bobot 10 Poin)**: Mengukur kejelian petugas menggali usaha keluarga saat mewawancarai KK (`UK Ditemukan / KK Ditemukan`), dengan skor maksimal 10 poin jika rasio $\ge 15\%$.
     - **Pilar 5 - Volume Muatan Murni (Bobot 15 Poin)**: Mengapresiasi beban wilayah kerja fisik yang berat (`KK + BKU`).
     - **Breakdown Tooltip & Sub-indikator**: Menampilkan rincian sub-skor pada cell Skor Kinerja (`P:.. | U:.. | SLS:.. | UK:.. | M:..`) dengan tooltip komprehensif.
-  - **Perbaikan Kontras Warna Badge UI (Eliminasi Teks Putih pada Background Putih)**:
-    - Mengganti class `bg-amber text-white` pada badge Target Harian Standar dan badge Warning Bangunan Lainnya dengan style inline solid (`#d97706` Amber Emas & `#ea580c` Oranye) agar teks terbaca tajam dan berpenampilan modern.
+  - **Peningkatan Halaman Approval Admin Anomali SLS (`Se2026AnomaliCatatanResource`)**:
+    - **Filter by Kecamatan**: Menambahkan filter dropdown 14 kecamatan di Kabupaten Demak untuk memudahkan penelaahan catatan klarifikasi per wilayah kecamatan.
+    - **Kolom Badge Kecamatan**: Menampilkan kolom nama kecamatan ber-badge biru pada tabel daftar approval.
+    - **Bulk Action "Approve Terpilih"**: Memungkinkan admin menyetujui banyak catatan klarifikasi anomali SLS sekaligus secara massal hanya dengan mencentang baris yang diinginkan.
