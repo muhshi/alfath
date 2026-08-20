@@ -115,10 +115,10 @@ class ImportExcelPemutakhiranKeluarga extends Command
             $pctMeninggal = (float) str_replace(',', '.', $cells[7] ?? 0);
             $tidakEligible = (int) str_replace(['.', ','], '', $cells[8] ?? 0);
             $pctTidakEligible = (float) str_replace(',', '.', $cells[9] ?? 0);
-            $tidakDapatDitemui = (int) str_replace(['.', ','], '', $cells[10] ?? 0);
-            $pctTidakDapatDitemui = (float) str_replace(',', '.', $cells[11] ?? 0);
-            $tidakDitemukan = (int) str_replace(['.', ','], '', $cells[12] ?? 0);
-            $pctTidakDitemukan = (float) str_replace(',', '.', $cells[13] ?? 0);
+            $tidakDitemukan = (int) str_replace(['.', ','], '', $cells[10] ?? 0);
+            $pctTidakDitemukan = (float) str_replace(',', '.', $cells[11] ?? 0);
+            $tidakDapatDitemui = (int) str_replace(['.', ','], '', $cells[12] ?? 0);
+            $pctTidakDapatDitemui = (float) str_replace(',', '.', $cells[13] ?? 0);
             $totalHasilPendataan = (int) str_replace(['.', ','], '', $cells[14] ?? 0);
             $pctTotalHasilPendataan = (float) str_replace(',', '.', $cells[15] ?? 0);
 
@@ -133,10 +133,10 @@ class ImportExcelPemutakhiranKeluarga extends Command
                 'persentase_meninggal' => $pctMeninggal,
                 'tidak_eligible' => $tidakEligible,
                 'persentase_tidak_eligible' => $pctTidakEligible,
-                'tidak_dapat_ditemui' => $tidakDapatDitemui,
-                'persentase_tidak_dapat_ditemui' => $pctTidakDapatDitemui,
                 'tidak_ditemukan' => $tidakDitemukan,
                 'persentase_tidak_ditemukan' => $pctTidakDitemukan,
+                'tidak_dapat_ditemui' => $tidakDapatDitemui,
+                'persentase_tidak_dapat_ditemui' => $pctTidakDapatDitemui,
                 'total_hasil_pendataan' => $totalHasilPendataan,
                 'persentase_total_hasil_pendataan' => $pctTotalHasilPendataan,
                 'tanggal_data' => $tanggalData,
