@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 
 class Se2026AnomaliCatatanResource extends Resource
 {
@@ -29,6 +30,33 @@ class Se2026AnomaliCatatanResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'danger';
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
+        $db = $connName ? DB::connection($connName) : DB::connection();
+
+        $sipwSub = $db->table('sipw')
+            ->select('id_subsls', DB::raw('MAX(nama_sls) as nama_sls'))
+            ->groupBy('id_subsls');
+
+        $pkSub = $db->table('se2026_pemutakhiran_keluarga')
+            ->select('kode', DB::raw('MAX(sub_sls) as sub_sls'))
+            ->groupBy('kode');
+
+        return parent::getEloquentQuery()
+            ->leftJoinSub($sipwSub, 'sipw', 'se2026_anomali_catatan.region_code', '=', 'sipw.id_subsls')
+            ->leftJoinSub($pkSub, 'pk', 'se2026_anomali_catatan.region_code', '=', 'pk.kode')
+            ->select([
+                'se2026_anomali_catatan.*',
+                DB::raw('COALESCE(
+                    NULLIF(sipw.nama_sls, "-"),
+                    NULLIF(pk.sub_sls, "-"),
+                    NULLIF(pk.sub_sls, "TIDAK DIKETAHUI"),
+                    CONCAT("SLS ", se2026_anomali_catatan.region_code)
+                ) as nama_sls'),
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -63,12 +91,27 @@ class Se2026AnomaliCatatanResource extends Resource
                     ->sortable(query: function ($query, string $direction) {
                         return $query->orderBy('region_code', $direction);
                     }),
-                Tables\Columns\TextColumn::make('region_code')
-                    ->label('Kode SLS (16 Digit)')
-                    ->searchable()
-                    ->sortable()
-                    ->fontFamily('mono')
-                    ->copyable(),
+                Tables\Columns\TextColumn::make('nama_sls')
+                    ->label('Satuan Lingkungan Setempat (SLS)')
+                    ->html()
+                    ->formatStateUsing(function (Se2026AnomaliCatatan $record): string {
+                        $namaSls = htmlspecialchars($record->nama_sls ?? 'SLS ' . $record->region_code);
+                        $code = htmlspecialchars($record->region_code);
+                        return "<div class='font-bold text-gray-950 dark:text-white leading-tight mb-1'>{$namaSls}</div>"
+                             . "<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-gray-100 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 shadow-xs'>{$code}</span>";
+                    })
+                    ->searchable(query: function ($query, string $search) {
+                        $query->where(function ($q) use ($search) {
+                            $q->where('se2026_anomali_catatan.region_code', 'LIKE', "%{$search}%")
+                              ->orWhere('sipw.nama_sls', 'LIKE', "%{$search}%")
+                              ->orWhere('pk.sub_sls', 'LIKE', "%{$search}%");
+                        });
+                    })
+                    ->sortable(query: function ($query, string $direction) {
+                        return $query->orderBy('nama_sls', $direction);
+                    })
+                    ->copyable()
+                    ->copyableState(fn(Se2026AnomaliCatatan $record): string => $record->region_code),
                 Tables\Columns\TextColumn::make('nama_petugas')
                     ->label('Petugas Pengaju')
                     ->searchable()
@@ -76,6 +119,8 @@ class Se2026AnomaliCatatanResource extends Resource
                 Tables\Columns\TextColumn::make('catatan')
                     ->label('Catatan Klarifikasi')
                     ->wrap()
+                    ->grow(true)
+                    ->extraAttributes(['style' => 'min-width: 340px;'])
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status Approval')
