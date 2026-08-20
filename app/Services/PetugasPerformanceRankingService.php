@@ -136,7 +136,7 @@ class PetugasPerformanceRankingService
 
             $ukSub = $db->table('se2026_usaha_keluarga')
                 ->when($ukDate, fn ($q) => $q->where('tanggal_data', $ukDate))
-                ->select('kode', DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED)) AS uk_ditemukan'))
+                ->select('kode', DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru AS SIGNED)) AS uk_ditemukan'))
                 ->groupBy('kode');
 
             $slsRows = $db->table('monitoring_se2026 as m')

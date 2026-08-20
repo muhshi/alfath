@@ -219,3 +219,9 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - **Muatan Murni Score (Bobot 30 Poin)**: Menilai volume cakupan fisik wilayah (`KK + BKU`).
   - **Penyempurnaan Klasifikasi Kategori Kinerja**: Menyesuaikan batasan *Sangat Rajin* (Skor $\ge 80$), *Rajin* (Skor $\ge 65$), *Cukup / Standar*, *Malas*, dan *Sangat Malas* secara berkeadilan berbasis skor komposit 3 pilar.
   - **UI/UX Dashboard Breakdown Indikator**: Menampilkan breakdown sub-skor `P` (Progres), `U` (Usaha), dan `M` (Muatan Murni) di cell Skor Kinerja beserta pembaruan penjelasan metodologi pada kartu panduan Dashboard Pengolahan.
+
+### 2026-08-20
+- **Sinkronisasi & Konsistensi Perhitungan Usaha Keluarga (Ditemukan + Baru)**:
+  - **Verifikasi Import Excel FASIH**: Memastikan data sheet `USAHA KELUARGA` tersimpan lengkap ke tabel `se2026_usaha_keluarga` dengan rincian status *Ditemukan* (61.920), *Baru* (70.759), dan total *Usaha dalam Keluarga* (132.679).
+  - **Penyelarasan Kueri Dashboard (`Se2026MonitoringService` & `PetugasPerformanceRankingService`)**: Memperbarui kueri subquery Usaha Keluarga pada Tab Alokasi SLS (`getSlsQuery`) dan kalkulasi anomali usaha SLS pada Ranking Service agar konsisten menjumlahkan `Ditemukan + Baru` (`uk_ditemukan = jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka + jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru`), selaras dengan Tab PPL dan Tab PML.
+
