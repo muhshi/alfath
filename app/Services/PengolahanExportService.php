@@ -477,7 +477,7 @@ class PengolahanExportService
             'Peringkat', 'Kode Kec', 'Nama Kecamatan', 'Nama Petugas (PPL)', 'Email Petugas', 'Nama Pengawas (PML)',
             'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)', 'Bangunan Kosong/Lainnya', '% Bangunan Lainnya', 'Warning Bangunan Lainnya (&ge;5%)',
             'Status Warning (3-Hari)', 'Warning Anomali Usaha',
-            'Laju s.d. 20 Agt', 'Skor Kinerja (0-100)', 'Kategori Kinerja', 'Rekomendasi Tindakan PML',
+            'Laju s.d. 25 Agt (Target 100%)', 'Skor Kinerja (0-100)', 'Kategori Kinerja', 'Rekomendasi Tindakan PML',
             'Status Catatan Anomali', 'Catatan Klarifikasi Petugas', 'Catatan Admin'
         ];
 
@@ -515,7 +515,7 @@ class PengolahanExportService
                 default => '✅ Normal',
             });
             $sheet->setCellValue('N' . $rowIdx, $row->has_warning_usaha ? "⚠️ Warning (BKU < 5% / UK < 10%)" : "✅ Normal");
-            $sheet->setCellValue('O' . $rowIdx, (float) $row->laju_harian_95);
+            $sheet->setCellValue('O' . $rowIdx, (float) $row->laju_harian_100);
             $sheet->setCellValue('P' . $rowIdx, (float) $row->skor_kinerja);
             $sheet->setCellValue('Q' . $rowIdx, $row->kat_label ?? '-');
             $sheet->setCellValue('R' . $rowIdx, $row->rekomendasi ?? '-');

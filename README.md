@@ -231,6 +231,17 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 - **Sinkronisasi & Konsistensi Perhitungan Usaha Keluarga (Ditemukan + Baru)**:
   - **Verifikasi Import Excel FASIH**: Memastikan data sheet `USAHA KELUARGA` tersimpan lengkap ke tabel `se2026_usaha_keluarga` dengan rincian status *Ditemukan* (61.920), *Baru* (70.759), dan total *Usaha dalam Keluarga* (132.679).
   - **Penyelarasan Kueri Dashboard (`Se2026MonitoringService` & `PetugasPerformanceRankingService`)**: Memperbarui kueri subquery Usaha Keluarga pada Tab Alokasi SLS (`getSlsQuery`) dan kalkulasi anomali usaha SLS pada Ranking Service agar konsisten menjumlahkan `Ditemukan + Baru` (`uk_ditemukan = jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka + jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru`), selaras dengan Tab PPL dan Tab PML.
-
-
-
+- **Pembaruan Target Laju 25 Agustus (100%), Formula Perangkingan Kualitas Probing Usaha (5 Pilar), & Perbaikan Kontras UI**:
+  - **Pembaruan Target Laju Penyelesaian ke 25 Agustus 2026 (Target 100%)**:
+    - Mengubah target milestone dari 95% s.d. 20 Agustus menjadi penyelesaian **100% s.d. 25 Agustus 2026**.
+    - Menghitung sisa hari dinamis ke 25 Agustus dan kebutuhan submit harian `(Beban - Submit) / Sisa Hari`.
+    - Menyesuaikan header kolom tabel dan file ekspor Excel menjadi **`Laju s.d. 25 Agt (Target 100%)`** serta menampilkan badge `✅ Selesai (100%)` untuk petugas yang telah tuntas.
+  - **Peningkatan Formula Perangkingan Kinerja Petugas (5 Pilar Komposit - Skala 0 s.d. 100 Poin)**:
+    - **Pilar 1 - Progres Submit (Bobot 30 Poin)**: Menilai ketepatan laju submit terhadap target harian dinamis.
+    - **Pilar 2 - Kualitas Probing Usaha Total vs Wilkerstat Petugas (Bobot 25 Poin)**: Mengukur rasio Total Usaha SE (`BKU + UK`) terhadap target Usaha Wilkerstat 2025 agregat petugas (mendapat 25 poin penuh jika $\ge 100\%$).
+    - **Pilar 3 - Ketelitian SLS Probing / SLS Optimal Rate (Bobot 20 Poin)**: Menghitung persentase SLS yang dipegang petugas yang jumlah usahanya telah mencapai/melebihi target Wilkerstat SLS (`Usaha SE SLS ≥ Wilkerstat SLS`), guna memastikan probing merata di seluruh SLS dan tidak menumpuk di satu SLS saja.
+    - **Pilar 4 - Intensitas Spotting Usaha Keluarga / Rasio UK per KK (Bobot 10 Poin)**: Mengukur kejelian petugas menggali usaha keluarga saat mewawancarai KK (`UK Ditemukan / KK Ditemukan`), dengan skor maksimal 10 poin jika rasio $\ge 15\%$.
+    - **Pilar 5 - Volume Muatan Murni (Bobot 15 Poin)**: Mengapresiasi beban wilayah kerja fisik yang berat (`KK + BKU`).
+    - **Breakdown Tooltip & Sub-indikator**: Menampilkan rincian sub-skor pada cell Skor Kinerja (`P:.. | U:.. | SLS:.. | UK:.. | M:..`) dengan tooltip komprehensif.
+  - **Perbaikan Kontras Warna Badge UI (Eliminasi Teks Putih pada Background Putih)**:
+    - Mengganti class `bg-amber text-white` pada badge Target Harian Standar dan badge Warning Bangunan Lainnya dengan style inline solid (`#d97706` Amber Emas & `#ea580c` Oranye) agar teks terbaca tajam dan berpenampilan modern.

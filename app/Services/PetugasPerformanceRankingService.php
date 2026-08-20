@@ -22,9 +22,9 @@ class PetugasPerformanceRankingService
         $diffDays = max(1, $startDate->diffInDays($currentDate, false) + 1);
         $dynamicTargetPct = min(100.0, round($diffDays * 1.33333, 2));
 
-        // Target Date: 20 August 2026 for 95% Milestone
-        $targetDate95 = \Carbon\Carbon::parse('2026-08-20');
-        $daysRemainingTo20Aug = max(1, $currentDate->diffInDays($targetDate95, false));
+        // Target Date: 25 August 2026 for 100% Completion Milestone
+        $targetDate100 = \Carbon\Carbon::parse('2026-08-25');
+        $daysRemainingTo25Aug = max(1, $currentDate->diffInDays($targetDate100, false));
 
         // 2. Fetch available snapshot dates up to selectedDate (ordered newest to oldest)
         $recentDates = [];
@@ -102,8 +102,9 @@ class PetugasPerformanceRankingService
                 ->toArray();
         }
 
-        // 3. SLS Level Usaha Check (Dual Thresholds: UP < 5% & UK < 10% dari Muatan Murni SLS)
+        // 3. SLS Level Usaha Check & Per-Petugas SLS Aggregation for Ranking
         $slsAnomaliMap = [];
+        $slsStatsPerPetugas = [];
         if (Schema::connection($connName)->hasTable('monitoring_se2026')) {
             $monitoringService = app(Se2026MonitoringService::class);
             $upDate = $monitoringService->getTargetDateForTable('se2026_usaha_perusahaan', $selectedDate);
@@ -170,7 +171,30 @@ class PetugasPerformanceRankingService
                 ->get();
 
             foreach ($slsRows as $sr) {
-                // Ignore SLS if muatan murni is empty (0)
+                $email = $sr->email_pencacah;
+                $totalUsahaSe = (int) $sr->up_sls + (int) $sr->uk_sls;
+                $wilkerstatUsaha = (int) $sr->wilkerstat_usaha;
+
+                if (!isset($slsStatsPerPetugas[$email])) {
+                    $slsStatsPerPetugas[$email] = [
+                        'total_sls' => 0,
+                        'sls_with_usaha' => 0,
+                        'sls_usaha_optimal' => 0,
+                    ];
+                }
+
+                $slsStatsPerPetugas[$email]['total_sls']++;
+                if ($wilkerstatUsaha > 0) {
+                    $slsStatsPerPetugas[$email]['sls_with_usaha']++;
+                    if ($totalUsahaSe >= $wilkerstatUsaha) {
+                        $slsStatsPerPetugas[$email]['sls_usaha_optimal']++;
+                    }
+                } else {
+                    // SLS tanpa target wilkerstat usaha (dianggap optimal jika totalUsahaSe >= 0)
+                    $slsStatsPerPetugas[$email]['sls_usaha_optimal']++;
+                }
+
+                // SLS Anomali Check (Dual Thresholds: UP < 5% & UK < 10% dari Muatan Murni SLS)
                 if ($sr->muatan_murni_sls > 0) {
                     $pctUp = round(($sr->up_sls / $sr->muatan_murni_sls) * 100, 1);
                     $pctUk = round(($sr->uk_sls / $sr->muatan_murni_sls) * 100, 1);
@@ -181,7 +205,6 @@ class PetugasPerformanceRankingService
                     // Warning if Usaha Perusahaan < 5% OR Usaha Keluarga < 10% of Muatan Murni
                     if ($isLowUp || $isLowUk) {
                         $catatanObj = $catatanMap[$sr->region_code] ?? null;
-                        $totalUsahaSe = (int) $sr->up_sls + (int) $sr->uk_sls;
 
                         $diffKkPct = $sr->wilkerstat_kk > 0
                             ? round((($sr->pk_sls - $sr->wilkerstat_kk) / $sr->wilkerstat_kk) * 100, 1)
@@ -194,7 +217,7 @@ class PetugasPerformanceRankingService
                         $hasWarningDiffKk = $sr->wilkerstat_kk > 0 && $diffKkPct < -5.0;
                         $hasWarningDiffUsaha = $sr->wilkerstat_usaha > 0 && $diffUsahaPct < -5.0;
 
-                        $slsAnomaliMap[$sr->email_pencacah][] = [
+                        $slsAnomaliMap[$email][] = [
                             'region_code' => $sr->region_code,
                             'nama_sls' => $sr->nama_sls,
                             'submit' => $sr->submit_sls,
@@ -209,7 +232,7 @@ class PetugasPerformanceRankingService
                             'diff_usaha_pct' => $diffUsahaPct,
                             'has_warning_diff_kk' => $hasWarningDiffKk,
                             'has_warning_diff_usaha' => $hasWarningDiffUsaha,
-                            'is_usaha_optimal' => (int) $sr->wilkerstat_usaha > 0 ? ($totalUsahaSe >= (int) $sr->wilkerstat_usaha) : true,
+                            'is_usaha_optimal' => $wilkerstatUsaha > 0 ? ($totalUsahaSe >= $wilkerstatUsaha) : true,
                             'pct_up' => $pctUp,
                             'pct_uk' => $pctUk,
                             'is_low_up' => $isLowUp,
@@ -232,15 +255,15 @@ class PetugasPerformanceRankingService
             $capaianPct = $row->pct_submit;
             $muatanMurni = $row->muatan_murni;
 
-            // Target 95% Calculation for 20 August 2026
-            $target95Count = (int) ceil($beban * 0.95);
-            $neededTo95 = max(0, $target95Count - $submit);
-            if ($capaianPct >= 95.0) {
-                $ketTarget95 = "✅ Selesai (>= 95%)";
-                $lajuHarian95 = 0;
+            // Target 100% Calculation for 25 August 2026
+            $target100Count = (int) $beban;
+            $neededTo100 = max(0, $target100Count - $submit);
+            if ($capaianPct >= 100.0 || $neededTo100 <= 0) {
+                $ketTarget100 = "✅ Selesai (100%)";
+                $lajuHarian100 = 0;
             } else {
-                $lajuHarian95 = (int) ceil($neededTo95 / $daysRemainingTo20Aug);
-                $ketTarget95 = "🎯 +{$lajuHarian95} submit/hari s.d. 20 Agt (Sisa {$neededTo95})";
+                $lajuHarian100 = (int) ceil($neededTo100 / $daysRemainingTo25Aug);
+                $ketTarget100 = "🎯 +{$lajuHarian100} submit/hari s.d. 25 Agt (Sisa {$neededTo100})";
             }
 
             // Warning Usaha List (UP < 5% or UK < 10% & muatan_murni > 0)
@@ -251,25 +274,59 @@ class PetugasPerformanceRankingService
             }
             $hasWarningUsaha = count($anomaliSlsList) > 0;
 
-            // 1. Progress Score (Max 35)
+            // ==========================================
+            // 5-PILLAR PERFORMANCE RANKING FORMULA (0 - 100)
+            // ==========================================
+
+            // 1. Progress Score (Max 30 Poin)
             if ($capaianPct < $dynamicTargetPct) {
-                $progressScore = ($dynamicTargetPct > 0) ? ($capaianPct / $dynamicTargetPct) * 24.5 : 0;
+                $progressScore = ($dynamicTargetPct > 0) ? ($capaianPct / $dynamicTargetPct) * 20.0 : 0;
             } else {
                 $denom = max(0.01, 100.0 - $dynamicTargetPct);
                 $extra = min(1.0, ($capaianPct - $dynamicTargetPct) / $denom);
-                $progressScore = 24.5 + ($extra * 10.5);
+                $progressScore = 20.0 + ($extra * 10.0);
             }
-            $progressScore = min(35.0, max(0.0, $progressScore));
+            $progressScore = min(30.0, max(0.0, $progressScore));
 
-            // 2. Usaha Score (Max 35) - BKU + UK Ditemukan
+            // 2. Kualitas Probing Usaha Total vs Wilkerstat Petugas (Max 25 Poin)
             $totalUsaha = (int) ($row->total_usaha_se ?? ((int) ($row->jumlah_usaha_ditemukan ?? 0) + (int) ($row->jumlah_usaha_keluarga ?? 0)));
-            $usahaScore = min(35.0, ($totalUsaha / 100.0) * 35.0);
+            $wilkerstatUsaha = (int) ($row->wilkerstat_usaha ?? 0);
+            if ($wilkerstatUsaha > 0) {
+                $usahaTotalScore = min(25.0, ($totalUsaha / $wilkerstatUsaha) * 25.0);
+            } else {
+                $usahaTotalScore = 25.0; // Baseline penuh jika wilayah non-usaha
+            }
+            $usahaTotalScore = min(25.0, max(0.0, $usahaTotalScore));
 
-            // 3. Volume Score (Max 30) - Muatan Murni (KK + BKU)
-            $volumeScore = min(30.0, ($muatanMurni / 350.0) * 30.0);
+            // 3. Ketelitian SLS Probing / SLS Optimal Rate (Max 20 Poin)
+            $slsStats = $slsStatsPerPetugas[$row->email_pencacah] ?? ['total_sls' => 1, 'sls_with_usaha' => 0, 'sls_usaha_optimal' => 1];
+            $totalSlsWithUsaha = $slsStats['sls_with_usaha'];
+            $totalSlsOptimal = $slsStats['sls_usaha_optimal'];
+            if ($totalSlsWithUsaha > 0) {
+                $slsOptimalRatio = min(1.0, $totalSlsOptimal / $totalSlsWithUsaha);
+                $usahaSlsScore = $slsOptimalRatio * 20.0;
+            } else {
+                $usahaSlsScore = 20.0;
+            }
+            $usahaSlsScore = min(20.0, max(0.0, $usahaSlsScore));
+
+            // 4. Spotting Usaha Keluarga / Rasio UK per KK (Max 10 Poin)
+            $ukCount = (int) ($row->jumlah_usaha_keluarga ?? 0);
+            $kkCount = (int) ($row->jumlah_keluarga_ditemukan ?? 0);
+            if ($kkCount > 0) {
+                $ratioUkKk = $ukCount / $kkCount;
+                // Target acuan: rasio UK/KK >= 15% (0.15) mendapat poin maksimal 10
+                $spottingUkScore = min(10.0, ($ratioUkKk / 0.15) * 10.0);
+            } else {
+                $spottingUkScore = ($ukCount > 0) ? 10.0 : 5.0;
+            }
+            $spottingUkScore = min(10.0, max(0.0, $spottingUkScore));
+
+            // 5. Volume Score - Muatan Murni (KK + BKU) (Max 15 Poin)
+            $volumeScore = min(15.0, ($muatanMurni / 350.0) * 15.0);
 
             // Total Score (0 - 100)
-            $skorKinerja = round($progressScore + $usahaScore + $volumeScore, 1);
+            $skorKinerja = round($progressScore + $usahaTotalScore + $usahaSlsScore + $spottingUkScore + $volumeScore, 1);
 
             $submitToday = $submitTodayMap[$row->email_pencacah] ?? 0;
             $draftToday = $draftTodayMap[$row->email_pencacah] ?? 0;
@@ -284,11 +341,11 @@ class PetugasPerformanceRankingService
             } elseif ($stagnantDays >= 1) {
                 // Submit 0/hari (tidak ada penambahan submit dibanding snapshot kemarin) & di bawah target
                 $warning = 'stagnant';
-            } elseif ($submitToday < $lajuHarian95) {
-                // Ada submit (>0) tetapi di bawah target laju harian s.d. 20 Agustus
+            } elseif ($submitToday < $lajuHarian100) {
+                // Ada submit (>0) tetapi di bawah target laju harian s.d. 25 Agustus
                 $warning = 'slow_progress';
             } else {
-                // Laju submit harian memadai (>= target laju harian 95%)
+                // Laju submit harian memadai (>= target laju harian 100%)
                 $warning = 'normal';
             }
 
@@ -342,9 +399,13 @@ class PetugasPerformanceRankingService
             $item = clone $row;
             $item->dynamic_target_pct = $dynamicTargetPct;
             $item->progress_score = round($progressScore, 1);
-            $item->usaha_score = round($usahaScore, 1);
+            $item->usaha_total_score = round($usahaTotalScore, 1);
+            $item->usaha_sls_score = round($usahaSlsScore, 1);
+            $item->spotting_uk_score = round($spottingUkScore, 1);
             $item->volume_score = round($volumeScore, 1);
             $item->total_usaha_se = $totalUsaha;
+            $item->sls_total_with_usaha = $totalSlsWithUsaha;
+            $item->sls_usaha_optimal = $totalSlsOptimal;
             $item->skor_kinerja = $skorKinerja;
             $item->kat_code = $katCode;
             $item->kat_label = $katLabel;
@@ -360,11 +421,11 @@ class PetugasPerformanceRankingService
             $item->pct_bangunan_lainnya = $pctBangunanLainnya;
             $item->has_warning_bangunan_lainnya = $hasWarningBangunanLainnya;
 
-            // Target 95% & Warning Usaha Attributes
-            $item->needed_to_95 = $neededTo95;
-            $item->laju_harian_95 = $lajuHarian95;
-            $item->ket_target_95 = $ketTarget95;
-            $item->days_remaining_to_20aug = $daysRemainingTo20Aug;
+            // Target 100% & Warning Usaha Attributes
+            $item->needed_to_100 = $neededTo100;
+            $item->laju_harian_100 = $lajuHarian100;
+            $item->ket_target_100 = $ketTarget100;
+            $item->days_remaining_to_25aug = $daysRemainingTo25Aug;
             $item->has_warning_usaha = $hasWarningUsaha;
             $item->anomali_sls_list = $anomaliSlsList;
 
@@ -403,7 +464,7 @@ class PetugasPerformanceRankingService
 
         $rankingSummary = [
             'dynamic_target_pct' => $dynamicTargetPct,
-            'days_remaining_to_20aug' => $daysRemainingTo20Aug,
+            'days_remaining_to_25aug' => $daysRemainingTo25Aug,
             'cnt_srajin' => $sortedRanking->where('kat_code', '1_SANGAT_RAJIN')->count(),
             'cnt_rajin' => $sortedRanking->where('kat_code', '2_RAJIN')->count(),
             'cnt_cukup' => $sortedRanking->where('kat_code', '3_CUKUP')->count(),

@@ -531,11 +531,10 @@
                         <div class="tab-pane fade show active" id="tab-ranking" role="tabpanel" aria-labelledby="ranking-tab">
                             
                             <!-- Ranking Summary Cards & Target Info -->
-                            <div class="p-3 bg-light border-bottom">
-                                <div class="row g-2 align-items-center mb-3">
+                                                      <div class="row g-2 align-items-center mb-3">
                                     <div class="col-12 col-md-7">
                                         <div class="d-flex flex-wrap align-items-center gap-2">
-                                            <span class="badge bg-amber text-white font-weight-bold px-3 py-1.5 rounded-pill fs-4 shadow-sm">
+                                            <span class="badge font-weight-bold px-3 py-1.5 rounded-pill fs-4 shadow-sm" style="background-color: #d97706 !important; color: #ffffff !important;">
                                                 🏆 TARGET HARIAN STANDAR: {{ number_format($dynamicTargetPct, 1) }}%
                                             </span>
                                             <span class="text-muted small">
@@ -566,11 +565,13 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="p-2.5 border rounded bg-light h-100">
-                                                    <div class="font-weight-bold text-success mb-1">2. Skor Kinerja (Skala 0 - 100)</div>
+                                                    <div class="font-weight-bold text-success mb-1">2. Skor Kinerja 5 Pilar (0 - 100 Poin)</div>
                                                     <ul class="ps-3 text-muted mb-0">
-                                                        <li><strong>Progress Score (Maks 35)</strong>: Rasio capaian submit vs target harian.</li>
-                                                        <li><strong>Usaha Score (Maks 35)</strong>: Total usaha terdata (BKU + UK).</li>
-                                                        <li><strong>Muatan Murni (Maks 30)</strong>: Cakupan volume keluarga & BKU.</li>
+                                                        <li><strong>Progres Submit (Maks 30)</strong>: Capaian vs target dinamis harian.</li>
+                                                        <li><strong>Usaha Total vs Wilkerstat (Maks 25)</strong>: Total usaha SE vs target Wilkerstat petugas.</li>
+                                                        <li><strong>Ketelitian SLS Probing (Maks 20)</strong>: Rasio SLS yang usahanya optimal &ge; Wilkerstat.</li>
+                                                        <li><strong>Spotting UK/KK (Maks 10)</strong>: Kejelian menggali usaha keluarga (&ge;15% KK).</li>
+                                                        <li><strong>Muatan Murni (Maks 15)</strong>: Volume beban KK + BKU.</li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -612,7 +613,7 @@
                                         </span>
                                     @endif
                                     @if(($rankingSummary['cnt_warning_bangunan_lainnya'] ?? 0) > 0)
-                                        <span class="badge bg-amber text-white px-2.5 py-1.5 rounded-pill font-weight-bold shadow-xs">
+                                        <span class="badge font-weight-bold px-2.5 py-1.5 rounded-pill shadow-xs" style="background-color: #ea580c !important; color: #ffffff !important;">
                                             ⚠️ {{ number_format($rankingSummary['cnt_warning_bangunan_lainnya']) }} Petugas Warning Bangunan Lainnya (&ge;5%)
                                         </span>
                                     @endif
@@ -633,7 +634,7 @@
                                         <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
                                         <th class="text-center">Status / Warning<br><span class="text-muted font-weight-normal small">submit/hari & stagnan</span></th>
                                         <th class="text-center text-danger">Warning Anomali Usaha<br><span class="text-muted font-weight-normal small">(BKU < 5% / UK < 10%)</span></th>
-                                        <th class="text-center text-indigo">Laju s.d. 20 Agt<br><span class="text-muted font-weight-normal small">(Kejar Target 95%)</span></th>
+                                        <th class="text-center text-indigo">Laju s.d. 25 Agt<br><span class="text-muted font-weight-normal small">(Target 100%)</span></th>
                                         <th class="text-end bg-amber-lt text-amber font-weight-extrabold">Skor Kinerja<br><span class="text-muted font-weight-normal small">(0 - 100)</span></th>
                                         <th class="text-center">Kategori Kinerja</th>
                                         <th>Rekomendasi Tindakan PML</th>
@@ -717,7 +718,7 @@
                                                              🚨 Stagnan {{ $row->stagnant_days }} hari
                                                          </span>
                                                      @elseif($row->warning_status === 'slow_progress')
-                                                         <span class="badge bg-warning-lt text-warning font-weight-bold px-2 py-1" title="Laju submit hari ini ({{ number_format($row->submit_today) }}/hari) kurang dari target laju s.d. 20 Agt ({{ number_format($row->laju_harian_95) }}/hari)">
+                                                         <span class="badge bg-warning-lt text-warning font-weight-bold px-2 py-1" title="Laju submit hari ini ({{ number_format($row->submit_today) }}/hari) kurang dari target laju s.d. 25 Agt ({{ number_format($row->laju_harian_100) }}/hari)">
                                                              ⚠️ Progres Lambat
                                                          </span>
                                                      @else
@@ -735,10 +736,10 @@
                                                         $cntBelum = $row->cnt_anomali_belum;
                                                         $totalAnomali = count($row->anomali_sls_list);
                                                         $slsJsonData = base64_encode(json_encode([
-                                                            'nama_pencacah' => $row->nama_pencacah,
-                                                            'email_pencacah' => $row->email_pencacah,
-                                                            'sls_list' => $row->anomali_sls_list
-                                                        ]));
+                                                             'nama_pencacah' => $row->nama_pencacah,
+                                                             'email_pencacah' => $row->email_pencacah,
+                                                             'sls_list' => $row->anomali_sls_list
+                                                         ]));
                                                     @endphp
 
                                                     <div class="d-flex flex-column align-items-center gap-1">
@@ -766,28 +767,30 @@
                                                     </span>
                                                 @endif
                                             </td>
-                                            <td class="text-center" data-order="{{ $row->laju_harian_95 }}">
-                                                @if($row->pct_submit >= 95.0)
+                                            <td class="text-center" data-order="{{ $row->laju_harian_100 }}">
+                                                @if($row->pct_submit >= 100.0)
                                                     <span class="badge bg-success-lt text-success font-weight-bold px-2 py-1">
-                                                        ✅ Aman (&ge; 95%)
+                                                        ✅ Selesai (100%)
                                                     </span>
                                                 @else
                                                     <div class="text-nowrap">
                                                         <span class="badge font-weight-extrabold px-2.5 py-1 border shadow-xs" style="color: #78350f !important; background-color: #fef3c7 !important; border-color: #f59e0b !important; font-size: 0.85rem;">
-                                                            +{{ number_format($row->laju_harian_95) }} / hari
+                                                            +{{ number_format($row->laju_harian_100) }} / hari
                                                         </span>
                                                         <div class="small text-muted mt-0.5" style="font-size: 0.75rem;">
-                                                            Sisa {{ number_format($row->needed_to_95) }} submit ({{ $row->days_remaining_to_20aug }} hr lg)
+                                                            Sisa {{ number_format($row->needed_to_100) }} submit ({{ $row->days_remaining_to_25aug }} hr lg)
                                                         </div>
                                                     </div>
                                                 @endif
                                             </td>
                                             <td class="text-end font-weight-extrabold text-amber bg-amber-lt fs-2" data-order="{{ $row->skor_kinerja }}">
                                                 {{ number_format($row->skor_kinerja, 1) }}
-                                                <div class="small font-weight-normal text-muted" style="font-size: 0.70rem;" title="Progres: {{ $row->progress_score }}/35 | Usaha: {{ $row->usaha_score }}/35 | Muatan Murni: {{ $row->volume_score }}/30">
-                                                    <span class="text-primary" title="Skor Progres (Maks 35)">P:{{ number_format($row->progress_score, 1) }}</span> |
-                                                    <span class="text-azure" title="Skor Usaha BKU+UK (Maks 35)">U:{{ number_format($row->usaha_score, 1) }}</span> |
-                                                    <span class="text-teal" title="Skor Muatan Murni (Maks 30)">M:{{ number_format($row->volume_score, 1) }}</span>
+                                                <div class="small font-weight-normal text-muted" style="font-size: 0.68rem;" title="Progres: {{ $row->progress_score }}/30 | Usaha vs Wilkerstat: {{ $row->usaha_total_score }}/25 | SLS Optimal: {{ $row->usaha_sls_score }}/20 ({{ $row->sls_usaha_optimal }}/{{ max(1, $row->sls_total_with_usaha) }} SLS) | Spotting UK/KK: {{ $row->spotting_uk_score }}/10 | Muatan Murni: {{ $row->volume_score }}/15">
+                                                    <span class="text-primary" title="Skor Progres Submit (Maks 30)">P:{{ number_format($row->progress_score, 1) }}</span> |
+                                                    <span class="text-azure" title="Skor Usaha Total vs Wilkerstat (Maks 25)">U:{{ number_format($row->usaha_total_score, 1) }}</span> |
+                                                    <span class="text-indigo" title="Skor Ketelitian SLS Usaha Optimal (Maks 20)">SLS:{{ number_format($row->usaha_sls_score, 1) }}</span> |
+                                                    <span class="text-purple" title="Skor Spotting Usaha Keluarga (Maks 10)">UK:{{ number_format($row->spotting_uk_score, 1) }}</span> |
+                                                    <span class="text-teal" title="Skor Muatan Murni (Maks 15)">M:{{ number_format($row->volume_score, 1) }}</span>
                                                 </div>
                                             </td>
                                             <td class="text-center" data-order="{{ $row->kat_code }}">
