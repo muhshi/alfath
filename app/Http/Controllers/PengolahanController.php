@@ -56,11 +56,13 @@ class PengolahanController extends Controller
                 $pmlRecords = $this->monitoringService->getPmlQuery($request, $data['selectedDate']);
                 $slsRecords = $this->monitoringService->getSlsQuery($request, $data['selectedDate']);
                 $rankingData = $this->rankingService->calculateRankingData($records, $data['selectedDate']);
-                $kpiSummary = $this->monitoringService->getKpiSummary($records, $pmlRecords, $slsRecords);
+                $pmlRankingData = $this->rankingService->calculatePmlRankingData($pmlRecords, $rankingData['rankingRecords'], $slsRecords, $data['selectedDate'], $rankingData['dynamicTargetPct']);
+                $kpiSummary = $this->monitoringService->getKpiSummary($records, $pmlRankingData['pmlRecords'], $slsRecords);
 
                 return [
                     'records' => $records,
-                    'pmlRecords' => $pmlRecords,
+                    'pmlRecords' => $pmlRankingData['pmlRecords'],
+                    'pmlSummary' => $pmlRankingData['pmlSummary'],
                     'slsRecords' => $slsRecords,
                     'rankingRecords' => $rankingData['rankingRecords'],
                     'dynamicTargetPct' => $rankingData['dynamicTargetPct'],
@@ -74,11 +76,13 @@ class PengolahanController extends Controller
             $pmlRecords = $this->monitoringService->getPmlQuery($request, $data['selectedDate']);
             $slsRecords = $this->monitoringService->getSlsQuery($request, $data['selectedDate']);
             $rankingData = $this->rankingService->calculateRankingData($records, $data['selectedDate']);
-            $kpiSummary = $this->monitoringService->getKpiSummary($records, $pmlRecords, $slsRecords);
+            $pmlRankingData = $this->rankingService->calculatePmlRankingData($pmlRecords, $rankingData['rankingRecords'], $slsRecords, $data['selectedDate'], $rankingData['dynamicTargetPct']);
+            $kpiSummary = $this->monitoringService->getKpiSummary($records, $pmlRankingData['pmlRecords'], $slsRecords);
 
             $dashboardData = [
                 'records' => $records,
-                'pmlRecords' => $pmlRecords,
+                'pmlRecords' => $pmlRankingData['pmlRecords'],
+                'pmlSummary' => $pmlRankingData['pmlSummary'],
                 'slsRecords' => $slsRecords,
                 'rankingRecords' => $rankingData['rankingRecords'],
                 'dynamicTargetPct' => $rankingData['dynamicTargetPct'],
@@ -98,6 +102,7 @@ class PengolahanController extends Controller
             'perPage' => $data['perPage'],
             'records' => $dashboardData['records'],
             'pmlRecords' => $dashboardData['pmlRecords'],
+            'pmlSummary' => $dashboardData['pmlSummary'] ?? [],
             'slsRecords' => $dashboardData['slsRecords'],
             'rankingRecords' => $dashboardData['rankingRecords'],
             'dynamicTargetPct' => $dashboardData['dynamicTargetPct'],

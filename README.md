@@ -252,3 +252,23 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
     - Mengintegrasikan caching terversioning (`se2026_dash_v{version}_{hash}`) dengan TTL 2 jam untuk mereduksi beban database dan memangkas waktu loading dashboard menjadi instan (< 10 ms).
     - **Auto-Invalidation Terintegrasi**: Cache otomatis di-flush secara instan setiap kali ada proses import Excel baru (`ImportExcelUsaha`, `ImportExcelPemutakhiranKeluarga`), pengajuan catatan anomali, approval/rejection catatan SLS di admin Filament, maupun penghapusan data.
     - **Tombol Refresh Manual UI**: Menyediakan tombol `🔄 Refresh & Hitung Ulang Cache Real-time` (parameter `?fresh=1`) pada form filter dashboard.
+
+### 2026-08-21
+- **Implementasi Formula Perhitungan & Ranking Kinerja PML Terbaik (5 Pilar Kinerja) & Transparansi Metodologi di Dashboard Pengolahan**:
+  - **Formula 5 Pilar Kinerja PML (Skala 0 s.d. 100 Poin) (`PetugasPerformanceRankingService.php`)**:
+    - **Pilar 1 - Responsivitas & Verifikasi PML (Bobot 25 Poin)**: Menilai kecepatan dan kedisiplinan PML memeriksa submit dokumen PPL binaannya (`% Pengerjaan PML = (Approved + Rejected) / Total Submit PPL * 100%`). Mendapat 25 poin penuh jika `% Pengerjaan PML` $\ge 90\%$.
+    - **Pilar 2 - Capaian Progres Tim Binaan vs Target Dinamis (Bobot 25 Poin)**: Menilai ketepatan laju submit tim binaan PML terhadap *Dynamic Target Harian* menuju 25 Agustus (on-track mendapat 20-25 poin).
+    - **Pilar 3 - Kualitas Probing & Akurasi Usaha Binaan (Bobot 20 Poin)**: Menggabungkan rasio Total Usaha SE vs Wilkerstat Usaha (10 poin) dan *SLS Usaha Optimal Rate* binaan PML (10 poin) untuk menjaga data bebas dari undercounting usaha.
+    - **Pilar 4 - Kesehatan & Pemerataan Tim / No PPL Left Behind (Bobot 15 Poin)**: Baseline 15 poin dengan penalti jika ada PPL binaan yang stagnant $\ge 2$ hari (-3 poin), berstatus Sangat Malas (-5 poin), atau Malas (-2 poin), guna mendorong pendampingan aktif ke anggota tim yang lambat.
+    - **Pilar 5 - Manajemen & Resolusi Anomali Lapangan (Bobot 15 Poin)**: Mengukur ketuntasan tindak lanjut catatan anomali SLS binaan (10 poin) dan pengendalian persentase Bangunan Kosong/Lainnya $< 5\%$ (5 poin).
+  - **Klasifikasi & Predikat PML**: Mengelompokkan PML ke dalam 4 predikat prestasi:
+    - 🌟 **1. PML Teladan** (Skor $\ge 85.0$)
+    - 🟢 **2. PML Aktif** (Skor $70.0 - 84.9$)
+    - 🟡 **3. PML Cukup** (Skor $55.0 - 69.9$)
+    - 🔴 **4. Perlu Evaluasi** (Skor $< 55.0$)
+  - **Transparansi Metodologi & KPI PML di Tab PML Dashboard (`dashboard-pengolahan.blade.php`)**:
+    - **KPI Summary Cards Tab PML**: Menampilkan 6 kartu ringkasan (Total PML, Teladan, Aktif, Cukup, Evaluasi, dan Rata-rata Skor).
+    - **Accordion Transparansi Metodologi**: Menyediakan panel panduan interaktif yang menjabarkan secara gamblang definisi setiap metrik, rumus matematis, bobot poin, dan tabel predikat PML.
+    - **Kolom Tabel PML Diperbarui**: Menyertakan kolom Peringkat (Rank #1 🏆), Skor Kinerja (0-100), Predikat Badge, sub-skor micro badges 5 pilar (`V:.. | P:.. | U:.. | T:.. | A:..`), serta Rekomendasi Tindakan PML. Default sorting otomatis mengurutkan berdasarkan peringkat PML.
+  - **Pembaruan Ekspor Excel Agregasi & Ranking PML (`PengolahanExportService.php`)**:
+    - Memperbarui Sheet PML (Sheet 3 pada export Semua Tab dan single sheet PML) agar memuat kolom Rank PML, Skor Kinerja, Predikat, Rekomendasi Tindakan, serta rincian nilai 5 pilar (Verifikasi, Progres Tim, Kualitas Usaha, Tim Health, Resolusi Anomali).

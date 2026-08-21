@@ -482,4 +482,269 @@ class PetugasPerformanceRankingService
             'rankingSummary' => $rankingSummary,
         ];
     }
+
+    /**
+     * Calculate PML (Pengawas) Performance Ranking using 5-Pillar Score Formula (0 - 100).
+     */
+    public function calculatePmlRankingData(Collection $pmlRecords, Collection $rankingRecords, Collection $slsRecords, ?string $selectedDate, float $dynamicTargetPct): array
+    {
+        $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
+        $db = $connName ? DB::connection($connName) : DB::connection();
+
+        // 1. Map Anomali Catatan by region_code
+        $catatanMap = [];
+        if (Schema::connection($connName)->hasTable('se2026_anomali_catatan')) {
+            $catatanMap = $db->table('se2026_anomali_catatan')
+                ->get()
+                ->keyBy('region_code')
+                ->toArray();
+        }
+
+        // 2. Map PPLs and SLSs to Pengawas Email
+        $alokasiMap = [];
+        if (Schema::connection($connName)->hasTable('alokasi_pengawas')) {
+            $alokasiData = $db->table('alokasi_pengawas as a')
+                ->leftJoin('monitoring_se2026 as m', function ($join) use ($selectedDate) {
+                    $join->on('a.region_code', '=', 'm.region_code');
+                    if (!empty($selectedDate)) {
+                        $join->where('m.tanggal_tarik', '=', $selectedDate);
+                    }
+                })
+                ->select('a.email_pengawas', 'a.region_code', 'm.email_pencacah')
+                ->get();
+
+            foreach ($alokasiData as $alo) {
+                $emailPengawas = $alo->email_pengawas;
+                if (!$emailPengawas) continue;
+
+                if (!isset($alokasiMap[$emailPengawas])) {
+                    $alokasiMap[$emailPengawas] = [
+                        'sls_codes' => [],
+                        'ppl_emails' => [],
+                    ];
+                }
+                if ($alo->region_code && !in_array($alo->region_code, $alokasiMap[$emailPengawas]['sls_codes'])) {
+                    $alokasiMap[$emailPengawas]['sls_codes'][] = $alo->region_code;
+                }
+                if ($alo->email_pencacah && !in_array($alo->email_pencacah, $alokasiMap[$emailPengawas]['ppl_emails'])) {
+                    $alokasiMap[$emailPengawas]['ppl_emails'][] = $alo->email_pencacah;
+                }
+            }
+        }
+
+        // Map PPL ranking details by email_pencacah
+        $pplRankingByEmail = $rankingRecords->keyBy('email_pencacah');
+
+        // Map SLS details by region_code
+        $slsByRegionCode = $slsRecords->keyBy('region_code');
+
+        $pmlRankingList = collect();
+
+        foreach ($pmlRecords as $row) {
+            $emailPengawas = $row->email_pengawas;
+            $slsCodes = $alokasiMap[$emailPengawas]['sls_codes'] ?? [];
+            $pplEmails = $alokasiMap[$emailPengawas]['ppl_emails'] ?? [];
+
+            // ----------------------------------------------------
+            // PILAR 1: Responsivitas & Verifikasi PML (Max 25 Poin)
+            // ----------------------------------------------------
+            $pctPengerjaan = (float) ($row->pct_pengerjaan_pml ?? 0);
+            if ($pctPengerjaan >= 90.0) {
+                $skorVerifikasi = 25.0;
+            } else {
+                $skorVerifikasi = min(25.0, max(0.0, ($pctPengerjaan / 90.0) * 25.0));
+            }
+            $skorVerifikasi = round($skorVerifikasi, 1);
+
+            // ----------------------------------------------------
+            // PILAR 2: Capaian Progres Tim vs Target Dinamis (Max 25 Poin)
+            // ----------------------------------------------------
+            $pctSubmitTim = (float) ($row->pct_submit ?? 0);
+            if ($pctSubmitTim >= $dynamicTargetPct) {
+                $denom = max(0.01, 100.0 - $dynamicTargetPct);
+                $extra = min(1.0, ($pctSubmitTim - $dynamicTargetPct) / $denom);
+                $skorProgresTim = 20.0 + ($extra * 5.0);
+            } else {
+                $skorProgresTim = ($dynamicTargetPct > 0) ? ($pctSubmitTim / $dynamicTargetPct) * 20.0 : 0;
+            }
+            $skorProgresTim = round(min(25.0, max(0.0, $skorProgresTim)), 1);
+
+            // ----------------------------------------------------
+            // PILAR 3: Kualitas Probing & Akurasi Usaha (Max 20 Poin)
+            // Sub-A: Rasio Usaha vs Wilkerstat (Max 10 Poin)
+            // Sub-B: SLS Usaha Optimal Rate (Max 10 Poin)
+            // ----------------------------------------------------
+            $totalUsaha = (int) ($row->total_usaha_se ?? 0);
+            $wilkerstatUsaha = (int) ($row->wilkerstat_usaha ?? 0);
+            if ($wilkerstatUsaha > 0) {
+                $skorRasioUsaha = min(10.0, ($totalUsaha / $wilkerstatUsaha) * 10.0);
+            } else {
+                $skorRasioUsaha = 10.0; // Baseline penuh wilayah non-usaha
+            }
+
+            // SLS Usaha Optimal in this PML
+            $cntSlsWithUsaha = 0;
+            $cntSlsOptimal = 0;
+            foreach ($slsCodes as $rCode) {
+                $slsItem = $slsByRegionCode->get($rCode);
+                if (!$slsItem) continue;
+
+                $wUsaha = (int) ($slsItem->wilkerstat_usaha ?? 0);
+                $uDitemukan = (int) ($slsItem->total_usaha_se ?? (($slsItem->up_ditemukan ?? 0) + ($slsItem->uk_ditemukan ?? 0)));
+
+                if ($wUsaha > 0 || $uDitemukan > 0) {
+                    $cntSlsWithUsaha++;
+                    if ($wUsaha == 0) {
+                        $cntSlsOptimal++;
+                    } else {
+                        $upFound = (int) ($slsItem->up_ditemukan ?? 0);
+                        $ukFound = (int) ($slsItem->uk_ditemukan ?? 0);
+                        $ratioUp = $upFound / $wUsaha;
+                        $ratioUk = $ukFound / $wUsaha;
+                        if ($ratioUp >= 0.05 || $ratioUk >= 0.10 || $uDitemukan >= $wUsaha) {
+                            $cntSlsOptimal++;
+                        }
+                    }
+                }
+            }
+
+            if ($cntSlsWithUsaha > 0) {
+                $skorSlsOptimal = min(10.0, ($cntSlsOptimal / $cntSlsWithUsaha) * 10.0);
+            } else {
+                $skorSlsOptimal = 10.0;
+            }
+            $skorKualitasUsaha = round(min(20.0, max(0.0, $skorRasioUsaha + $skorSlsOptimal)), 1);
+
+            // ----------------------------------------------------
+            // PILAR 4: Kesehatan & Pemerataan Tim (No PPL Left Behind) (Max 15 Poin)
+            // ----------------------------------------------------
+            $cntStagnantPpl = 0;
+            $cntSangatMalasPpl = 0;
+            $cntMalasPpl = 0;
+            foreach ($pplEmails as $pplEmail) {
+                $pplRank = $pplRankingByEmail->get($pplEmail);
+                if (!$pplRank) continue;
+
+                if (($pplRank->stagnant_days ?? 0) >= 2 || ($pplRank->warning_status ?? '') === 'stagnant') {
+                    $cntStagnantPpl++;
+                }
+                if (($pplRank->kat_code ?? '') === '5_SANGAT_MALAS') {
+                    $cntSangatMalasPpl++;
+                } elseif (($pplRank->kat_code ?? '') === '4_MALAS') {
+                    $cntMalasPpl++;
+                }
+            }
+
+            $penaltyTim = ($cntStagnantPpl * 3.0) + ($cntSangatMalasPpl * 5.0) + ($cntMalasPpl * 2.0);
+            $skorKesehatanTim = round(max(0.0, 15.0 - $penaltyTim), 1);
+
+            // ----------------------------------------------------
+            // PILAR 5: Manajemen & Resolusi Anomali (Max 15 Poin)
+            // Sub-A: Catatan Anomali SLS Approved (Max 10 Poin)
+            // Sub-B: Kontrol Bangunan Kosong/Lainnya (Max 5 Poin)
+            // ----------------------------------------------------
+            $totalAnomaliSls = 0;
+            $approvedAnomaliSls = 0;
+            foreach ($slsCodes as $rCode) {
+                if (isset($catatanMap[$rCode])) {
+                    $totalAnomaliSls++;
+                    if (($catatanMap[$rCode]->status ?? '') === 'approved') {
+                        $approvedAnomaliSls++;
+                    }
+                }
+            }
+
+            if ($totalAnomaliSls > 0) {
+                $skorCatatanAnomali = ($approvedAnomaliSls / $totalAnomaliSls) * 10.0;
+            } else {
+                $skorCatatanAnomali = 10.0; // Wilayah bersih tanpa anomali mendapat nilai penuh
+            }
+
+            $pctBangunanLainnya = (float) ($row->pct_bangunan_lainnya ?? 0);
+            if ($pctBangunanLainnya < 5.0) {
+                $skorBangunanLainnya = 5.0;
+            } else {
+                $skorBangunanLainnya = max(0.0, 5.0 - (($pctBangunanLainnya - 5.0) * 1.0));
+            }
+            $skorResolusiAnomali = round(min(15.0, max(0.0, $skorCatatanAnomali + $skorBangunanLainnya)), 1);
+
+            // ----------------------------------------------------
+            // TOTAL SKOR PML & PREDIKAT (0 - 100)
+            // ----------------------------------------------------
+            $skorKinerjaPml = round($skorVerifikasi + $skorProgresTim + $skorKualitasUsaha + $skorKesehatanTim + $skorResolusiAnomali, 1);
+
+            if ($skorKinerjaPml >= 85.0) {
+                $katCode = '1_PML_TELADAN';
+                $katLabel = '1. PML Teladan (Top Supervisor 🌟)';
+                $katBadge = 'bg-success text-white';
+                $rekomendasi = 'Apresiasi Kinerja & Role Model Pengawasan';
+            } elseif ($skorKinerjaPml >= 70.0) {
+                $katCode = '2_PML_AKTIF';
+                $katLabel = '2. PML Aktif (Good Supervisor 🟢)';
+                $katBadge = 'bg-primary text-white';
+                $rekomendasi = 'Pengawasan Berjalan Baik, Pertahankan';
+            } elseif ($skorKinerjaPml >= 55.0) {
+                $katCode = '3_PML_CUKUP';
+                $katLabel = '3. PML Cukup (Moderate 🟡)';
+                $katBadge = 'bg-warning-lt text-warning';
+                $rekomendasi = 'Tingkatkan Laju Approval & Dampingi PPL Lambat';
+            } else {
+                $katCode = '4_PML_KURANG';
+                $katLabel = '4. Perlu Evaluasi (Needs Attention 🔴)';
+                $katBadge = 'bg-danger text-white';
+                $rekomendasi = 'Evaluasi Beban Kerja & Pendampingan Langsung Koseka';
+            }
+
+            $item = clone $row;
+            $item->skor_verifikasi = $skorVerifikasi;
+            $item->skor_progres_tim = $skorProgresTim;
+            $item->skor_kualitas_usaha = $skorKualitasUsaha;
+            $item->skor_kesehatan_tim = $skorKesehatanTim;
+            $item->skor_resolusi_anomali = $skorResolusiAnomali;
+            $item->skor_kinerja_pml = $skorKinerjaPml;
+            $item->kat_code = $katCode;
+            $item->kat_label = $katLabel;
+            $item->kat_badge = $katBadge;
+            $item->rekomendasi = $rekomendasi;
+            $item->cnt_stagnant_ppl = $cntStagnantPpl;
+            $item->cnt_sangat_malas_ppl = $cntSangatMalasPpl;
+            $item->cnt_malas_ppl = $cntMalasPpl;
+            $item->cnt_sls_optimal = $cntSlsOptimal;
+            $item->cnt_sls_with_usaha = $cntSlsWithUsaha;
+            $item->total_anomali_sls = $totalAnomaliSls;
+            $item->approved_anomali_sls = $approvedAnomaliSls;
+
+            $pmlRankingList->push($item);
+        }
+
+        // Sort PML: Primary by Skor Kinerja PML DESC, Secondary by % Pengerjaan PML DESC, Tertiary by % Submit Tim DESC
+        $sortedPml = $pmlRankingList->sort(function ($a, $b) {
+            if ($a->skor_kinerja_pml == $b->skor_kinerja_pml) {
+                if ($a->pct_pengerjaan_pml == $b->pct_pengerjaan_pml) {
+                    return $b->pct_submit <=> $a->pct_submit;
+                }
+                return $b->pct_pengerjaan_pml <=> $a->pct_pengerjaan_pml;
+            }
+            return $b->skor_kinerja_pml <=> $a->skor_kinerja_pml;
+        })->values();
+
+        // Assign Rank numbers
+        foreach ($sortedPml as $idx => $item) {
+            $item->rank_pml = $idx + 1;
+        }
+
+        $pmlSummary = [
+            'cnt_teladan' => $sortedPml->where('kat_code', '1_PML_TELADAN')->count(),
+            'cnt_aktif' => $sortedPml->where('kat_code', '2_PML_AKTIF')->count(),
+            'cnt_cukup' => $sortedPml->where('kat_code', '3_PML_CUKUP')->count(),
+            'cnt_kurang' => $sortedPml->where('kat_code', '4_PML_KURANG')->count(),
+            'avg_skor' => $sortedPml->count() > 0 ? round($sortedPml->avg('skor_kinerja_pml'), 1) : 0,
+            'top_pml' => $sortedPml->first(),
+        ];
+
+        return [
+            'pmlRecords' => $sortedPml,
+            'pmlSummary' => $pmlSummary,
+        ];
+    }
 }

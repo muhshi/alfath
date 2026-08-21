@@ -953,10 +953,150 @@
 
                         <!-- TAB 2: RINGKASAN PER PML (PENGAWAS) -->
                         <div class="tab-pane fade" id="tab-pml" role="tabpanel" aria-labelledby="pml-tab">
+                            <!-- PML KPI SUMMARY STATS -->
+                            <div class="row row-deck row-cards mb-3 g-2">
+                                <div class="col-6 col-sm-4 col-md-2">
+                                    <div class="card card-sm border-0 shadow-xs">
+                                        <div class="card-body p-2 text-center">
+                                            <div class="text-muted small">Total PML</div>
+                                            <div class="h3 m-0 font-weight-bold text-dark">{{ number_format($pmlRecords->count()) }}</div>
+                                            <div class="text-muted" style="font-size: 0.7rem;">Pengawas</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-4 col-md-2">
+                                    <div class="card card-sm border-0 shadow-xs bg-success-lt">
+                                        <div class="card-body p-2 text-center">
+                                            <div class="text-success small font-weight-bold">1. PML Teladan 🌟</div>
+                                            <div class="h3 m-0 font-weight-extrabold text-success">{{ number_format($pmlSummary['cnt_teladan'] ?? 0) }}</div>
+                                            <div class="text-success small" style="font-size: 0.7rem;">Skor &ge; 85</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-4 col-md-2">
+                                    <div class="card card-sm border-0 shadow-xs bg-blue-lt">
+                                        <div class="card-body p-2 text-center">
+                                            <div class="text-blue small font-weight-bold">2. PML Aktif 🟢</div>
+                                            <div class="h3 m-0 font-weight-extrabold text-blue">{{ number_format($pmlSummary['cnt_aktif'] ?? 0) }}</div>
+                                            <div class="text-blue small" style="font-size: 0.7rem;">Skor 70 - 84.9</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-4 col-md-2">
+                                    <div class="card card-sm border-0 shadow-xs bg-warning-lt">
+                                        <div class="card-body p-2 text-center">
+                                            <div class="text-warning small font-weight-bold">3. PML Cukup 🟡</div>
+                                            <div class="h3 m-0 font-weight-extrabold text-warning">{{ number_format($pmlSummary['cnt_cukup'] ?? 0) }}</div>
+                                            <div class="text-warning small" style="font-size: 0.7rem;">Skor 55 - 69.9</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-4 col-md-2">
+                                    <div class="card card-sm border-0 shadow-xs bg-danger-lt">
+                                        <div class="card-body p-2 text-center">
+                                            <div class="text-danger small font-weight-bold">4. Evaluasi 🔴</div>
+                                            <div class="h3 m-0 font-weight-extrabold text-danger">{{ number_format($pmlSummary['cnt_kurang'] ?? 0) }}</div>
+                                            <div class="text-danger small" style="font-size: 0.7rem;">Skor &lt; 55</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-4 col-md-2">
+                                    <div class="card card-sm border-0 shadow-xs bg-purple-lt">
+                                        <div class="card-body p-2 text-center">
+                                            <div class="text-purple small font-weight-bold">Rata-rata Skor ⭐</div>
+                                            <div class="h3 m-0 font-weight-extrabold text-purple">{{ number_format($pmlSummary['avg_skor'] ?? 0, 1) }}</div>
+                                            <div class="text-purple small" style="font-size: 0.7rem;">Skala 100</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TRANSPARENT METHODOLOGY BANNER -->
+                            <div class="card mb-3 border border-purple-lt shadow-xs bg-purple-lt bg-opacity-10">
+                                <div class="card-header py-2 px-3 bg-white d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#pmlMethodologyCollapse" aria-expanded="false" aria-controls="pmlMethodologyCollapse" style="cursor: pointer;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-purple text-white p-1"><i class="fa-solid fa-graduation-cap"></i></span>
+                                        <span class="font-weight-bold text-dark fs-4">📐 Transparansi Metodologi & Formula Perhitungan PML Terbaik (5 Pilar Kinerja)</span>
+                                        <span class="badge bg-purple-lt text-purple font-weight-bold">Skor 0 - 100</span>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button">
+                                        <i class="fa-solid fa-chevron-down"></i> Detail Formula
+                                    </button>
+                                </div>
+                                <div class="collapse" id="pmlMethodologyCollapse">
+                                    <div class="card-body p-3 bg-white border-top">
+                                        <p class="text-muted small mb-3">
+                                            Perhitungan peringkat <strong>PML Terbaik</strong> mengukur efektivitas supervisi kepemimpinan, responsivitas verifikasi/approval, kontrol kualitas data usaha, pemerataan kinerja tim (<em>no PPL left behind</em>), dan penyelesaian anomali:
+                                        </p>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <div class="p-2.5 rounded bg-light border h-100">
+                                                    <div class="font-weight-bold text-purple mb-1">1. Responsivitas Verifikasi PML (25 Poin)</div>
+                                                    <div class="small text-muted mb-1">
+                                                        Rasio penyelesaian dokumen yang disubmit PPL: <code>(Approved + Rejected) / Total Submit PPL * 100%</code>.
+                                                    </div>
+                                                    <div class="small font-weight-semibold text-dark">
+                                                        &ge; 90% = 25 Poin penuh | &lt; 90% = Proporsional (Skor = %Pengerjaan / 90 * 25).
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="p-2.5 rounded bg-light border h-100">
+                                                    <div class="font-weight-bold text-blue mb-1">2. Progres Tim vs Target Dinamis (25 Poin)</div>
+                                                    <div class="small text-muted mb-1">
+                                                        Capaian <code>% Submit Tim</code> terhadap <code>Dynamic Target Harian ({{ number_format($dynamicTargetPct, 1) }}%)</code>.
+                                                    </div>
+                                                    <div class="small font-weight-semibold text-dark">
+                                                        On-Track = 20 - 25 Poin | Di Bawah Target = Proporsional (Maks 20 Poin).
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="p-2.5 rounded bg-light border h-100">
+                                                    <div class="font-weight-bold text-teal mb-1">3. Kualitas Probing & Usaha Binaan (20 Poin)</div>
+                                                    <div class="small text-muted mb-1">
+                                                        • <strong>Rasio Usaha vs Wilkerstat</strong> (10 Poin): <code>Total Usaha SE / Wilkerstat Usaha</code>.<br>
+                                                        • <strong>SLS Usaha Optimal Rate</strong> (10 Poin): % SLS binaan yang memenuhi ambang batas temuan usaha.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="p-2.5 rounded bg-light border h-100">
+                                                    <div class="font-weight-bold text-warning mb-1">4. Kesehatan Tim / No PPL Left Behind (15 Poin)</div>
+                                                    <div class="small text-muted mb-1">
+                                                        Menilai pendampingan lapangan PML agar tidak ada anggota tim yang tertinggal atau macet.
+                                                    </div>
+                                                    <div class="small font-weight-semibold text-dark">
+                                                        Baseline 15 Poin | Penalti: -3 Poin per PPL Stagnant (&ge;2 hari), -5 Poin per PPL Sangat Malas, -2 Poin per PPL Malas (Min 0 Poin).
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="p-2.5 rounded bg-light border h-100">
+                                                    <div class="font-weight-bold text-danger mb-1">5. Manajemen Anomali & Kontrol Lapangan (15 Poin)</div>
+                                                    <div class="small text-muted mb-1">
+                                                        • <strong>Tindak Lanjut Catatan Anomali SLS</strong> (10 Poin): Rasio anomali SLS yang di-approve admin (wilayah bersih tanpa anomali = 10 Poin penuh).<br>
+                                                        • <strong>Kontrol Bangunan Kosong/Lainnya</strong> (5 Poin): % Bangunan Lainnya &lt; 5% = 5 Poin penuh.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 pt-2 border-top d-flex flex-wrap gap-2 align-items-center">
+                                            <span class="small font-weight-bold text-muted me-2">Predikat PML:</span>
+                                            <span class="badge bg-success text-white">🌟 1. PML Teladan (&ge;85.0)</span>
+                                            <span class="badge bg-primary text-white">🟢 2. PML Aktif (70.0 - 84.9)</span>
+                                            <span class="badge bg-warning-lt text-warning">🟡 3. PML Cukup (55.0 - 69.9)</span>
+                                            <span class="badge bg-danger text-white">🔴 4. Perlu Evaluasi (&lt;55.0)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <table id="pml-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
                                 <thead>
                                     <tr class="bg-light text-uppercase small font-weight-bold">
                                         <th class="w-1 text-center">No</th>
+                                        <th class="text-center bg-purple-lt text-purple font-weight-bold">Peringkat & Skor ⭐<br><span class="font-weight-normal small">Rank • Predikat • Skor</span></th>
                                         <th>Kecamatan</th>
                                         <th>Nama Pengawas<br><span class="text-muted font-weight-normal small">/ PML</span></th>
                                         <th class="text-center">Jml PPL<br><span class="text-muted font-weight-normal small">Didampingi</span></th>
@@ -974,12 +1114,44 @@
                                         <th class="text-end">Usaha Keluarga<br><span class="text-purple font-weight-normal small">Total SE vs Usaha Wilkerstat</span></th>
                                         <th class="text-end">Keluarga Ditemukan<br><span class="text-warning font-weight-normal small">vs Wilkerstat KK (Tol. 5%)</span></th>
                                         <th class="text-end">Keluarga<br><span class="text-muted font-weight-normal small">Tdk Ditemukan</span></th>
+                                        <th class="text-start">Rekomendasi Tindakan PML</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($pmlRecords as $index => $row)
                                         <tr>
                                             <td class="text-muted small text-center">{{ $index + 1 }}</td>
+                                            <td class="text-center bg-purple-lt" data-order="{{ $row->rank_pml ?? 999 }}">
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <div class="d-flex align-items-center gap-1">
+                                                        @if(($row->rank_pml ?? 999) == 1)
+                                                            <span class="badge bg-yellow text-yellow-fg font-weight-extrabold px-1.5 py-0.5 shadow-xs fs-5">🥇 #1</span>
+                                                        @elseif(($row->rank_pml ?? 999) == 2)
+                                                            <span class="badge bg-secondary-lt font-weight-bold px-1.5 py-0.5 shadow-xs fs-5">🥈 #2</span>
+                                                        @elseif(($row->rank_pml ?? 999) == 3)
+                                                            <span class="badge bg-brown-lt font-weight-bold px-1.5 py-0.5 shadow-xs fs-5">🥉 #3</span>
+                                                        @elseif(($row->rank_pml ?? 999) <= 10)
+                                                            <span class="badge bg-purple text-white font-weight-bold px-1.5 py-0.5 fs-5">#{{ $row->rank_pml }}</span>
+                                                        @else
+                                                            <span class="badge bg-light text-muted font-weight-bold px-1.5 py-0.5 fs-5">#{{ $row->rank_pml }}</span>
+                                                        @endif
+                                                        <span class="font-weight-extrabold fs-3 text-purple ms-1">{{ number_format($row->skor_kinerja_pml ?? 0, 1) }}</span>
+                                                    </div>
+                                                    <div class="mt-1">
+                                                        <span class="badge {{ $row->kat_badge ?? 'bg-secondary text-white' }} font-weight-bold px-1.5 py-0.2" style="font-size: 0.68rem;">
+                                                            {{ $row->kat_label ?? 'PML' }}
+                                                        </span>
+                                                    </div>
+                                                    <!-- Pillar Score Micro-Badges -->
+                                                    <div class="d-flex gap-1 mt-1 font-weight-semibold" style="font-size: 0.62rem;" title="Breakdown Skor: Verifikasi ({{ $row->skor_verifikasi }}/25) | Progres Tim ({{ $row->skor_progres_tim }}/25) | Kualitas Usaha ({{ $row->skor_kualitas_usaha }}/20) | Tim Health ({{ $row->skor_kesehatan_tim }}/15) | Anomali ({{ $row->skor_resolusi_anomali }}/15)">
+                                                        <span class="badge bg-purple-lt text-purple px-1 py-0" title="Verifikasi: {{ $row->skor_verifikasi }}/25">V:{{ $row->skor_verifikasi }}</span>
+                                                        <span class="badge bg-blue-lt text-blue px-1 py-0" title="Progres Tim: {{ $row->skor_progres_tim }}/25">P:{{ $row->skor_progres_tim }}</span>
+                                                        <span class="badge bg-teal-lt text-teal px-1 py-0" title="Kualitas Usaha: {{ $row->skor_kualitas_usaha }}/20">U:{{ $row->skor_kualitas_usaha }}</span>
+                                                        <span class="badge bg-warning-lt text-warning px-1 py-0" title="Tim Health: {{ $row->skor_kesehatan_tim }}/15">T:{{ $row->skor_kesehatan_tim }}</span>
+                                                        <span class="badge bg-danger-lt text-danger px-1 py-0" title="Resolusi Anomali: {{ $row->skor_resolusi_anomali }}/15">A:{{ $row->skor_resolusi_anomali }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
                                             <td>
                                                 <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
                                                 <div class="small text-muted">Kode: {{ $row->kode_kec }}</div>
@@ -1093,10 +1265,23 @@
                                                 </div>
                                             </td>
                                             <td class="text-end text-muted" data-order="{{ $row->keluarga_tidak_ditemukan }}">{{ number_format($row->keluarga_tidak_ditemukan) }}</td>
+                                            <td class="text-start small">
+                                                <div class="font-weight-semibold text-dark">{{ $row->rekomendasi ?? '-' }}</div>
+                                                <div class="text-muted mt-0.5" style="font-size: 0.7rem;">
+                                                    @if(($row->cnt_stagnant_ppl ?? 0) > 0)
+                                                        <span class="text-danger font-weight-bold">⚠️ {{ $row->cnt_stagnant_ppl }} PPL Stagnant</span> •
+                                                    @endif
+                                                    @if(($row->total_submitted_ppl ?? 0) > 0)
+                                                        <span class="text-warning font-weight-bold">⏳ {{ number_format($row->total_submitted_ppl) }} belum disentuh</span>
+                                                    @else
+                                                        <span class="text-success">✅ Selesai diperiksa</span>
+                                                    @endif
+                                                </div>
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="16" class="text-center py-5 text-muted">
+                                            <td colspan="20" class="text-center py-5 text-muted">
                                                 <div class="mb-2">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
                                                 </div>
@@ -1396,7 +1581,7 @@
                         },
                         pageLength: 25,
                         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
-                        order: [[5, 'desc']], // Default sort: Muatan Murni (Index 5) Descending
+                        order: [[1, 'asc']], // Default sort: Peringkat & Skor PML (Index 1) Ascending (#1, #2, ...)
                         columnDefs: [
                             { orderable: false, targets: [0] } // Disable sorting for 'No' column
                         ],
