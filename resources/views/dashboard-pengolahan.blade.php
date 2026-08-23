@@ -1316,7 +1316,8 @@
                                         <th class="text-end text-success font-weight-bold">Keluarga Ditemukan<br><span class="font-weight-normal small">vs Wilkerstat KK (Tol. 5%)</span></th>
                                         <th class="text-end text-muted font-weight-bold">Keluarga<br><span class="font-weight-normal small">Tdk/Meninggal</span></th>
                                         <th class="text-end bg-success-lt text-success font-weight-extrabold fs-3">Total<br><span class="font-weight-bold small">Ditemukan</span></th>
-                                        <th class="text-end bg-danger text-white font-weight-extrabold fs-3 shadow-xs">Total Tdk Ditemukan<br><span class="font-weight-bold small">/ Tutup / Ganda</span></th>
+                                        <th class="text-end bg-danger-lt text-danger font-weight-extrabold fs-3">Total Tdk Ditemukan<br><span class="font-weight-bold small">/ Tutup / Ganda</span></th>
+                                        <th class="text-end bg-pink-lt text-pink font-weight-bold">Khusus Ganda ⭐<br><span class="font-weight-normal small">(BKU + UK)</span></th>
                                         <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
                                     </tr>
                                 </thead>
@@ -1392,7 +1393,23 @@
                                             </td>
                                             <td class="text-end text-muted" data-order="{{ $row->pk_tdk }}">{{ number_format($row->pk_tdk) }}</td>
                                             <td class="text-end font-weight-extrabold text-success bg-success-lt fs-3" data-order="{{ $row->total_ditemukan }}">{{ number_format($row->total_ditemukan) }}</td>
-                                            <td class="text-end font-weight-extrabold text-white bg-danger fs-3 shadow-xs" data-order="{{ $row->total_tdk }}">{{ number_format($row->total_tdk) }}</td>
+                                            <td class="text-end font-weight-extrabold bg-danger-lt text-danger fs-3" data-order="{{ $row->total_tdk }}">
+                                                <span class="badge bg-danger text-white font-weight-extrabold px-2 py-1 fs-3">
+                                                    {{ number_format($row->total_tdk) }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end font-weight-bold bg-pink-lt" data-order="{{ $row->total_ganda }}">
+                                                @if($row->total_ganda > 0)
+                                                    <span class="badge bg-pink text-white font-weight-bold px-2 py-1 fs-4" title="BKU Ganda: {{ number_format($row->up_ganda) }} | UK Ganda: {{ number_format($row->uk_ganda) }}">
+                                                        ⚠️ {{ number_format($row->total_ganda) }}
+                                                    </span>
+                                                    <div class="small font-weight-normal text-muted mt-0.5" style="font-size: 0.68rem;">
+                                                        (BKU: {{ number_format($row->up_ganda) }} | UK: {{ number_format($row->uk_ganda) }})
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">0</span>
+                                                @endif
+                                            </td>
                                             <td class="text-end font-weight-bold {{ $row->has_warning_bangunan_lainnya ? 'text-orange bg-amber-lt' : '' }}" data-order="{{ $row->bangunan_lainnya }}">
                                                 {{ number_format($row->bangunan_lainnya) }}
                                                 <div class="small font-weight-normal" style="font-size: 0.72rem;">
@@ -1408,7 +1425,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="18" class="text-center py-5 text-muted">
+                                            <td colspan="19" class="text-center py-5 text-muted">
                                                 <div class="mb-2">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
                                                 </div>

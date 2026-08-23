@@ -243,6 +243,7 @@ class Se2026MonitoringService
             ->select(
                 'kode',
                 DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'),
+                DB::raw('SUM(CAST(status___ganda AS SIGNED)) AS up_ganda'),
                 DB::raw('SUM(CAST(status___tutup AS SIGNED) + CAST(status___ganda AS SIGNED) + CAST(status___tidak_ditemukan AS SIGNED)) AS up_tdk')
             )
             ->groupBy('kode');
@@ -252,6 +253,7 @@ class Se2026MonitoringService
             ->select(
                 'kode',
                 DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ditemuka AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___baru AS SIGNED)) AS uk_ditemukan'),
+                DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ganda AS SIGNED)) AS uk_ganda'),
                 DB::raw('SUM(CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tutup AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___ganda AS SIGNED) + CAST(jumlah_usaha_keluarga_menurut_status_keberadaan_usaha___tidak_di AS SIGNED)) AS uk_tdk')
             )
             ->groupBy('kode');
@@ -285,9 +287,12 @@ class Se2026MonitoringService
                 DB::raw('IFNULL(SUM(m.status_draft), 0) as status_draft'),
                 DB::raw('CASE WHEN SUM(m.total_beban) > 0 THEN ROUND(((IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) / SUM(m.total_beban)) * 100, 2) ELSE 0 END as pct_submit'),
                 DB::raw('IFNULL(SUM(up.up_ditemukan), 0) as up_ditemukan'),
+                DB::raw('IFNULL(SUM(up.up_ganda), 0) as up_ganda'),
                 DB::raw('IFNULL(SUM(up.up_tdk), 0) as up_tdk'),
                 DB::raw('IFNULL(SUM(uk.uk_ditemukan), 0) as uk_ditemukan'),
+                DB::raw('IFNULL(SUM(uk.uk_ganda), 0) as uk_ganda'),
                 DB::raw('IFNULL(SUM(uk.uk_tdk), 0) as uk_tdk'),
+                DB::raw('(IFNULL(SUM(up.up_ganda), 0) + IFNULL(SUM(uk.uk_ganda), 0)) as total_ganda'),
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as pk_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as pk_tdk'),
                 DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) as total_usaha_se'),
