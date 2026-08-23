@@ -1398,13 +1398,13 @@
                                                     {{ number_format($row->total_tdk) }}
                                                 </span>
                                             </td>
-                                            <td class="text-end font-weight-bold bg-pink-lt" data-order="{{ $row->total_ganda }}">
-                                                @if($row->total_ganda > 0)
-                                                    <span class="badge bg-pink text-white font-weight-bold px-2 py-1 fs-4" title="BKU Ganda: {{ number_format($row->up_ganda) }} | UK Ganda: {{ number_format($row->uk_ganda) }}">
-                                                        ⚠️ {{ number_format($row->total_ganda) }}
+                                            <td class="text-end font-weight-bold bg-pink-lt" data-order="{{ $row->total_ganda ?? 0 }}">
+                                                @if(($row->total_ganda ?? 0) > 0)
+                                                    <span class="badge bg-pink text-white font-weight-bold px-2 py-1 fs-4" title="BKU Ganda: {{ number_format($row->up_ganda ?? 0) }} | UK Ganda: {{ number_format($row->uk_ganda ?? 0) }}">
+                                                        ⚠️ {{ number_format($row->total_ganda ?? 0) }}
                                                     </span>
                                                     <div class="small font-weight-normal text-muted mt-0.5" style="font-size: 0.68rem;">
-                                                        (BKU: {{ number_format($row->up_ganda) }} | UK: {{ number_format($row->uk_ganda) }})
+                                                        (BKU: {{ number_format($row->up_ganda ?? 0) }} | UK: {{ number_format($row->uk_ganda ?? 0) }})
                                                     </div>
                                                 @else
                                                     <span class="text-muted">0</span>
