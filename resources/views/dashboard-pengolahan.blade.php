@@ -1962,6 +1962,18 @@
                     $('#pengolahan-table, #pml-table, #sls-table, #ranking-table').removeClass('datatable-pre-init').addClass('datatable-initialized');
                 }
             });
+
+            // Instant Loading Feedback on Navigation Buttons
+            document.querySelectorAll('a.btn[href*="timeline-petugas"], a.btn[href*="dashboard-pengolahan"], a.btn[href*="dashboard-se2026"]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    if (this.getAttribute('data-nav-loading') === 'true') return;
+                    this.setAttribute('data-nav-loading', 'true');
+                    this.style.pointerEvents = 'none';
+                    this.style.opacity = '0.85';
+                    var cleanText = this.textContent.replace(/\s+/g, ' ').trim();
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Memuat ' + cleanText + '...';
+                });
+            });
         })(window.jqDT);
     </script>
 @endpush
