@@ -116,7 +116,7 @@
         }
 
         .table-responsive-timeline {
-            max-height: calc(100vh - 300px);
+            max-height: calc(100vh - 310px);
             overflow-y: auto;
             overflow-x: auto;
         }
@@ -132,8 +132,45 @@
             margin-bottom: 0.25rem;
             border: 1px solid rgba(0,0,0,0.08);
         }
+
+        .sort-link {
+            color: #334155 !important;
+            text-decoration: none !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 0.2rem 0;
+            transition: color 0.15s ease;
+        }
+
+        .sort-link:hover {
+            color: #0284c7 !important;
+        }
     </style>
 @endpush
+
+@php
+    $makeSortUrl = function($field) use ($sortBy, $sortDir, $kodekec, $search) {
+        $nextDir = ($sortBy === $field && $sortDir === 'asc') ? 'desc' : 'asc';
+        return route('dashboard.timeline-petugas', [
+            'sort' => $field,
+            'dir' => $nextDir,
+            'kodekec' => $kodekec,
+            'search' => $search,
+        ]);
+    };
+
+    $renderSortIcon = function($field) use ($sortBy, $sortDir) {
+        if ($sortBy !== $field) {
+            return '<span class="text-muted opacity-40 ms-1" style="font-size: 0.75rem;">↕</span>';
+        }
+        return $sortDir === 'asc' 
+            ? '<span class="text-primary fw-bold ms-1" style="font-size: 0.8rem;">▲</span>' 
+            : '<span class="text-primary fw-bold ms-1" style="font-size: 0.8rem;">▼</span>';
+    };
+@endphp
 
 @section('content')
     <div class="container-fluid py-3">
@@ -168,10 +205,16 @@
                     <div class="h2 fw-bold text-primary mb-0 mt-1">{{ number_format($summary['totalPetugas'], 0, ',', '.') }}</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <div class="stat-badge-card border-start border-4 border-info">
-                    <div class="text-muted small fw-semibold text-uppercase">Rata-rata Hari Kerja</div>
+                    <div class="text-muted small fw-semibold text-uppercase">Rerata Hari Kerja (>0)</div>
                     <div class="h2 fw-bold text-info mb-0 mt-1">{{ $summary['avgHariKerja'] }} <span class="fs-6 text-muted font-normal">hari</span></div>
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="stat-badge-card border-start border-4 border-danger">
+                    <div class="text-muted small fw-semibold text-uppercase">Rerata Hari 0 Submit</div>
+                    <div class="h2 fw-bold text-danger mb-0 mt-1">{{ $summary['avgZeroDays'] ?? 0 }} <span class="fs-6 text-muted font-normal">hari</span></div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
@@ -180,9 +223,9 @@
                     <div class="h2 fw-bold text-success mb-0 mt-1">{{ number_format($summary['totalSubmit'], 0, ',', '.') }}</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <div class="stat-badge-card border-start border-4 border-teal">
-                    <div class="text-muted small fw-semibold text-uppercase">Rerata Submit / Hari Kerja</div>
+                    <div class="text-muted small fw-semibold text-uppercase">Rerata Submit / Hari</div>
                     <div class="h2 fw-bold text-teal mb-0 mt-1">{{ $summary['avgSubmitPerHari'] }} <span class="fs-6 text-muted font-normal">dok/hari</span></div>
                 </div>
             </div>
@@ -222,6 +265,9 @@
 
                 <!-- Filters Toolbar -->
                 <form id="timelineFilterForm" action="{{ route('dashboard.timeline-petugas') }}" method="GET" class="d-flex align-items-center gap-2 m-0 ms-auto">
+                    <input type="hidden" name="sort" value="{{ $sortBy }}">
+                    <input type="hidden" name="dir" value="{{ $sortDir }}">
+
                     <select name="kodekec" class="form-select form-select-sm" style="min-width: 150px;" onchange="document.getElementById('timelineFilterForm').requestSubmit()">
                         <option value="">-- Semua Kecamatan --</option>
                         @foreach ($kecNameMap as $code => $name)
@@ -248,8 +294,20 @@
                         <thead class="bg-light sticky-top" style="z-index: 15;">
                             <tr>
                                 <th class="sticky-col-left-header text-center align-middle bg-light" style="width: 40px;">No</th>
-                                <th class="sticky-col-left-header align-middle bg-light" style="min-width: 200px;">Nama Petugas</th>
-                                <th class="text-center align-middle bg-light" style="min-width: 110px;">Kecamatan</th>
+                                
+                                {{-- Nama Petugas Header (Sortable) --}}
+                                <th class="sticky-col-left-header align-middle bg-light" style="min-width: 210px;">
+                                    <a href="{{ $makeSortUrl('nama') }}" class="sort-link justify-content-start" title="Urutkan berdasarkan Nama Petugas">
+                                        Nama Petugas {!! $renderSortIcon('nama') !!}
+                                    </a>
+                                </th>
+                                
+                                {{-- Kecamatan Header (Sortable) --}}
+                                <th class="text-center align-middle bg-light" style="min-width: 120px;">
+                                    <a href="{{ $makeSortUrl('kode_kec') }}" class="sort-link" title="Urutkan berdasarkan Kecamatan">
+                                        Kecamatan {!! $renderSortIcon('kode_kec') !!}
+                                    </a>
+                                </th>
                                 
                                 {{-- Tanggal Headers --}}
                                 @foreach ($calendarDates as $cDate)
@@ -265,15 +323,26 @@
                                     </th>
                                 @endforeach
 
-                                {{-- Ringkasan Headers --}}
-                                <th class="text-center align-middle bg-info-lt text-dark fw-bold" style="min-width: 90px;">
-                                    Hari Kerja
+                                {{-- Ringkasan Headers (All Sortable) --}}
+                                <th class="text-center align-middle bg-info-lt text-dark fw-bold" style="min-width: 105px;">
+                                    <a href="{{ $makeSortUrl('working_days') }}" class="sort-link text-info" title="Klik untuk mengurutkan berdasarkan Hari Kerja (>0 submit)">
+                                        Hari Kerja (>0) {!! $renderSortIcon('working_days') !!}
+                                    </a>
                                 </th>
-                                <th class="text-center align-middle bg-success-lt text-dark fw-bold" style="min-width: 100px;">
-                                    Total Submit
+                                <th class="text-center align-middle bg-danger-lt text-dark fw-bold" style="min-width: 105px;">
+                                    <a href="{{ $makeSortUrl('zero_days') }}" class="sort-link text-danger" title="Klik untuk mengurutkan berdasarkan Hari 0 Submit (Tidak Aktif)">
+                                        Hari 0 Submit {!! $renderSortIcon('zero_days') !!}
+                                    </a>
                                 </th>
-                                <th class="text-center align-middle bg-primary-lt text-dark fw-bold" style="min-width: 110px;">
-                                    Rata-rata/Hari
+                                <th class="text-center align-middle bg-success-lt text-dark fw-bold" style="min-width: 110px;">
+                                    <a href="{{ $makeSortUrl('total_submit') }}" class="sort-link text-success" title="Klik untuk mengurutkan berdasarkan Total Submit">
+                                        Total Submit {!! $renderSortIcon('total_submit') !!}
+                                    </a>
+                                </th>
+                                <th class="text-center align-middle bg-primary-lt text-dark fw-bold" style="min-width: 115px;">
+                                    <a href="{{ $makeSortUrl('avg_submit_per_working_day') }}" class="sort-link text-primary" title="Klik untuk mengurutkan berdasarkan Rata-rata Submit per Hari Kerja">
+                                        Rata-rata/Hari {!! $renderSortIcon('avg_submit_per_working_day') !!}
+                                    </a>
                                 </th>
                             </tr>
                         </thead>
@@ -332,8 +401,13 @@
 
                                     {{-- Ringkasan Columns --}}
                                     <td class="text-center align-middle bg-info-lt">
-                                        <span class="badge bg-info text-white fw-bold px-2 py-1 fs-6">
+                                        <span class="badge bg-info text-white fw-bold px-2 py-1 fs-6" title="{{ $rec['working_days'] }} hari kerja dengan submit > 0">
                                             {{ $rec['working_days'] }} <span class="small font-normal">hr</span>
+                                        </span>
+                                    </td>
+                                    <td class="text-center align-middle bg-danger-lt">
+                                        <span class="badge bg-danger-lt text-danger border border-danger-subtle fw-bold px-2 py-1 fs-6" title="{{ $rec['zero_days'] }} hari tidak aktif (0 submit)">
+                                            {{ $rec['zero_days'] }} <span class="small font-normal">hr</span>
                                         </span>
                                     </td>
                                     <td class="text-center align-middle bg-success-lt fw-bold text-success fs-6">
@@ -348,7 +422,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ count($calendarDates) + 6 }}" class="text-center py-4 text-muted">
+                                    <td colspan="{{ count($calendarDates) + 7 }}" class="text-center py-4 text-muted">
                                         <em>Tidak ada data petugas yang cocok dengan filter.</em>
                                     </td>
                                 </tr>
@@ -360,10 +434,10 @@
             
             <div class="card-footer bg-light py-2 px-3 d-flex align-items-center justify-content-between text-muted small">
                 <div>
-                    Menampilkan <strong>{{ $records->count() }}</strong> petugas dari total <strong>{{ $summary['totalPetugas'] }}</strong>.
+                    Menampilkan <strong>{{ $records->count() }}</strong> petugas dari total <strong>{{ $summary['totalPetugas'] }}</strong> (Diurutkan berdasarkan: <strong>{{ $sortBy }}</strong> [{{ strtoupper($sortDir) }}]).
                 </div>
                 <div>
-                    <span class="me-2">📍 Catatan: <strong>Data tidak ditarik</strong> menandakan Alfath tidak menjalankan scraper/sync pada hari tersebut.</span>
+                    <span class="me-2">📍 Catatan: <strong>Hari 0 Submit</strong> menghitung hari di mana data ditarik tetapi petugas tidak mengirimkan dokumen.</span>
                 </div>
             </div>
         </div>
@@ -381,7 +455,7 @@
                 });
             });
 
-            // Loading Feedback Overlay & Button Spinner on Filter Form
+            // Loading Feedback Overlay & Button Spinner on Filter Form & Sort Links
             var filterForm = document.getElementById('timelineFilterForm');
             var loadingOverlay = document.getElementById('tableLoadingOverlay');
             var btnSubmit = document.getElementById('btnFilterSubmit');
@@ -398,6 +472,14 @@
                     showLoadingState();
                 });
             }
+
+            // Show loading overlay on clicking sortable header links
+            var sortLinks = document.querySelectorAll('a.sort-link');
+            sortLinks.forEach(function (link) {
+                link.addEventListener('click', function () {
+                    showLoadingState();
+                });
+            });
 
             function showLoadingState() {
                 if (loadingOverlay) {

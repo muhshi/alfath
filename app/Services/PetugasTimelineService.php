@@ -17,7 +17,7 @@ class PetugasTimelineService
     ) {}
 
     /**
-     * Build Petugas Daily Submit Heatmap & Timeline Matrix (Ultra Fast In-Memory Filtering)
+     * Build Petugas Daily Submit Heatmap & Timeline Matrix (Ultra Fast In-Memory Filtering & Sorting)
      */
     public function getTimelineData(Request $request): array
     {
@@ -26,6 +26,8 @@ class PetugasTimelineService
 
         $search = trim((string) $request->get('search', ''));
         $kodekec = trim((string) $request->get('kodekec', ''));
+        $sortBy = $request->get('sort', 'nama');
+        $sortDir = strtolower($request->get('dir', 'asc')) === 'desc' ? 'desc' : 'asc';
 
         $cacheStore = Cache::store('file');
 
@@ -129,11 +131,14 @@ class PetugasTimelineService
                 'summary' => [
                     'totalPetugas' => 0,
                     'avgHariKerja' => 0,
+                    'avgZeroDays' => 0,
                     'totalSubmit' => 0,
                     'avgSubmitPerHari' => 0,
                 ],
                 'kodekec' => $kodekec,
                 'search' => $search,
+                'sortBy' => $sortBy,
+                'sortDir' => $sortDir,
             ];
         }
 
@@ -141,6 +146,7 @@ class PetugasTimelineService
         $records = collect();
         $totalSubmitsAll = 0;
         $totalWorkingDaysAll = 0;
+        $totalZeroDaysAll = 0;
 
         foreach ($allPetugasData as $email => $meta) {
             // Apply kecamatan filter
@@ -200,12 +206,14 @@ class PetugasTimelineService
                 }
             }
 
+            $zeroDays = max(0, $pulledDaysCount - $workingDays);
             $totalSubmit = $lastCumulativeSubmit;
             $avgSubmitPerWorkingDay = $workingDays > 0 ? round($totalSubmit / $workingDays, 1) : 0;
             $activityPct = $pulledDaysCount > 0 ? round(($workingDays / $pulledDaysCount) * 100, 1) : 0;
 
             $totalSubmitsAll += $totalSubmit;
             $totalWorkingDaysAll += $workingDays;
+            $totalZeroDaysAll += $zeroDays;
 
             $namaKec = $kecNameMap[$meta['kode_kec']] ?? $meta['kode_kec'];
 
@@ -217,17 +225,35 @@ class PetugasTimelineService
                 'daily_submits' => $dailySubmits,
                 'total_submit' => $totalSubmit,
                 'working_days' => $workingDays,
+                'zero_days' => $zeroDays,
                 'pulled_days_count' => $pulledDaysCount,
                 'avg_submit_per_working_day' => $avgSubmitPerWorkingDay,
                 'activity_pct' => $activityPct,
             ]);
         }
 
-        // Sort records by nama ascending by default
-        $records = $records->sortBy('nama', SORT_NATURAL | SORT_FLAG_CASE)->values();
+        // Sorting mapping
+        $validSortFields = [
+            'nama' => 'nama',
+            'kode_kec' => 'nama_kec',
+            'working_days' => 'working_days',
+            'zero_days' => 'zero_days',
+            'total_submit' => 'total_submit',
+            'avg_submit_per_working_day' => 'avg_submit_per_working_day',
+            'activity_pct' => 'activity_pct',
+        ];
+
+        $sortKey = $validSortFields[$sortBy] ?? 'nama';
+
+        if ($sortDir === 'desc') {
+            $records = $records->sortByDesc($sortKey, SORT_NATURAL | SORT_FLAG_CASE)->values();
+        } else {
+            $records = $records->sortBy($sortKey, SORT_NATURAL | SORT_FLAG_CASE)->values();
+        }
 
         $totalPetugas = $records->count();
         $avgHariKerja = $totalPetugas > 0 ? round($totalWorkingDaysAll / $totalPetugas, 1) : 0;
+        $avgZeroDays = $totalPetugas > 0 ? round($totalZeroDaysAll / $totalPetugas, 1) : 0;
         $overallAvgSubmit = $totalWorkingDaysAll > 0 ? round($totalSubmitsAll / $totalWorkingDaysAll, 1) : 0;
 
         return [
@@ -239,11 +265,14 @@ class PetugasTimelineService
             'summary' => [
                 'totalPetugas' => $totalPetugas,
                 'avgHariKerja' => $avgHariKerja,
+                'avgZeroDays' => $avgZeroDays,
                 'totalSubmit' => $totalSubmitsAll,
                 'avgSubmitPerHari' => $overallAvgSubmit,
             ],
             'kodekec' => $kodekec,
             'search' => $search,
+            'sortBy' => $sortBy,
+            'sortDir' => $sortDir,
         ];
     }
 }
