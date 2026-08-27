@@ -222,6 +222,18 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M12 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M4 20l14 0"/></svg>
                 Executive Dashboard
             </a>
+            <a href="{{ route('dashboard.timeline-petugas') }}" class="btn btn-emerald font-weight-bold shadow-sm text-white" style="border-radius: 10px; background-color: #059669; border-color: #047857;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+                    <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                    <path d="M15 3v4" />
+                    <path d="M7 3v4" />
+                    <path d="M3 11h16" />
+                    <path d="M18 16.496v1.504l1 1" />
+                </svg>
+                Timeline / Heatmap Submit
+            </a>
             <div class="btn-group shadow-sm" style="border-radius: 10px;">
                 <a href="{{ route('dashboard.pengolahan.export', array_merge(request()->query(), ['tab' => 'ranking'])) }}" 
                    class="btn btn-success font-weight-bold btn-export-active-tab" 

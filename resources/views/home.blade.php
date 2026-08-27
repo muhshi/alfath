@@ -3,12 +3,24 @@
 @section('content')
     <!-- Page header -->
     <x-page-header title="Beranda ALFATH">
-        <div class="col-12 col-md-auto ms-auto d-print-none flex-wrap gap-2 d-flex">
-            <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-primary font-weight-bold shadow-sm" style="border-radius: 10px; padding: 0.6rem 1.2rem;">
+        <div class="col-12 col-md-auto ms-auto d-print-none flex-wrap gap-2 d-flex" style="position: relative; z-index: 10;">
+            <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-primary font-weight-bold shadow-sm" style="border-radius: 10px; padding: 0.6rem 1.2rem; position: relative; z-index: 10; cursor: pointer;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M3 10h18"/><path d="M10 3v18"/></svg>
                 Tabel Petugas SE2026
             </a>
-            <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px; padding: 0.6rem 1.4rem;">
+            <a href="{{ route('dashboard.timeline-petugas') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #059669; border-color: #059669; border-radius: 10px; padding: 0.6rem 1.2rem; position: relative; z-index: 10; cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+                    <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                    <path d="M15 3v4" />
+                    <path d="M7 3v4" />
+                    <path d="M3 11h16" />
+                    <path d="M18 16.496v1.504l1 1" />
+                </svg>
+                Timeline / Heatmap Submit
+            </a>
+            <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px; padding: 0.6rem 1.4rem; position: relative; z-index: 10; cursor: pointer;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                     <path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path>
@@ -45,14 +57,26 @@
                                     <p class="fs-3 text-muted mb-4" style="max-width: 620px; line-height: 1.6;">
                                         Portal monitoring terpadu untuk pemanduan data harian pendataan Sensus Ekonomi 2026 dan survei statistik BPS Kabupaten Demak.
                                     </p>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px;">
+                                    <div class="d-flex flex-wrap gap-2" style="position: relative; z-index: 10;">
+                                        <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                                             Buka Executive Dashboard SE2026
                                         </a>
-                                        <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-primary font-weight-bold px-4 py-2 shadow-sm" style="border-radius: 10px;">
+                                        <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-primary font-weight-bold px-4 py-2 shadow-sm" style="border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M3 10h18"/><path d="M10 3v18"/></svg>
                                             Tabel Petugas SE2026
+                                        </a>
+                                        <a href="{{ route('dashboard.timeline-petugas') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #059669; border-color: #059669; border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                                <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+                                                <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                                <path d="M15 3v4" />
+                                                <path d="M7 3v4" />
+                                                <path d="M3 11h16" />
+                                                <path d="M18 16.496v1.504l1 1" />
+                                            </svg>
+                                            Timeline / Heatmap Submit
                                         </a>
                                     </div>
                                 </div>

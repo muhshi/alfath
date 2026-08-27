@@ -151,6 +151,20 @@ return [
         ],
 
         [
+            'text' => 'Tabel Petugas',
+            'url' => 'dashboard-pengolahan',
+            'icon' => 'ti ti-table',
+            'active' => ['dashboard-pengolahan'],
+        ],
+
+        [
+            'text' => 'Timeline Submit',
+            'url' => 'timeline-petugas',
+            'icon' => 'ti ti-calendar-time',
+            'active' => ['timeline-petugas'],
+        ],
+
+        [
             'text' => 'Monitoring',
             'url' => 'surveys?category=monitoring',
             'icon' => 'ti ti-clipboard-data',
