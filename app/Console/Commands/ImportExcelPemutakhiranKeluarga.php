@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use OpenSpout\Reader\SheetInterface;
 use OpenSpout\Reader\XLSX\Reader;
 
 class ImportExcelPemutakhiranKeluarga extends Command
@@ -13,7 +15,8 @@ class ImportExcelPemutakhiranKeluarga extends Command
      *
      * @var string
      */
-    protected $signature = 'import:pemutakhiran-keluarga {file : Path to the Excel file (.xlsx)}';
+    protected $signature = 'import:pemutakhiran-keluarga {file : Path to the Excel file (.xlsx)}
+                            {--no-truncate : Skip truncating existing data before import}';
 
     /**
      * The console command description.
@@ -30,7 +33,7 @@ class ImportExcelPemutakhiranKeluarga extends Command
         set_time_limit(600);
         ini_set('memory_limit', '512M');
 
-        $file = $this->argument('file');
+        $file = (string) $this->argument('file');
 
         if (!file_exists($file)) {
             $this->error("File tidak ditemukan: {$file}");
@@ -46,7 +49,8 @@ class ImportExcelPemutakhiranKeluarga extends Command
         $tanggalData = null;
 
         foreach ($reader->getSheetIterator() as $sheet) {
-            if ($sheet->getName() === 'KELUARGA') {
+            $sheetName = trim(strtoupper($sheet->getName()));
+            if ($sheetName === 'KELUARGA' || str_contains($sheetName, 'KELUARGA')) {
                 $processed += $this->importSheetKeluarga($sheet, $tanggalData);
             }
         }
@@ -58,26 +62,39 @@ class ImportExcelPemutakhiranKeluarga extends Command
             return 1;
         }
 
+        try {
+            Cache::store('file')->increment('se2026_dash_version');
+        } catch (\Throwable $e) {}
+
         $this->info("✅ SUCCESS! Berhasil mengimpor {$processed} data Sub-SLS Pemutakhiran Keluarga." . ($tanggalData ? " (Tanggal Data: {$tanggalData})" : ''));
 
         return 0;
     }
 
-    private function importSheetKeluarga($sheet, &$tanggalData): int
+    /**
+     * Process and import the KELUARGA sheet.
+     */
+    private function importSheetKeluarga(SheetInterface $sheet, ?string &$tanggalData): int
     {
         $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
         $db = $connName ? DB::connection($connName) : DB::connection();
+
+        if (!$this->option('no-truncate')) {
+            $db->table('se2026_pemutakhiran_keluarga')->truncate();
+            $this->warn('   🗑️  Tabel se2026_pemutakhiran_keluarga di-truncate.');
+        }
 
         $rowsToInsert = [];
         $rowCount = 0;
 
         foreach ($sheet->getRowIterator() as $row) {
             $rowCount++;
-            $cells = array_map(fn($cell) => trim((string) $cell->getValue()), $row->getCells());
+            $cells = $row->toArray();
 
             // Extract Tanggal Data from Row 2 if available (e.g. "Diperbarui: 6 Agu 2026, 06.16")
             if ($rowCount === 2 && !empty($cells[0])) {
-                if (preg_match('/Diperbarui:\s*(\d{1,2})\s*([A-Za-z]+)\s*(\d{4})/i', $cells[0], $matches)) {
+                $cellText = (string) $cells[0];
+                if (preg_match('/Diperbarui:\s*(\d{1,2})\s*([A-Za-z]+)\s*(\d{4})/i', $cellText, $matches)) {
                     $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
                     $monthStr = strtolower($matches[2]);
                     $year = $matches[3];
@@ -99,28 +116,31 @@ class ImportExcelPemutakhiranKeluarga extends Command
                 continue;
             }
 
-            $kode = $cells[0] ?? '';
-            $subSls = $cells[1] ?? '';
+            $kode = trim((string) ($cells[0] ?? ''));
+            $subSls = trim((string) ($cells[1] ?? ''));
 
-            // SLS Code must be 16 characters
-            if (strlen($kode) !== 16 || !is_numeric($kode)) {
+            // Clean trailing decimal (.0) if Excel exported numeric cell as float string
+            $kode = preg_replace('/\.0+$/', '', $kode);
+
+            // SLS Code must be 16 characters numeric
+            if (!preg_match('/^\d{16}$/', $kode)) {
                 continue;
             }
 
-            $prelistAwal = (int) str_replace(['.', ','], '', $cells[2] ?? 0);
-            $ditemukan = (int) str_replace(['.', ','], '', $cells[3] ?? 0);
-            $pctDitemukan = (float) str_replace(',', '.', $cells[4] ?? 0);
-            $keluargaBaru = (int) str_replace(['.', ','], '', $cells[5] ?? 0);
-            $meninggal = (int) str_replace(['.', ','], '', $cells[6] ?? 0);
-            $pctMeninggal = (float) str_replace(',', '.', $cells[7] ?? 0);
-            $tidakEligible = (int) str_replace(['.', ','], '', $cells[8] ?? 0);
-            $pctTidakEligible = (float) str_replace(',', '.', $cells[9] ?? 0);
-            $tidakDitemukan = (int) str_replace(['.', ','], '', $cells[10] ?? 0);
-            $pctTidakDitemukan = (float) str_replace(',', '.', $cells[11] ?? 0);
-            $tidakDapatDitemui = (int) str_replace(['.', ','], '', $cells[12] ?? 0);
-            $pctTidakDapatDitemui = (float) str_replace(',', '.', $cells[13] ?? 0);
-            $totalHasilPendataan = (int) str_replace(['.', ','], '', $cells[14] ?? 0);
-            $pctTotalHasilPendataan = (float) str_replace(',', '.', $cells[15] ?? 0);
+            $prelistAwal = $this->cleanNumeric($cells[2] ?? 0);
+            $ditemukan = $this->cleanNumeric($cells[3] ?? 0);
+            $pctDitemukan = $this->cleanFloat($cells[4] ?? 0);
+            $keluargaBaru = $this->cleanNumeric($cells[5] ?? 0);
+            $meninggal = $this->cleanNumeric($cells[6] ?? 0);
+            $pctMeninggal = $this->cleanFloat($cells[7] ?? 0);
+            $tidakEligible = $this->cleanNumeric($cells[8] ?? 0);
+            $pctTidakEligible = $this->cleanFloat($cells[9] ?? 0);
+            $tidakDitemukan = $this->cleanNumeric($cells[10] ?? 0);
+            $pctTidakDitemukan = $this->cleanFloat($cells[11] ?? 0);
+            $tidakDapatDitemui = $this->cleanNumeric($cells[12] ?? 0);
+            $pctTidakDapatDitemui = $this->cleanFloat($cells[13] ?? 0);
+            $totalHasilPendataan = $this->cleanNumeric($cells[14] ?? 0);
+            $pctTotalHasilPendataan = $this->cleanFloat($cells[15] ?? 0);
 
             $rowsToInsert[] = [
                 'kode' => $kode,
@@ -163,10 +183,30 @@ class ImportExcelPemutakhiranKeluarga extends Command
             }
         }
 
-        try {
-            \Illuminate\Support\Facades\Cache::store('file')->increment('se2026_dash_version');
-        } catch (\Throwable $e) {}
-
         return count($rowsToInsert);
+    }
+
+    /**
+     * Clean integer values.
+     */
+    private function cleanNumeric(mixed $value): int
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+        $cleaned = str_replace(['.', ',', ' '], '', (string) $value);
+        return is_numeric($cleaned) ? (int) $cleaned : 0;
+    }
+
+    /**
+     * Clean float values.
+     */
+    private function cleanFloat(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+        $cleaned = str_replace(',', '.', trim((string) $value));
+        return is_numeric($cleaned) ? (float) $cleaned : 0.0;
     }
 }
