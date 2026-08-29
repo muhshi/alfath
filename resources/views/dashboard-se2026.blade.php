@@ -365,6 +365,80 @@
             border-radius: 12px;
             border: 1px solid var(--border-card);
         }
+
+        /* Per Kecamatan Summary Table Styles */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 14px;
+            border: 1px solid var(--border-card);
+        }
+        .table-kecamatan {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+        .table-kecamatan th {
+            background: #f5f5f4;
+            color: var(--text-title);
+            font-weight: 700;
+            padding: 0.85rem 0.95rem;
+            border-bottom: 2px solid var(--border-card);
+            white-space: nowrap;
+        }
+        .table-kecamatan td {
+            padding: 0.75rem 0.95rem;
+            border-bottom: 1px solid var(--border-card);
+            white-space: nowrap;
+            color: var(--text-body);
+        }
+        .table-kecamatan tbody tr:hover {
+            background: var(--orange-bg);
+        }
+        .table-kecamatan tfoot tr {
+            background: #f5f5f4;
+            font-weight: 800;
+            border-top: 2px solid var(--orange-primary);
+        }
+        .table-kecamatan tfoot td {
+            padding: 0.9rem 0.95rem;
+            color: var(--text-title);
+        }
+        .badge-code {
+            background: #e7e5e4;
+            color: #44403c;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .badge-pct {
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+        .pct-high { background: #dcfce7; color: #15803d; }
+        .pct-mid { background: #fef3c7; color: #b45309; }
+        .pct-low { background: #ffe4e6; color: #be123c; }
+
+        .search-table-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            width: 250px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .search-table-input:focus {
+            border-color: var(--orange-primary);
+            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -581,6 +655,77 @@
                 </div>
                 <div class="chart-container" style="height: 420px;">
                     <canvas id="chartKecamatan"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rangkuman Detail per Kecamatan (Tabel Rincian) -->
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header-title">
+                    <h2><i class="fa-solid fa-table-list" style="color: var(--orange-primary);"></i> Rangkuman Rincian Capaian & Potensi Usaha per Kecamatan</h2>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <input type="text" id="searchKecamatanInput" class="search-table-input" placeholder="Cari nama / kode kecamatan...">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">14 Kecamatan</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table-kecamatan">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Kode</th>
+                                <th>Kecamatan</th>
+                                <th style="text-align: right;">Beban Target</th>
+                                <th style="text-align: right;">Submit</th>
+                                <th style="text-align: right;">Sisa Beban</th>
+                                <th style="text-align: center;">Capaian (%)</th>
+                                <th style="text-align: right;">BKU</th>
+                                <th style="text-align: right;">UK (Keluarga)</th>
+                                <th style="text-align: right;">UP (Perusahaan)</th>
+                                <th style="text-align: right;">Total Usaha SE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyKecamatan">
+                            @foreach ($kecamatanProgress as $idx => $kec)
+                                <tr>
+                                    <td>{{ $idx + 1 }}</td>
+                                    <td><span class="badge-code">{{ $kec['code'] }}</span></td>
+                                    <td><strong>{{ $kec['name'] }}</strong></td>
+                                    <td style="text-align: right;">{{ number_format($kec['target'], 0, ',', '.') }}</td>
+                                    <td style="text-align: right; color: #059669; font-weight: 700;">{{ number_format($kec['submit'], 0, ',', '.') }}</td>
+                                    <td style="text-align: right; color: #64748b;">{{ number_format($kec['sisa'], 0, ',', '.') }}</td>
+                                    <td style="text-align: center;">
+                                        <span class="badge-pct {{ $kec['pct'] >= 70 ? 'pct-high' : ($kec['pct'] >= 50 ? 'pct-mid' : 'pct-low') }}">
+                                            {{ number_format($kec['pct'], 1, ',', '.') }}%
+                                        </span>
+                                    </td>
+                                    <td style="text-align: right;">{{ number_format($kec['bku'], 0, ',', '.') }}</td>
+                                    <td style="text-align: right;">{{ number_format($kec['uk'], 0, ',', '.') }}</td>
+                                    <td style="text-align: right;">{{ number_format($kec['up'], 0, ',', '.') }}</td>
+                                    <td style="text-align: right; color: #ea580c; font-weight: 800;">{{ number_format($kec['total_usaha'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3"><strong>TOTAL KABUPATEN DEMAK</strong></td>
+                                <td style="text-align: right;">{{ number_format(array_sum(array_column($kecamatanProgress, 'target')), 0, ',', '.') }}</td>
+                                <td style="text-align: right; color: #059669;">{{ number_format(array_sum(array_column($kecamatanProgress, 'submit')), 0, ',', '.') }}</td>
+                                <td style="text-align: right; color: #64748b;">{{ number_format(array_sum(array_column($kecamatanProgress, 'sisa')), 0, ',', '.') }}</td>
+                                <td style="text-align: center;">
+                                    <span class="badge-pct {{ $persenCapaianKab >= 70 ? 'pct-high' : ($persenCapaianKab >= 50 ? 'pct-mid' : 'pct-low') }}">
+                                        {{ number_format($persenCapaianKab, 1, ',', '.') }}%
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">{{ number_format(array_sum(array_column($kecamatanProgress, 'bku')), 0, ',', '.') }}</td>
+                                <td style="text-align: right;">{{ number_format(array_sum(array_column($kecamatanProgress, 'uk')), 0, ',', '.') }}</td>
+                                <td style="text-align: right;">{{ number_format(array_sum(array_column($kecamatanProgress, 'up')), 0, ',', '.') }}</td>
+                                <td style="text-align: right; color: #ea580c;">{{ number_format(array_sum(array_column($kecamatanProgress, 'total_usaha')), 0, ',', '.') }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
@@ -816,6 +961,19 @@
                 }
             }
         });
+
+        // Search filter for kecamatan table
+        const searchInput = document.getElementById('searchKecamatanInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const query = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#tbodyKecamatan tr');
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+        }
     </script>
 </body>
 </html>
