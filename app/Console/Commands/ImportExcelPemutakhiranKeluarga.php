@@ -16,7 +16,8 @@ class ImportExcelPemutakhiranKeluarga extends Command
      * @var string
      */
     protected $signature = 'import:pemutakhiran-keluarga {file : Path to the Excel file (.xlsx)}
-                            {--no-truncate : Skip truncating existing data before import}';
+                            {--no-truncate : Skip truncating existing data before import}
+                            {--date= : Tanggal data (YYYY-MM-DD)}';
 
     /**
      * The console command description.
@@ -50,8 +51,10 @@ class ImportExcelPemutakhiranKeluarga extends Command
 
         foreach ($reader->getSheetIterator() as $sheet) {
             $sheetName = trim(strtoupper($sheet->getName()));
-            if ($sheetName === 'KELUARGA' || str_contains($sheetName, 'KELUARGA')) {
-                $processed += $this->importSheetKeluarga($sheet, $tanggalData);
+            // Hanya import sheet utama 'KELUARGA', BUKAN 'ANGGOTA KELUARGA' atau 'KELUARGA KHUSUS'
+            if ($sheetName === 'KELUARGA') {
+                $processed = $this->importSheetKeluarga($sheet, $tanggalData);
+                break;
             }
         }
 
@@ -91,23 +94,36 @@ class ImportExcelPemutakhiranKeluarga extends Command
             $rowCount++;
             $cells = $row->toArray();
 
-            // Extract Tanggal Data from Row 2 if available (e.g. "Diperbarui: 6 Agu 2026, 06.16")
-            if ($rowCount === 2 && !empty($cells[0])) {
-                $cellText = (string) $cells[0];
-                if (preg_match('/Diperbarui:\s*(\d{1,2})\s*([A-Za-z]+)\s*(\d{4})/i', $cellText, $matches)) {
-                    $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
-                    $monthStr = strtolower($matches[2]);
-                    $year = $matches[3];
+            // Validasi baris 1 adalah header Progres Pemutakhiran Keluarga
+            if ($rowCount === 1 && !empty($cells[0])) {
+                $r1 = strtoupper((string) $cells[0]);
+                if (!str_contains($r1, 'PEMUTAKHIRAN KELUARGA')) {
+                    $this->error("❌ File ini bukan file Progres Pemutakhiran Keluarga! Terdeteksi: {$r1}");
+                    return 0;
+                }
+            }
 
-                    $monthMap = [
-                        'jan' => '01', 'feb' => '02', 'mar' => '03', 'apr' => '04',
-                        'mei' => '05', 'may' => '05', 'jun' => '06', 'jul' => '07',
-                        'agu' => '08', 'aug' => '08', 'sep' => '09', 'okt' => '10',
-                        'oct' => '10', 'nov' => '11', 'des' => '12', 'dec' => '12',
-                    ];
+            // Extract Tanggal Data from Row 2 if available or from --date option
+            if ($rowCount === 2) {
+                if ($this->option('date')) {
+                    $tanggalData = (string) $this->option('date');
+                } elseif (!empty($cells[0])) {
+                    $cellText = (string) $cells[0];
+                    if (preg_match('/Diperbarui:\s*(\d{1,2})\s*([A-Za-z]+)\s*(\d{4})/i', $cellText, $matches)) {
+                        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+                        $monthStr = strtolower($matches[2]);
+                        $year = $matches[3];
 
-                    $month = $monthMap[$monthStr] ?? '08';
-                    $tanggalData = "{$year}-{$month}-{$day}";
+                        $monthMap = [
+                            'jan' => '01', 'feb' => '02', 'mar' => '03', 'apr' => '04',
+                            'mei' => '05', 'may' => '05', 'jun' => '06', 'jul' => '07',
+                            'agu' => '08', 'aug' => '08', 'sep' => '09', 'okt' => '10',
+                            'oct' => '10', 'nov' => '11', 'des' => '12', 'dec' => '12',
+                        ];
+
+                        $month = $monthMap[$monthStr] ?? '08';
+                        $tanggalData = "{$year}-{$month}-{$day}";
+                    }
                 }
             }
 

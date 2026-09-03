@@ -9,7 +9,8 @@ use OpenSpout\Reader\XLSX\Reader;
 class ImportExcelUsaha extends Command
 {
     protected $signature = 'import:usaha {file : Path to the Excel file (.xlsx)}
-                            {--no-truncate : Skip truncating existing data before import}';
+                            {--no-truncate : Skip truncating existing data before import}
+                            {--date= : Tanggal data (YYYY-MM-DD)}';
 
     protected $description = 'Import sheet "USAHA PERUSAHAAN" dan "USAHA KELUARGA" dari file Excel FASIH ke database fasih';
 
@@ -68,7 +69,7 @@ class ImportExcelUsaha extends Command
         $this->info('📊 Importing sheet: USAHA PERUSAHAAN...');
 
         $db = DB::connection('fasih');
-        $tanggalData = now()->toDateString();
+        $tanggalData = $this->option('date') ?: now()->toDateString();
 
         if (!$this->option('no-truncate')) {
             $db->table('usaha_perusahaan')->truncate();
@@ -181,7 +182,7 @@ class ImportExcelUsaha extends Command
         $this->info('📊 Importing sheet: USAHA KELUARGA...');
 
         $db = DB::connection('fasih');
-        $tanggalData = now()->toDateString();
+        $tanggalData = $this->option('date') ?: now()->toDateString();
 
         if (!$this->option('no-truncate')) {
             $db->table('usaha_keluarga')->truncate();

@@ -301,6 +301,10 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - **Penghapusan Tombol Satelit Eksternal**: Menghapus tombol link Google Maps eksternal pada popup dan daftar klaster karena peta satelit sudah tertanam langsung di aplikasi.
     - **Marker Clustering Interaktif**: Menggunakan `Leaflet.markercluster` dengan custom cluster icon bulat besar berangka total titik saat zoom out, dan otomatis terurai (spiderfy / uncluster) menampilkan persebaran titik survei individu saat zoom in hingga level rumah/bangunan.
     - **Mode Titik Survei Individu & Auto-Uncluster**: Menambahkan konfigurasi `disableClusteringAtZoom: 15` sehingga saat zoom in ke tingkat desa/rumah (zoom >= 15), bulatan klaster otomatis bubar dan menampilkan seluruh titik survei individu. Menambahkan pula tombol toggle cepat `[Tampilkan Semua Titik Individu]` di peta untuk melihat sebaran ribuan titik langsung tanpa pengelompokan.
+  - **Perbaikan Parser Excel Pemutakhiran Keluarga & Proteksi Zero-Data Guard (`ImportExcelPemutakhiranKeluarga.php`, `ImportExcelUsaha.php`, `FasihScraper.php`)**:
+    - **Pencegahan Overwrite Multi-Sheet Keluarga**: Memperbaiki filter sheet di `ImportExcelPemutakhiranKeluarga` menjadi strict `$sheetName === 'KELUARGA'` dan menambahkan validasi header baris 1 (`PROGRES PEMUTAKHIRAN KELUARGA`), sehingga tidak lagi menimpa data utama dengan sheet `ANGGOTA KELUARGA`, `KELUARGA KHUSUS` (98 data), ataupun `USAHA KELUARGA`.
+    - **Opsi Custom Date & Tanpa Truncate Default**: Menambahkan opsi `--date=YYYY-MM-DD` pada `import:usaha` dan `import:pemutakhiran-keluarga`, serta menerapkan `--no-truncate` secara default di Filament Scraper Page guna melindungi integritas data historis di database.
+    - **Sinkronisasi Data Snapshot 3 September 2026**: Mengimpor data Usaha Perusahaan & Usaha Keluarga dari file `Export_Progres_Pendataan... (11).xlsx` sebagai snapshot 3 September ($30.436$ Usaha Perusahaan dan $149.138$ Usaha Keluarga) serta data Pemutakhiran Keluarga utuh dari `Export_Progres_Pemutakhiran_Keluarga... (10).xlsx` ($374.252$ Keluarga Ditemukan + Baru), memulihkan total Muatan Murni menjadi **404.688**.
 
 
 

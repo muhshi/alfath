@@ -127,6 +127,7 @@ class FasihScraper extends Page implements Tables\Contracts\HasTable
                         if ($jenisImport === 'pemutakhiran_keluarga') {
                             $exitCode = Artisan::call('import:pemutakhiran-keluarga', [
                                 'file' => $fullPath,
+                                '--no-truncate' => true,
                             ]);
                             $label = 'Progres Pemutakhiran Keluarga';
                         } else {
