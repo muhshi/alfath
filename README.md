@@ -1,3 +1,4 @@
+
 <p align="center">
   <img src="public/assets/logo_bps.png" width="120" alt="Logo BPS Demak" onerror="this.style.display='none'">
 </p>
@@ -54,6 +55,7 @@ chmod +x deploy.sh
 ```
 
 Script `deploy.sh` secara otomatis mengeksekusi:
+
 1. Peringatan mode pemeliharaan (`php artisan down`).
 2. Pull update code terbaru dari git (`git pull origin main`).
 3. Optimalisasi instalasi dependensi PHP & JS (`composer install --no-dev`, `pnpm/npm run build`).
@@ -66,6 +68,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
 ## 📜 Changelog
 
 ### 2026-07-29
+
 - **Executive Public Dashboard Sensus Ekonomi 2026**:
   - Menambahkan controller `ExecutiveDashboardController` untuk agregasi data 8 tabel (`alokasi_pengawas`, `master_petugas`, `monitoring_se2026`, `monitoring_sls_se2026`, `ub_pencacah`, `ub_pengawas`, `usaha_keluarga`, `usaha_perusahaan`).
   - Menambahkan rute publik `/dashboard-se2026` di `routes/web.php`.
@@ -86,6 +89,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - Pemisahan 5 Status Keberadaan Usaha: Memecah tampilan legenda grafik doughnut dan stat grid pada kartu **Temuan Usaha Keluarga** dan **Keberadaan Bangunan Usaha Perusahaan** menjadi 5 kategori status terpisah (**Ditemukan**, **Baru**, **Tidak Ditemukan**, **Ganda**, dan **Tutup**) lengkap dengan skema warna beriklim eksekutif.
 
 ### 2026-07-31
+
 - **Fitur Upload & Pengolahan Data Excel Usaha (FASIH DB)**:
   - Ekstraksi Khusus Sheet Usaha: Mengekstrak hanya sheet `USAHA PERUSAHAAN` dan `USAHA KELUARGA` dari file Excel Export Progres Pendataan Sub-SLS dan mengabaikan sheet lainnya.
   - Dukungan Metabase Historical Snapshot Date Filter: Memperbarui unique index database `fasih` pada tabel `usaha_perusahaan` dan `usaha_keluarga` menjadi komposit `UNIQUE (kode, tanggal_data)`. Menjaga kelengkapan snapshot historis per tanggal agar query Metabase dapat melakukan filtering tanggal secara presisi tanpa menimpa data lama.
@@ -99,12 +103,14 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - Penyesuaian Batas Ukuran Upload Livewire & Mime Types Excel: Menyesuaikan batas `maxSize(65536)` (64 MB) pada komponen `FileUpload` Filament dan aturan `config/livewire.php` (`temporary_file_upload.rules`), menghapus pembatasan `acceptedFileTypes` agar tidak terjadi error "file type invalid" pada browser, serta menambahkan berkas `.user.ini` (`upload_max_filesize = 64M`, `post_max_size = 64M`) untuk menaikkan batas upload PHP bawaan (2M).
 
 ### 2026-08-03
+
 - **Perbaikan Deklarasi Properti Filament v3 Resources & Widgets**:
   - Memperbaiki tipe deklarasi `$navigationGroup`, `$navigationIcon`, dan `$heading` pada `CategoryResource`, `TeamResource`, `SurveyResource`, `FasihScraper`, `CategoryDistributionChartWidget`, dan `DailyVisitorsChartWidget` menjadi `protected static ?string` agar kompatibel penuh dengan kelas induk Filament v3 dan PHP 8.2+.
   - Mempublikasikan ulang aset JavaScript Filament 3.3 (`php artisan filament:assets`) ke direktori `public/js/filament/` untuk menghilangkan error `Livewire.interceptMessage` pada browser pasca-pull.
   - Memperbaiki properti `$view` pada `App\Livewire\ScraperLogViewer` menjadi `protected static string $view` agar sesuai dengan spesifikasi widget Filament.
 
 ### 2026-08-06
+
 - **Integrasi Import Data Progres Pemutakhiran Keluarga SE2026 (`se2026_pemutakhiran_keluarga`) & Penataan Tabel SE2026**:
   - Penataan Prefix Nama Tabel SE2026: Merename tabel fisik `usaha_perusahaan` menjadi `se2026_usaha_perusahaan` dan `usaha_keluarga` menjadi `se2026_usaha_keluarga` pada database `fasih`.
   - Kompatibilitas Metabase (SQL View Layer): Membuat Database View `usaha_perusahaan` dan `usaha_keluarga` yang merujuk ke tabel fisik `se2026_...` agar dashboard dan query Metabase tetap berjalan 100% lancar tanpa breaking change.
@@ -127,7 +133,9 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Memperbarui properti `$view` pada `App\Filament\Pages\FasihScraper` menjadi instance property (`protected string $view`) sesuai kelas induk `Filament\Pages\Page`.
     - Memperbarui properti `$heading` pada `CategoryDistributionChartWidget` dan `DailyVisitorsChartWidget` menjadi instance property (`protected ?string $heading`) sesuai kelas induk `Filament\Widgets\ChartWidget`.
     - Menyelesaikan error `artisan package:discover` (code 255) yang terjadi saat script `deploy.sh` dijalankan di server.
+
 ### 2026-08-07
+
 - **Tabel Petugas SE2026 (High-Contrast Segmented Pill Tabs UI, DataTables Integration, Tabel Agregasi PML & Multi-Sheet Excel Export)**:
   - Desain Tab Berkontras Tinggi (*High-Contrast Segmented Pill Tabs UI*): Mengubah tampilan navigasi Tab di atas kartu tabel menjadi komponen *segmented control pill tabs* dengan kontras warna yang sangat tajam dan jelas. Tab Aktif memiliki warna latar belakang solid yang mencolok (Sky Blue untuk PPL, Indigo untuk PML, dan Emerald Green untuk SLS) lengkap dengan *badge counter pill* transparan serta efek bayangan (*glowing shadow*), sehingga user dapat dengan mudah mengenali Tab mana yang sedang aktif.
   - Tabel Agregasi PML (Pengawas): Menambahkan kueri `getPmlQuery` di `PengolahanController.php` dan **Tab 2: Ringkasan Per PML (Pengawas)** pada UI untuk mengagregasikan seluruh hasil pendataan (Muatan Murni, Belum Dikerjakan, Beban, Total Submit, % Progres, Usaha Perusahaan, Usaha Keluarga, dan Pemutakhiran Keluarga) berdasarkan Pengawas (PML), lengkap dengan statistik Jumlah PPL dan Jumlah SLS yang didampingi.
@@ -138,7 +146,9 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - Resolusi Nama SLS Multi-Tabel (`COALESCE` Fallback): Memperbarui kueri `getSlsQuery` untuk mengambil nama SLS secara berlapis dari 3 tabel (`monitoring_sls_se2026.nmsls`, `sipw.nama_sls`, dan `se2026_pemutakhiran_keluarga.sub_sls`). Jika nama SLS bernilai `NULL` atau `-`, sistem otomatis mengambil nama dari Wilkerstat / Pemutakhiran Keluarga atau menampilkan format `SLS [Kode]`.
   - Penataan Header Tabel Ringkas & Centered: Mempersempit lebar kolom tabel, merata-tengahkan judul header (`text-align: center !important`), dan menyusun judul panjang menjadi berbaris ke bawah (`white-space: normal`, `<br>`, dan padding compact) agar tampilan proporsional dan tidak stelling.
   - Penanganan Error AMD `define` & jQuery Collision: Memuat instance jQuery terisolasi dengan `jQuery.noConflict(true)` dan IIFE wrapper untuk menjamin fungsi `$.fn.DataTable` selalu siap tanpa terganggu oleh bundling scripts lain.
+
 ### 2026-08-10
+
 - **Optimasi Performa Database & Pemulihan Tab Ranking Kinerja Petugas**:
   - Restorasi Tab **Ranking Kinerja Petugas (🏆)**: Mengembalikan Tab 4 Ranking Kinerja Petugas beserta kalkulasi Skor Kinerja (0-100), Target Milestone 95% s.d. 20 Agustus, indikator laju harian, serta sistem warning anomali SLS (Usaha Perusahaan < 5% / Usaha Keluarga < 10%) & 3-day stagnancy signal.
   - Pemulihan 4 Tab Utama: Menjamin ke-4 tab (`Tab 1: PPL`, `Tab 2: PML`, `Tab 3: SLS`, dan `Tab 4: Ranking Kinerja`) berfungsi 100% normal dan lancar saat berpindah tab.
@@ -155,6 +165,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - **Koreksi Pemetaan Kolom Parser Excel FASIH (`ImportExcelUsaha.php`)**: Memperbaiki pergeseran indeks kolom Excel FASIH pada sheet `USAHA PERUSAHAAN` (kolom CAPI Ditemukan, Tutup, Ganda, Tidak Ditemukan, Baru) dan `USAHA KELUARGA` (kolom Ditemukan, Tutup, Ganda, Tidak Ditemukan, Baru, Usaha Dalam Keluarga) di mana data 61.089 *Tidak Ditemukan* sebelumnya tersimpan sebagai *Baru* sehingga membengkakkan Muatan Murni dan membuat status Tidak Ditemukan hilang. Data Excel telah di-import ulang dan kini 100% tepat sesuai indikator FASIH.
 
 ### 2026-08-13
+
 - **Peningkatan Dashboard Pengolahan & Sistem SE2026**:
   - **Peningkatan Batas Upload File Excel di Docker & FrankenPHP**: Menambahkan konfigurasi `request_body { max_size 100MB }` pada `Caddyfile` dan `uploads.ini` (100MB) pada `Dockerfile` agar unggah file Excel FASIH ukuran besar (hingga 64MB+) di server berbasis Docker/FrankenPHP berjalan lancar tanpa error upload.
   - **Penyesuaian Istilah Usaha: BKU & UK**: Memperbarui istilah **UP (Usaha Perusahaan)** menjadi **BKU (Bangunan Khusus Usaha)** di seluruh kartu KPI, header tabel, modal detail anomali, serta berkas ekspor Excel, sedangkan istilah **UK (Usaha Keluarga)** tetap dipertahankan.
@@ -165,6 +176,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - **Pembaruan Ekspor Excel**: Memperbarui format ekspor Excel Sheet Ranking Kinerja untuk menyertakan angka submit harian, pertambahan draft harian, dan durasi hari stagnan secara bersih tanpa teks membingungkan (`stagnan 0 hari`).
 
 ### 2026-08-17
+
 - **Penyandingan Data Patokan Wilkerstat 2025 (KK & Usaha) dengan Hasil Pendataan SE2026 & Integrasi Anomali SLS**:
   - **Penyandingan Data & Indikator Komparasi Intuitif**:
     - **Data Keluarga (KK)**: Menyandingkan Muatan Keluarga Ditemukan + Baru SE2026 (`pk_ditemukan`) dengan data KK Wilkerstat 2025 (`muatan_kk`).
@@ -191,6 +203,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Mengintegrasikan tombol login SSO SIPETRA dengan branding logo resmi BPS Demak pada form login Filament Admin Panel (`PanelsRenderHook::AUTH_LOGIN_FORM_AFTER`) dan form login Tablar (`/login`).
 
 ### 2026-08-18
+
 - **Perbaikan Export Excel Multi-Sheet (`PengolahanExportService`)**:
   - Mengganti fungsi `range($startCol, $endCol)` pada method `applyBordersAndAutoWidth()` dengan `Coordinate::columnIndexFromString()` dan `Coordinate::stringFromColumnIndex()`.
   - Mengatasi error `Argument #2 ($end) must be a single byte, subsequent bytes are ignored` pada PHP 8 saat melakukan autosize kolom Excel lebih dari 26 kolom (seperti kolom `AA`, `AB` pada Sheet Alokasi SLS).
@@ -198,6 +211,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - Memperbarui import action tabel dari `Filament\Tables\Actions` menjadi `Filament\Actions` (`EditAction`, `BulkActionGroup`, `DeleteBulkAction`) sesuai standar Filament v5.
 
 ### 2026-08-19
+
 - **Pembaruan Formula Perangkingan Kinerja Petugas SE2026 (`PetugasPerformanceRankingService.php`)**:
   - **Skema 3 Pilar Proporsional (100 Poin)**:
     - **Progress Score (Bobot 35 Poin)**: Menilai kedisiplinan dan pencapaian submit relatif terhadap *Dynamic Target* harian.
@@ -207,6 +221,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - **UI/UX Dashboard Breakdown Indikator**: Menampilkan breakdown sub-skor `P` (Progres), `U` (Usaha), dan `M` (Muatan Murni) di cell Skor Kinerja beserta pembaruan penjelasan metodologi pada kartu panduan Dashboard Pengolahan.
 
 ### 2026-08-20
+
 - **Koreksi Pemetaan Kolom Parser Excel Usaha (`process_usaha_excel.py` & `ImportExcelUsaha.php`) & Re-import Data**:
   - **Identifikasi Pergeseran Kolom Sheet USAHA PERUSAHAAN**: Mengoreksi pemetaan kolom parser Excel FASIH di mana kolom kategori *UMKM (Non-UB)* berada pada indeks kolom 21 (Ditemukan), 23 (Tutup), 25 (Ganda), 27 (Tidak Ditemukan), 29 (Baru), dan 39 (Total Usaha BKU). Sebelumnya terjadi pergeseran sehingga data *Tidak Ditemukan* (seperti 186 pada SLS `3321070012004400`) tergeser ke status *Baru/Ditemukan*.
   - **Penggabungan Status UB + UMKM**: Memastikan perhitungan BKU menggabungkan status dari entitas *UB* (Usaha Besar) dan *UMKM* secara presisi.
@@ -240,6 +255,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - **Tombol Refresh Manual UI**: Menyediakan tombol `🔄 Refresh & Hitung Ulang Cache Real-time` (parameter `?fresh=1`) pada form filter dashboard.
 
 ### 2026-08-21
+
 - **Implementasi Formula Perhitungan & Ranking Kinerja PML Terbaik (5 Pilar Kinerja) & Transparansi Metodologi di Dashboard Pengolahan**:
   - **Formula 5 Pilar Kinerja PML (Skala 0 s.d. 100 Poin) (`PetugasPerformanceRankingService.php`)**:
     - **Pilar 1 - Responsivitas & Verifikasi PML (Bobot 25 Poin)**: Menilai kecepatan dan kedisiplinan PML memeriksa submit dokumen PPL binaannya (`% Pengerjaan PML = (Approved + Rejected) / Total Submit PPL * 100%`). Mendapat 25 poin penuh jika `% Pengerjaan PML` $\ge 90\%$.
@@ -258,3 +274,12 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - **Kolom Tabel PML Diperbarui**: Menyertakan kolom Peringkat (Rank #1 🏆), Skor Kinerja (0-100), Predikat Badge, sub-skor micro badges 5 pilar (`V:.. | P:.. | U:.. | T:.. | A:..`), serta Rekomendasi Tindakan PML. Default sorting otomatis mengurutkan berdasarkan peringkat PML.
   - **Pembaruan Ekspor Excel Agregasi & Ranking PML (`PengolahanExportService.php`)**:
     - Memperbarui Sheet PML (Sheet 3 pada export Semua Tab dan single sheet PML) agar memuat kolom Rank PML, Skor Kinerja, Predikat, Rekomendasi Tindakan, serta rincian nilai 5 pilar (Verifikasi, Progres Tim, Kualitas Usaha, Tim Health, Resolusi Anomali).
+
+### 2026-09-03
+
+- **Perancangan Fitur Dashboard Deteksi Anomali Geotag Petugas (Klaster Lat-Long SE2026)**:
+  - **Analisis & Parsing Dataset Klaster Geotag (`public/SE2026/*.csv`)**: Melakukan audit dan analisis terhadap 13 file CSV (117.000 titik geotag) hasil query SQL Lab yang membentuk 736 titik klaster anomali pada 253 petugas pencacah (PPL).
+  - **Arsitektur Service Layer & High-Performance Caching**: Merancang `Se2026ClusterAnomalyService` untuk memisahkan logika parsing data, agregasi geospasial, join dengan database `fasih` (`master_petugas`, `monitoring_se2026`, `alokasi_pengawas`), serta indexed caching agar beban komputasi tidak membebani server dan respons halaman instan (< 100ms).
+  - **Perancangan Visualisasi Geospasial Interaktif (Leaflet.js)**: Menyusun desain dashboard berbasis Tablar dengan peta interaktif Demak, penandaan klaster bergradasi risiko (Ekstrem >100 titik, Berat 51-100, Sedang 21-50, Ringan 10-20), integrasi tombol cek lokasi Google Maps / Satelit (untuk validasi area pasar/ruko vs domisili warkop/rumah), serta ranking investigasi petugas nakal.
+  - **Penyusunan Rencana Kerja Terstruktur**: Mendokumentasikan alur implementasi di `tasks/plan.md` dan `tasks/todo.md`.
+
