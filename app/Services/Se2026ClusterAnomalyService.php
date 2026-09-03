@@ -40,7 +40,7 @@ class Se2026ClusterAnomalyService
     public function getClusterData(bool $forceRefresh = false): array
     {
         $cacheStore = Cache::store('file');
-        $cacheKey = 'se2026_geotag_anomaly_dataset_v1';
+        $cacheKey = 'se2026_geotag_anomaly_dataset_v2';
 
         if ($forceRefresh) {
             $cacheStore->forget($cacheKey);
@@ -235,15 +235,37 @@ class Se2026ClusterAnomalyService
                         'marker_color' => $markerColor,
                         'google_maps_url' => "https://www.google.com/maps?q={$cLat},{$cLon}&z=19&t=k",
                         'sample_assignments' => [trim($row[$idxAssign] ?? '')],
+                        'points' => [],
                     ];
                 } else {
                     if (count($clusters[$clusterKey]['sample_assignments']) < 3) {
                         $clusters[$clusterKey]['sample_assignments'][] = trim($row[$idxAssign] ?? '');
                     }
                 }
+
+                $assignId = trim($row[$idxAssign] ?? '');
+                $pLat = (float) ($row[$idxPointLat] ?? $cLat);
+                $pLon = (float) ($row[$idxPointLon] ?? $cLon);
+
+                if (!empty($assignId) && !isset($clusters[$clusterKey]['points'][$assignId])) {
+                    $clusters[$clusterKey]['points'][$assignId] = [
+                        round($pLat, 7),
+                        round($pLon, 7),
+                        substr($assignId, 0, 8),
+                    ];
+                }
             }
             fclose($handle);
         }
+
+        // Convert points to numeric array and adjust cluster_size
+        foreach ($clusters as &$c) {
+            $c['points'] = array_values($c['points']);
+            if (count($c['points']) > 0) {
+                $c['cluster_size'] = count($c['points']);
+            }
+        }
+        unset($c);
 
         // Sort clusters by cluster_size desc
         uasort($clusters, function ($a, $b) {

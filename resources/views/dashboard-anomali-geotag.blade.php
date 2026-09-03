@@ -3,8 +3,10 @@
 @section('title', 'Deteksi Anomali Geotag & Klaster Titik SE2026')
 
 @push('css')
-    <!-- Leaflet CSS CDN -->
+    <!-- Leaflet & MarkerCluster CSS CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
     <style>
@@ -43,12 +45,51 @@
         .stat-card.stat-info::before { background-color: #0284c7; }
 
         #anomali-map {
-            height: 620px;
-            min-height: 620px;
+            height: 640px;
+            min-height: 640px;
             width: 100%;
             border-radius: 10px;
             z-index: 1;
-            background-color: #f1f5f9;
+            background-color: #1e293b;
+        }
+
+        /* MarkerCluster Custom Badges */
+        .custom-cluster-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+        .custom-cluster-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.85rem;
+            border: 2.5px solid #ffffff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+            transition: transform 0.15s ease-in-out;
+        }
+        .custom-cluster-badge:hover {
+            transform: scale(1.2);
+        }
+        .custom-cluster-badge.cluster-ekstrem {
+            background: #dc2626;
+            box-shadow: 0 0 16px rgba(220, 38, 38, 0.8);
+        }
+        .custom-cluster-badge.cluster-berat {
+            background: #ea580c;
+            box-shadow: 0 0 14px rgba(234, 88, 12, 0.7);
+        }
+        .custom-cluster-badge.cluster-sedang {
+            background: #ca8a04;
+            box-shadow: 0 0 10px rgba(202, 138, 4, 0.6);
+        }
+        .custom-cluster-badge.cluster-ringan {
+            background: #0284c7;
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.6);
         }
 
         .map-legend {
@@ -317,14 +358,31 @@
                 </div>
                 <div class="col-lg-4 col-xl-3">
                     <div class="card anomali-card">
-                        <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
-                            <span class="fw-bold small text-uppercase text-muted">Klaster Terpilih</span>
-                            <span class="badge bg-secondary-lt fw-normal">{{ count($clusters) }} spot</span>
+                        <div class="card-header bg-white py-2 px-3 flex-column align-items-stretch border-bottom">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold small text-uppercase text-muted">Daftar Klaster</span>
+                                <span class="badge bg-secondary-lt fw-normal" id="sidebarClusterCount">{{ count($clusters) }} spot</span>
+                            </div>
+                            <div class="row g-1">
+                                <div class="col-12">
+                                    <select id="sidebarKecFilter" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                                        <option value="">-- Semua Kecamatan di List --</option>
+                                        @foreach ($kecNameMap as $kCode => $kName)
+                                            <option value="{{ $kName }}">{{ $kName }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <input type="text" id="sidebarSearchInput" class="form-control form-control-sm" placeholder="🔍 Cari nama / email di list..." style="font-size: 0.8rem;">
+                                </div>
+                            </div>
                         </div>
                         <div class="cluster-list-container" id="clusterList">
                             @forelse($clusters as $idx => $c)
                                 <div class="cluster-item {{ $idx === 0 ? 'active' : '' }}" 
                                      id="cItem_{{ $c['id'] }}"
+                                     data-kec="{{ $c['namakec'] }}"
+                                     data-search="{{ strtolower($c['nama_petugas'] . ' ' . $c['email'] . ' ' . $c['namakec']) }}"
                                      onclick="focusCluster({{ $c['center_lat'] }}, {{ $c['center_lon'] }}, '{{ $c['id'] }}')">
                                     <div class="d-flex justify-content-between align-items-start mb-1">
                                         <span class="badge {{ $c['badge_class'] }} small py-0 px-1">
@@ -337,11 +395,9 @@
                                     <div class="fw-bold text-dark small text-truncate" title="{{ $c['nama_petugas'] }}">
                                         {{ $c['nama_petugas'] }}
                                     </div>
-                                    <div class="text-muted small d-flex justify-content-between align-items-center" style="font-size: 0.775rem;">
+                                    <div class="text-muted small d-flex justify-content-between align-items-center mt-1" style="font-size: 0.775rem;">
                                         <span><i class="ti ti-map-pin text-primary"></i> {{ $c['namakec'] }}</span>
-                                        <a href="{{ $c['google_maps_url'] }}" target="_blank" rel="noopener noreferrer" class="text-azure text-decoration-none fw-semibold" onclick="event.stopPropagation()">
-                                            <i class="ti ti-external-link"></i> Satelit
-                                        </a>
+                                        <span class="text-muted" style="font-size:0.72rem;">PML: {{ $c['pml_nama'] }}</span>
                                     </div>
                                 </div>
                             @empty
@@ -500,8 +556,9 @@
     <!-- jQuery CDN (Required by DataTables & reliable DOM operations) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     
-    <!-- Leaflet JS CDN -->
+    <!-- Leaflet & MarkerCluster JS CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 
     <!-- DataTables CDN with AMD safeguard -->
     <script>
@@ -518,6 +575,7 @@
         // Pre-loaded clusters from PHP
         const clustersData = {!! json_encode($clusters, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!};
         let mapInstance = null;
+        let clusterGroup = null;
         let markersById = {};
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -553,7 +611,10 @@
                 console.warn("DataTables initialization warning:", dtErr);
             }
 
-            // 3. Refresh map dimensions when Tab 1 becomes visible
+            // 3. Setup Client-Side Sidebar Search & Filter
+            initSidebarFilter();
+
+            // 4. Refresh map dimensions when Tab 1 becomes visible
             const mapTabBtn = document.getElementById('map-tab');
             if (mapTabBtn) {
                 mapTabBtn.addEventListener('shown.bs.tab', function () {
@@ -563,6 +624,41 @@
                 });
             }
         });
+
+        function initSidebarFilter() {
+            const kecSelect = document.getElementById('sidebarKecFilter');
+            const searchInput = document.getElementById('sidebarSearchInput');
+            const countBadge = document.getElementById('sidebarClusterCount');
+            const items = document.querySelectorAll('.cluster-item');
+
+            function filterItems() {
+                const selectedKec = (kecSelect ? kecSelect.value : '').toLowerCase().trim();
+                const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+                let visibleCount = 0;
+
+                items.forEach(el => {
+                    const itemKec = (el.getAttribute('data-kec') || '').toLowerCase();
+                    const itemSearch = (el.getAttribute('data-search') || '').toLowerCase();
+
+                    const matchKec = !selectedKec || itemKec.includes(selectedKec);
+                    const matchQuery = !query || itemSearch.includes(query);
+
+                    if (matchKec && matchQuery) {
+                        el.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        el.style.display = 'none';
+                    }
+                });
+
+                if (countBadge) {
+                    countBadge.innerText = visibleCount + ' spot';
+                }
+            }
+
+            if (kecSelect) kecSelect.addEventListener('change', filterItems);
+            if (searchInput) searchInput.addEventListener('input', filterItems);
+        }
 
         function initLeafletMap() {
             const mapContainer = document.getElementById('anomali-map');
@@ -576,13 +672,25 @@
                 scrollWheelZoom: true
             });
 
-            // Base Layer: OpenStreetMap (Standard default, highly reliable)
+            // Base Layer 1: Google Maps Satellite Hybrid (DEFAULT)
+            const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                attribution: '&copy; Google Maps Satellite'
+            }).addTo(mapInstance);
+
+            // Base Layer 2: OpenStreetMap Standard
             const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(mapInstance);
+            });
 
-            // Base Layer: Carto Positron (Clean Light)
+            // Base Layer 3: Esri World Imagery (Satellite)
+            const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: '&copy; Esri World Imagery'
+            });
+
+            // Base Layer 4: Carto Positron (Clean Light)
             const cartoPositron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 maxZoom: 20,
                 subdomains: 'abcd',
@@ -591,8 +699,10 @@
 
             // Layer Control
             L.control.layers({
-                "OpenStreetMap (Default)": osm,
-                "Carto Clean Light": cartoPositron
+                "🛰️ Google Satellite Hybrid (Default)": googleHybrid,
+                "🗺️ OpenStreetMap": osm,
+                "🌍 Esri Satellite": esriSatellite,
+                "⚪ Carto Clean Light": cartoPositron
             }, null, { position: 'topright' }).addTo(mapInstance);
 
             // Add Custom Map Legend (Bottom Left)
@@ -605,12 +715,15 @@
                     <div class="legend-item"><span class="legend-circle" style="background:#ea580c;"></span> Berat (51 - 100 Titik)</div>
                     <div class="legend-item"><span class="legend-circle" style="background:#ca8a04;"></span> Sedang (21 - 50 Titik)</div>
                     <div class="legend-item"><span class="legend-circle" style="background:#0284c7;"></span> Ringan (10 - 20 Titik)</div>
+                    <div class="text-muted small mt-2 pt-1 border-top" style="font-size:0.7rem;">
+                        Zoom in untuk memecah klaster menjadi titik survei individu.
+                    </div>
                 `;
                 return div;
             };
             legend.addTo(mapInstance);
 
-            // Render Circle Markers for each cluster
+            // Render MarkerCluster with individual points
             renderClusterMarkers();
 
             // Force recalculation of map container dimensions
@@ -621,51 +734,63 @@
         function renderClusterMarkers() {
             if (!clustersData || !Array.isArray(clustersData) || clustersData.length === 0) return;
 
-            const group = new L.featureGroup();
+            // Initialize MarkerClusterGroup
+            clusterGroup = L.markerClusterGroup({
+                chunkedLoading: true,
+                showCoverageOnHover: true,
+                zoomToBoundsOnClick: true,
+                spiderfyOnMaxZoom: true,
+                maxClusterRadius: 40,
+                iconCreateFunction: function (cluster) {
+                    const count = cluster.getChildCount();
+                    let bgClass = 'cluster-ringan';
+                    if (count > 100) bgClass = 'cluster-ekstrem';
+                    else if (count > 50) bgClass = 'cluster-berat';
+                    else if (count > 20) bgClass = 'cluster-sedang';
+
+                    return L.divIcon({
+                        html: '<div class="custom-cluster-badge ' + bgClass + '"><span>' + count + '</span></div>',
+                        className: 'custom-cluster-icon',
+                        iconSize: L.point(40, 40)
+                    });
+                }
+            });
 
             clustersData.forEach(c => {
                 if (!c || isNaN(parseFloat(c.center_lat)) || isNaN(parseFloat(c.center_lon))) {
                     return;
                 }
 
-                const lat = parseFloat(c.center_lat);
-                const lon = parseFloat(c.center_lon);
+                const cLat = parseFloat(c.center_lat);
+                const cLon = parseFloat(c.center_lon);
                 const size = parseInt(c.cluster_size) || 1;
+                const points = (Array.isArray(c.points) && c.points.length > 0) ? c.points : [[cLat, cLon, '']];
 
-                // Sizing circle radius based on cluster_size
-                const r = Math.min(26, Math.max(7, Math.sqrt(size) * 2.2));
-
-                const circle = L.circleMarker([lat, lon], {
-                    radius: r,
+                // Create main cluster representative marker (for centering & popup)
+                const mainMarker = L.circleMarker([cLat, cLon], {
+                    radius: 7,
                     fillColor: c.marker_color || '#dc2626',
                     color: '#ffffff',
-                    weight: 1.5,
-                    opacity: 0.9,
-                    fillOpacity: 0.75
+                    weight: 2,
+                    opacity: 0.95,
+                    fillOpacity: 0.9
                 });
 
-                // Tooltip on Hover
-                circle.bindTooltip(`<strong>${c.nama_petugas}</strong>: ${size} titik bertumpuk (${c.namakec})`, {
-                    direction: 'top',
-                    offset: [0, -r]
-                });
-
-                // Rich Popup on Click
                 const popupContent = `
-                    <div style="min-width: 250px; font-family: inherit;">
+                    <div style="min-width: 260px; font-family: inherit;">
                         <div class="popup-custom-title d-flex justify-content-between align-items-center">
-                            <span>${c.nama_petugas}</span>
+                            <span class="fw-bold">${c.nama_petugas}</span>
                             <span class="badge ${c.badge_class}" style="font-size:0.75rem;">${size} Titik</span>
                         </div>
                         <div class="text-muted small mb-2" style="font-size:0.75rem;">${c.email}</div>
                         
                         <div class="popup-stat-row">
                             <span class="text-muted">Kecamatan:</span>
-                            <span class="fw-semibold">${c.namakec}</span>
+                            <span class="fw-semibold text-dark">${c.namakec}</span>
                         </div>
                         <div class="popup-stat-row">
                             <span class="text-muted">Pengawas (PML):</span>
-                            <span class="fw-semibold">${c.pml_nama}</span>
+                            <span class="fw-semibold text-dark">${c.pml_nama}</span>
                         </div>
                         <div class="popup-stat-row">
                             <span class="text-muted">Radius Sebaran:</span>
@@ -676,37 +801,71 @@
                             <span class="fw-semibold">${c.avg_accuracy} m</span>
                         </div>
                         <div class="popup-stat-row">
-                            <span class="text-muted">Koordinat:</span>
-                            <span class="font-monospace small">${lat.toFixed(5)}, ${lon.toFixed(5)}</span>
+                            <span class="text-muted">Pusat Koordinat:</span>
+                            <span class="font-monospace small">${cLat.toFixed(5)}, ${cLon.toFixed(5)}</span>
                         </div>
 
-                        <div class="mt-3 pt-2 border-top d-flex gap-2">
-                            <a href="${c.google_maps_url}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary flex-grow-1" style="font-size: 0.775rem;">
-                                <i class="ti ti-world me-1"></i> Cek Satelit (Pasar/Rumah)
-                            </a>
-                            <button class="btn btn-sm btn-primary" onclick="mapInstance.setView([${lat}, ${lon}], 18)" style="font-size: 0.775rem;">
-                                <i class="ti ti-zoom-in"></i> Zoom
+                        <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
+                            <button class="btn btn-sm btn-primary w-100" onclick="mapInstance.setView([${cLat}, ${cLon}], 19)" style="font-size: 0.775rem;">
+                                <i class="ti ti-zoom-in me-1"></i> Zoom In Detail Titik (Level Bangunan)
                             </button>
                         </div>
                     </div>
                 `;
 
-                circle.bindPopup(popupContent);
-
-                // Highlight active item on list when marker clicked
-                circle.on('click', () => {
+                mainMarker.bindPopup(popupContent);
+                mainMarker.on('click', () => {
                     highlightListItem(c.id);
                 });
 
-                markersById[c.id] = circle;
-                circle.addTo(mapInstance);
-                group.addLayer(circle);
+                markersById[c.id] = mainMarker;
+
+                // Add individual survey points to the cluster group
+                points.forEach((pt, pIdx) => {
+                    const pLat = parseFloat(pt[0]) || cLat;
+                    const pLon = parseFloat(pt[1]) || cLon;
+                    const pAssign = pt[2] || ('#' + (pIdx + 1));
+
+                    const pointMarker = L.circleMarker([pLat, pLon], {
+                        radius: 6,
+                        fillColor: c.marker_color || '#dc2626',
+                        color: '#ffffff',
+                        weight: 1.5,
+                        opacity: 0.95,
+                        fillOpacity: 0.85
+                    });
+
+                    // Tooltip & Popup for individual point
+                    pointMarker.bindTooltip(`${c.nama_petugas} (Assignment: ${pAssign})`, {
+                        direction: 'top',
+                        offset: [0, -6]
+                    });
+
+                    pointMarker.bindPopup(`
+                        <div style="min-width: 220px; font-family: inherit;">
+                            <div class="fw-bold text-dark mb-1">${c.nama_petugas}</div>
+                            <div class="badge ${c.badge_class} mb-2">Titik ke-${pIdx + 1} dari ${size} titik</div>
+                            <div class="small text-muted mb-1">Kecamatan: <strong>${c.namakec}</strong></div>
+                            <div class="small text-muted mb-1">Pengawas (PML): <strong>${c.pml_nama}</strong></div>
+                            <div class="small text-muted mb-1">Assignment ID: <code>${pAssign}</code></div>
+                            <div class="small text-muted">Koordinat: <code>${pLat.toFixed(6)}, ${pLon.toFixed(6)}</code></div>
+                        </div>
+                    `);
+
+                    pointMarker.on('click', () => {
+                        highlightListItem(c.id);
+                    });
+
+                    clusterGroup.addLayer(pointMarker);
+                });
             });
 
-            // Adjust bounds to fit all markers if any
-            if (clustersData.length > 0 && group.getLayers().length > 0) {
+            mapInstance.addLayer(clusterGroup);
+
+            // Adjust bounds to fit all markers
+            if (clusterGroup.getLayers().length > 0) {
                 try {
-                    mapInstance.fitBounds(group.getBounds().pad(0.08));
+                    mapInstance.fitBounds(clusterGroup.getBounds().pad(0.08));
                 } catch (bErr) {
                     console.warn("fitBounds warning:", bErr);
                 }
@@ -716,7 +875,7 @@
         function focusCluster(lat, lon, id) {
             if (!mapInstance) return;
 
-            mapInstance.flyTo([lat, lon], 17, {
+            mapInstance.flyTo([lat, lon], 18, {
                 animate: true,
                 duration: 1.0
             });

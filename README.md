@@ -296,6 +296,11 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - **Peningkatan Kontras Card Panduan Lapangan**: Mengganti alert biru pekat dengan kartu putih korporat beraksen border biru (`#0284c7`), teks charcoal gelap (`#334155`), dan badge kontras tinggi sehingga tulisan panduan verifikasi pasar vs domisili terbaca dengan sangat jelas.
     - **Perbaikan Inisialisasi Peta Leaflet**: Menambahkan pustaka jQuery CDN dan pengaman AMD loader (`window.define`) untuk mencegah error ReferenceError pada DataTables yang memblokir eksekusi inisialisasi peta Leaflet.
     - **Optimasi Render Peta**: Memastikan layer OpenStreetMap aktif secara andal dan menambahkan re-kalkulasi dimensi container (`mapInstance.invalidateSize()`) agar peta geospasial tampil penuh dan responsif.
+  - **Peta Satelit Hybrid, MarkerCluster Titik Survei, & Filter Sidebar (`dashboard-anomali-geotag.blade.php` & `Se2026ClusterAnomalyService.php`)**:
+    - **Layer Satelit Hybrid Default**: Mengintegrasikan peta citra satelit Google Hybrid (`mt1.google.com/vt/lyrs=y`) beresolusi tinggi dengan label jalan dan tempat sebagai basemap default, serta opsi switch ke OpenStreetMap dan Esri Satellite.
+    - **Penghapusan Tombol Satelit Eksternal**: Menghapus tombol link Google Maps eksternal pada popup dan daftar klaster karena peta satelit sudah tertanam langsung di aplikasi.
+    - **Marker Clustering Interaktif**: Menggunakan `Leaflet.markercluster` dengan custom cluster icon bulat besar berangka total titik saat zoom out, dan otomatis terurai (spiderfy / uncluster) menampilkan persebaran titik survei individu saat zoom in hingga level rumah/bangunan.
+    - **Filter & Search Real-Time Sidebar**: Menambahkan dropdown filter Kecamatan dan input pencarian nama/email di atas daftar klaster yang menyaring data seketika (0ms) di sisi klien tanpa reload halaman.
 
 
 
