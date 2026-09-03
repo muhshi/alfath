@@ -40,28 +40,34 @@ class Se2026ClusterAnomalyService
     public function getClusterData(bool $forceRefresh = false): array
     {
         $cacheStore = Cache::store('file');
-        $cacheKey = 'se2026_geotag_anomaly_dataset_v2';
+        $cacheKey = 'se2026_geotag_anomaly_dataset_v4';
 
         if ($forceRefresh) {
             $cacheStore->forget($cacheKey);
         }
 
-        return $cacheStore->remember($cacheKey, now()->addDays(7), function () {
+        return $cacheStore->remember($cacheKey, 86400, function () {
             return $this->buildDatasetFromCsv();
         });
     }
 
     /**
-     * Process raw CSV files and join with master database.
+     * Parse raw CSV cluster files, combine coordinates, and join with fasih DB.
      */
     protected function buildDatasetFromCsv(): array
     {
         ini_set('memory_limit', '1024M');
         set_time_limit(300);
 
-        $csvPattern = public_path('SE2026/*.csv');
-        $files = glob($csvPattern);
-
+        // Priority 1: New dataset with building classification labels
+        $files = glob(public_path('SE2026/fraud bangunan/*.csv'));
+        if (empty($files)) {
+            $files = glob(base_path('public/SE2026/fraud bangunan/*.csv'));
+        }
+        // Priority 2: Fallback to original SE2026 CSVs
+        if (empty($files)) {
+            $files = glob(public_path('SE2026/*.csv'));
+        }
         if (empty($files)) {
             $files = glob(base_path('public/SE2026/*.csv'));
         }
@@ -139,6 +145,8 @@ class Se2026ClusterAnomalyService
 
             $idxEmail = array_search('pencacah_email', $header);
             $idxSize = array_search('cluster_size', $header);
+            $idxNonBku = array_search('cluster_non_bku_size', $header);
+            $idxLabel = array_search('kode_bang_label', $header);
             $idxCenterLat = array_search('cluster_center_lat', $header);
             $idxCenterLon = array_search('cluster_center_lon', $header);
             $idxMinLat = array_search('cluster_min_lat', $header);
@@ -150,7 +158,7 @@ class Se2026ClusterAnomalyService
             $idxPointLat = array_search('point_lat', $header);
             $idxPointLon = array_search('point_lon', $header);
 
-            while (($row = fgetcsv($handle)) !== false) {
+            while (($row = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
                 $totalRawPoints++;
                 $email = strtolower(trim($row[$idxEmail] ?? ''));
                 $cLat = trim($row[$idxCenterLat] ?? '');
@@ -221,6 +229,11 @@ class Se2026ClusterAnomalyService
                         'pml_email' => $pmlEmail,
                         'pml_nama' => $pmlNama,
                         'cluster_size' => $size,
+                        'cluster_non_bku_size' => $idxNonBku !== false ? (int) ($row[$idxNonBku] ?? 0) : 0,
+                        'bku_count' => 0,
+                        'btt_count' => 0,
+                        'campuran_count' => 0,
+                        'lainnya_count' => 0,
                         'center_lat' => (float) $cLat,
                         'center_lon' => (float) $cLon,
                         'min_lat' => $minLat,
@@ -244,25 +257,85 @@ class Se2026ClusterAnomalyService
                 }
 
                 $assignId = trim($row[$idxAssign] ?? '');
+                $label = $idxLabel !== false ? trim($row[$idxLabel] ?? '') : '';
                 $pLat = (float) ($row[$idxPointLat] ?? $cLat);
                 $pLon = (float) ($row[$idxPointLon] ?? $cLon);
 
                 if (!empty($assignId) && !isset($clusters[$clusterKey]['points'][$assignId])) {
+                    $isBku = strpos($label, '1. Bangunan Khusus Usaha') !== false;
+                    $isBtt = strpos($label, '3. Bangunan Tempat Tinggal') !== false;
+                    $isCampuran = strpos($label, '2. Bangunan Campuran') !== false;
+
+                    $bType = 'lainnya';
+                    $pointColor = '#8b5cf6'; // Ungu untuk Bangunan Lainnya/Kosong
+                    if ($isBku) {
+                        $bType = 'bku';
+                        $pointColor = '#10b981'; // Hijau Segar untuk BKU (Pasar/Usaha)
+                        $clusters[$clusterKey]['bku_count']++;
+                    } elseif ($isBtt) {
+                        $bType = 'btt';
+                        $pointColor = '#ef4444'; // Merah Tegas untuk BTT (Tempat Tinggal / Fraud)
+                        $clusters[$clusterKey]['btt_count']++;
+                    } elseif ($isCampuran) {
+                        $bType = 'campuran';
+                        $pointColor = '#f59e0b'; // Amber/Oranye untuk Bangunan Campuran
+                        $clusters[$clusterKey]['campuran_count']++;
+                    } else {
+                        $clusters[$clusterKey]['lainnya_count']++;
+                    }
+
                     $clusters[$clusterKey]['points'][$assignId] = [
                         round($pLat, 7),
                         round($pLon, 7),
                         substr($assignId, 0, 8),
+                        $bType,
+                        $label,
+                        $pointColor,
                     ];
                 }
             }
             fclose($handle);
         }
 
-        // Convert points to numeric array and adjust cluster_size
+        // Convert points to numeric array, compute BKU vs BTT metrics, and classify fraud
         foreach ($clusters as &$c) {
             $c['points'] = array_values($c['points']);
-            if (count($c['points']) > 0) {
-                $c['cluster_size'] = count($c['points']);
+            $total = count($c['points']);
+            if ($total > 0) {
+                $c['cluster_size'] = $total;
+            }
+
+            $bku = $c['bku_count'];
+            $btt = $c['btt_count'];
+            $campuran = $c['campuran_count'];
+            $lainnya = $c['lainnya_count'];
+
+            $pctBku = round(($bku / max(1, $total)) * 100);
+            $pctBtt = round(($btt / max(1, $total)) * 100);
+            $pctCampuran = round(($campuran / max(1, $total)) * 100);
+            $pctLainnya = round(($lainnya / max(1, $total)) * 100);
+
+            $c['pct_bku'] = $pctBku;
+            $c['pct_btt'] = $pctBtt;
+            $c['pct_campuran'] = $pctCampuran;
+            $c['pct_lainnya'] = $pctLainnya;
+
+            // Classification: BKU (Pasar/Wajar) vs BTT (Tempat Tinggal/Fraud)
+            if ($bku >= ($total * 0.50)) {
+                $c['fraud_category'] = 'wajar_bku';
+                $c['fraud_label'] = '🟢 Potensi Wajar (Pasar / Ruko BKU)';
+                $c['fraud_badge'] = 'bg-success text-white';
+                $c['fraud_summary'] = "{$pctBku}% BKU (Pasar/Usaha)";
+            } elseif ($btt >= ($total * 0.40) || (($btt + $lainnya) >= ($total * 0.65) && $bku < ($total * 0.25))) {
+                $c['fraud_category'] = 'fraud_btt';
+                $c['fraud_label'] = '🚨 Indikasi Kuat Fraud (BTT/Tempat Tinggal)';
+                $c['fraud_badge'] = 'bg-danger text-white';
+                $c['fraud_summary'] = "{$pctBtt}% BTT (Tempat Tinggal)";
+            } else {
+                $c['fraud_category'] = 'campuran';
+                $c['fraud_label'] = '🟡 Campuran (BTT & BKU)';
+                $c['fraud_badge'] = 'bg-warning text-dark';
+                $c['fraud_summary'] = "Campuran ({$pctBku}% BKU, {$pctBtt}% BTT)";
             }
         }
         unset($c);
@@ -287,6 +360,10 @@ class Se2026ClusterAnomalyService
                     'total_clusters' => 0,
                     'max_cluster_size' => 0,
                     'total_anomali_points' => 0,
+                    'total_bku_points' => 0,
+                    'total_btt_points' => 0,
+                    'total_fraud_clusters' => 0,
+                    'total_wajar_clusters' => 0,
                     'top_cluster_id' => $c['id'],
                     'top_cluster_lat' => $c['center_lat'],
                     'top_cluster_lon' => $c['center_lon'],
@@ -296,6 +373,15 @@ class Se2026ClusterAnomalyService
 
             $petugasGroups[$email]['total_clusters']++;
             $petugasGroups[$email]['total_anomali_points'] += $c['cluster_size'];
+            $petugasGroups[$email]['total_bku_points'] += $c['bku_count'];
+            $petugasGroups[$email]['total_btt_points'] += $c['btt_count'];
+
+            if ($c['fraud_category'] === 'fraud_btt') {
+                $petugasGroups[$email]['total_fraud_clusters']++;
+            } elseif ($c['fraud_category'] === 'wajar_bku') {
+                $petugasGroups[$email]['total_wajar_clusters']++;
+            }
+
             if ($c['cluster_size'] > $petugasGroups[$email]['max_cluster_size']) {
                 $petugasGroups[$email]['max_cluster_size'] = $c['cluster_size'];
                 $petugasGroups[$email]['top_cluster_id'] = $c['id'];
@@ -351,6 +437,10 @@ class Se2026ClusterAnomalyService
                 'total_clusters' => 0,
                 'total_petugas' => 0,
                 'total_points' => 0,
+                'total_bku_points' => 0,
+                'total_btt_points' => 0,
+                'total_fraud_clusters' => 0,
+                'total_wajar_clusters' => 0,
                 'max_cluster_size' => 0,
                 'petugas_emails' => [],
             ];
@@ -363,6 +453,10 @@ class Se2026ClusterAnomalyService
             'total_clusters' => 0,
             'total_petugas' => 0,
             'total_points' => 0,
+            'total_bku_points' => 0,
+            'total_btt_points' => 0,
+            'total_fraud_clusters' => 0,
+            'total_wajar_clusters' => 0,
             'max_cluster_size' => 0,
             'petugas_emails' => [],
         ];
@@ -374,6 +468,15 @@ class Se2026ClusterAnomalyService
             }
             $kecamatanSummary[$kCode]['total_clusters']++;
             $kecamatanSummary[$kCode]['total_points'] += $c['cluster_size'];
+            $kecamatanSummary[$kCode]['total_bku_points'] += $c['bku_count'];
+            $kecamatanSummary[$kCode]['total_btt_points'] += $c['btt_count'];
+
+            if ($c['fraud_category'] === 'fraud_btt') {
+                $kecamatanSummary[$kCode]['total_fraud_clusters']++;
+            } elseif ($c['fraud_category'] === 'wajar_bku') {
+                $kecamatanSummary[$kCode]['total_wajar_clusters']++;
+            }
+
             if ($c['cluster_size'] > $kecamatanSummary[$kCode]['max_cluster_size']) {
                 $kecamatanSummary[$kCode]['max_cluster_size'] = $c['cluster_size'];
             }
@@ -398,9 +501,18 @@ class Se2026ClusterAnomalyService
             'sedang' => 0,
             'ringan' => 0,
         ];
+        $fraudCounts = [
+            'fraud_btt' => 0,
+            'wajar_bku' => 0,
+            'campuran' => 0,
+        ];
         $maxClusterOverall = 0;
         foreach ($clusters as $c) {
             $severityCounts[$c['severity']]++;
+            $cat = $c['fraud_category'] ?? 'campuran';
+            if (isset($fraudCounts[$cat])) {
+                $fraudCounts[$cat]++;
+            }
             if ($c['cluster_size'] > $maxClusterOverall) {
                 $maxClusterOverall = $c['cluster_size'];
             }
@@ -414,6 +526,7 @@ class Se2026ClusterAnomalyService
             'total_petugas' => count($petugasRanking),
             'max_cluster_size' => $maxClusterOverall,
             'severity_counts' => $severityCounts,
+            'fraud_counts' => $fraudCounts,
             'batch_files' => $batchFiles,
             'clusters' => $clusterList,
             'petugas_ranking' => $petugasRanking,
@@ -432,24 +545,34 @@ class Se2026ClusterAnomalyService
 
         $selectedKec = trim((string) $request->get('kecamatan', ''));
         $selectedSeverity = trim((string) $request->get('severity', ''));
+        $selectedFraud = trim((string) $request->get('fraud_category', ''));
         $search = trim((string) $request->get('search', ''));
 
         $filteredClusters = $raw['clusters'];
         $filteredPetugas = $raw['petugas_ranking'];
 
-        // Filter Clusters
+        // Filter Clusters by Kecamatan
         if (!empty($selectedKec)) {
             $filteredClusters = array_values(array_filter($filteredClusters, function ($c) use ($selectedKec) {
                 return ($c['kodekec'] === $selectedKec) || ($selectedKec === 'other' && empty($c['kodekec']));
             }));
         }
 
+        // Filter Clusters by Severity
         if (!empty($selectedSeverity)) {
             $filteredClusters = array_values(array_filter($filteredClusters, function ($c) use ($selectedSeverity) {
                 return $c['severity'] === $selectedSeverity;
             }));
         }
 
+        // Filter Clusters by Fraud Category (BTT vs BKU)
+        if (!empty($selectedFraud)) {
+            $filteredClusters = array_values(array_filter($filteredClusters, function ($c) use ($selectedFraud) {
+                return ($c['fraud_category'] ?? '') === $selectedFraud;
+            }));
+        }
+
+        // Search Filter for Clusters
         if (!empty($search)) {
             $searchLower = strtolower($search);
             $filteredClusters = array_values(array_filter($filteredClusters, function ($c) use ($searchLower) {
@@ -460,7 +583,7 @@ class Se2026ClusterAnomalyService
             }));
         }
 
-        // Filter Petugas
+        // Filter Petugas Ranking
         if (!empty($selectedKec)) {
             $filteredPetugas = array_values(array_filter($filteredPetugas, function ($p) use ($selectedKec) {
                 return ($p['kodekec'] === $selectedKec) || ($selectedKec === 'other' && empty($p['kodekec']));
@@ -483,16 +606,27 @@ class Se2026ClusterAnomalyService
             }));
         }
 
+        $fraudClusters = array_filter($filteredClusters, fn($c) => ($c['fraud_category'] ?? '') === 'fraud_btt');
+        $wajarClusters = array_filter($filteredClusters, fn($c) => ($c['fraud_category'] ?? '') === 'wajar_bku');
+        $campuranClusters = array_filter($filteredClusters, fn($c) => ($c['fraud_category'] ?? '') === 'campuran');
+
         return [
             'kecNameMap' => $this->kecNameMap,
             'selectedKec' => $selectedKec,
             'selectedSeverity' => $selectedSeverity,
+            'selectedFraud' => $selectedFraud,
             'search' => $search,
             'kpi' => [
-                'total_points' => $raw['total_raw_points'],
+                'total_points' => array_sum(array_column($filteredClusters, 'cluster_size')),
                 'total_clusters' => count($filteredClusters),
-                'total_petugas' => count($filteredPetugas),
+                'total_petugas' => count(array_unique(array_column($filteredClusters, 'email'))),
                 'max_cluster' => !empty($filteredClusters) ? max(array_column($filteredClusters, 'cluster_size')) : 0,
+                'total_fraud_clusters' => count($fraudClusters),
+                'total_fraud_points' => array_sum(array_column($fraudClusters, 'cluster_size')),
+                'total_wajar_clusters' => count($wajarClusters),
+                'total_wajar_points' => array_sum(array_column($wajarClusters, 'cluster_size')),
+                'total_campuran_clusters' => count($campuranClusters),
+                'total_campuran_points' => array_sum(array_column($campuranClusters, 'cluster_size')),
                 'severity_counts' => $raw['severity_counts'],
             ],
             'clusters' => $filteredClusters,

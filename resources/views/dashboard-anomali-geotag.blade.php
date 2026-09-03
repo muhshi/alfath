@@ -210,27 +210,47 @@
         </div>
     </div>
 
-    <!-- Alert Edukasi / Disclaimer Karakteristik Lapangan (Pasar Tradisional vs Domisili) -->
+    <!-- Alert Edukasi / Disclaimer Klasifikasi Bangunan (BKU vs BTT) -->
     <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #0284c7 !important; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0;">
         <div class="card-body p-3 p-md-4">
             <div class="d-flex align-items-start">
                 <div class="me-3 d-flex align-items-center justify-content-center rounded-3 bg-blue-lt p-2 flex-shrink-0" style="width: 44px; height: 44px; color: #0284c7;">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-info-circle" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-building-store" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-                        <path d="M12 9h.01" />
-                        <path d="M11 12h1v4h1" />
+                        <path d="M3 21l18 0" />
+                        <path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4" />
+                        <path d="M5 21l0 -10.15" />
+                        <path d="M19 21l0 -10.15" />
+                        <path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4" />
                     </svg>
                 </div>
                 <div class="flex-grow-1">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <h4 class="fw-bold mb-0 text-dark" style="font-size: 1rem; color: #0f172a !important;">
-                            Catatan Penting Pemeriksaan Lapangan (Verifikasi Pasar vs Domisili Petugas)
+                            Klasifikasi Otomatis Tipe Bangunan: BKU (Pasar/Wajar) vs BTT (Tempat Tinggal/Fraud)
                         </h4>
-                        <span class="badge bg-blue-lt text-primary fw-bold" style="font-size: 0.75rem;">Panduan Verifikasi</span>
+                        <span class="badge bg-blue-lt text-primary fw-bold" style="font-size: 0.75rem;">Deteksi Berbasis Kode Bangunan</span>
                     </div>
                     <div class="small" style="line-height: 1.65; color: #334155 !important;">
-                        Klaster titik koordinat bertumpuk merupakan indikasi awal. Pengawas Lapangan (PML/Koseka) disarankan <strong>selalu memverifikasi fisik lokasi melalui tombol "Cek Satelit"</strong> sebelum mengambil tindakan pembinaan, karena pada <strong style="color: #0369a1;">Pasar Tradisional</strong> (seperti Pasar Bintoro, Pasar Sayung, Pasar Karanganyar) atau <strong style="color: #0369a1;">Sentra Pertokoan/Ruko Padat</strong>, kumpulan titik geotag adalah hal yang <span class="badge bg-success-lt text-success fw-bold px-2 py-0">Wajar / Valid</span> mengingat letak kios usaha yang saling bersebelahan. Sebaliknya, jika titik bertumpuk berada di <strong style="color: #b91c1c;">Rumah Tinggal Pribadi, Warkop, atau Sawah</strong>, hal tersebut baru diindikasikan sebagai <span class="badge bg-danger-lt text-danger fw-bold px-2 py-0">Anomali Tidak Door-to-Door</span>.
+                        Sistem kini mengklasifikasikan setiap titik anomali menggunakan kolom data <code>kode_bang_label</code>:
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-6">
+                                <div class="p-2 rounded bg-danger-lt border border-danger-subtle">
+                                    <strong class="text-danger"><i class="ti ti-home-alert me-1"></i> 🚨 Indikasi Kuat Fraud (BTT / Tempat Tinggal):</strong>
+                                    <div class="text-secondary small mt-1">
+                                        Titik bertumpuk pada <strong>Bangunan Tempat Tinggal (BTT)</strong>. Petugas menggeotag banyak responden dari satu titik rumah tinggal/warkop tanpa melakukan pendataan <em>door-to-door</em>.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-2 rounded bg-success-lt border border-success-subtle">
+                                    <strong class="text-success"><i class="ti ti-building-store me-1"></i> 🟢 Potensi Wajar (BKU / Pasar Tradisional):</strong>
+                                    <div class="text-secondary small mt-1">
+                                        Titik bertumpuk pada <strong>Bangunan Khusus Usaha (BKU)</strong> seperti Pasar Bintoro, Pasar Sayung, atau deretan ruko padat di mana titik berdekatan adalah hal yang wajar karena jarak kios bersebelahan.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -243,40 +263,40 @@
             <div class="stat-card stat-danger">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="text-muted fw-semibold small text-uppercase">Total Geotag Teranomali</span>
-                    <span class="badge bg-danger-lt px-2 py-1"><i class="ti ti-map-pin"></i> 13 Batch</span>
+                    <span class="badge bg-danger-lt px-2 py-1"><i class="ti ti-map-pin"></i> {{ count($clusters) }} Klaster</span>
                 </div>
                 <h2 class="fw-bold mb-1 text-danger">{{ number_format($kpi['total_points'], 0, ',', '.') }}</h2>
                 <div class="text-muted small">Titik geotag bertumpuk di titik statis</div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <div class="stat-card stat-orange">
+            <div class="stat-card stat-danger">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="text-muted fw-semibold small text-uppercase">Total Klaster Anomali</span>
-                    <span class="badge bg-orange-lt px-2 py-1"><i class="ti ti-circles"></i> Sebaran</span>
+                    <span class="text-muted fw-semibold small text-uppercase">Indikasi Kuat Fraud</span>
+                    <span class="badge bg-danger text-white px-2 py-1"><i class="ti ti-alert-triangle"></i> BTT</span>
                 </div>
-                <h2 class="fw-bold mb-1 text-dark">{{ number_format($kpi['total_clusters'], 0, ',', '.') }}</h2>
-                <div class="text-muted small">Lokasi/spot kumpulan titik tumpuk</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card stat-warning">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="text-muted fw-semibold small text-uppercase">Petugas Terindikasi</span>
-                    <span class="badge bg-warning-lt px-2 py-1"><i class="ti ti-user-exclamation"></i> PPL</span>
-                </div>
-                <h2 class="fw-bold mb-1 text-dark">{{ number_format($kpi['total_petugas'], 0, ',', '.') }}</h2>
-                <div class="text-muted small">Pencacah dengan $\ge 1$ klaster anomali</div>
+                <h2 class="fw-bold mb-1 text-danger">{{ number_format($kpi['total_fraud_points'], 0, ',', '.') }}</h2>
+                <div class="text-muted small">{{ $kpi['total_fraud_clusters'] }} klaster dominan Rumah Tinggal (BTT)</div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card stat-info">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="text-muted fw-semibold small text-uppercase">Klaster Terbesar</span>
-                    <span class="badge bg-azure-lt px-2 py-1"><i class="ti ti-flame"></i> Rekor</span>
+                    <span class="text-muted fw-semibold small text-uppercase">Potensi Wajar / Pasar</span>
+                    <span class="badge bg-success text-white px-2 py-1"><i class="ti ti-building-store"></i> BKU</span>
                 </div>
-                <h2 class="fw-bold mb-1 text-primary">{{ number_format($kpi['max_cluster'], 0, ',', '.') }} <span class="fs-4 text-muted fw-normal">titik</span></h2>
-                <div class="text-muted small">Titik terbanyak di satu koordinat mikro</div>
+                <h2 class="fw-bold mb-1 text-success">{{ number_format($kpi['total_wajar_points'], 0, ',', '.') }}</h2>
+                <div class="text-muted small">{{ $kpi['total_wajar_clusters'] }} klaster sentra Bangunan Usaha/Pasar</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card stat-warning">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-muted fw-semibold small text-uppercase">Campuran / Verifikasi</span>
+                    <span class="badge bg-warning text-dark px-2 py-1"><i class="ti ti-help"></i> BKU & BTT</span>
+                </div>
+                <h2 class="fw-bold mb-1 text-warning">{{ number_format($kpi['total_campuran_points'], 0, ',', '.') }}</h2>
+                <div class="text-muted small">{{ $kpi['total_campuran_clusters'] }} klaster kombinasi BKU & BTT</div>
             </div>
         </div>
     </div>
@@ -286,7 +306,7 @@
         <div class="card-body p-3">
             <form method="GET" action="{{ route('dashboard.anomali-geotag') }}" id="filterForm">
                 <div class="row g-2 align-items-center">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label small fw-semibold text-muted mb-1">Filter Kecamatan:</label>
                         <select name="kecamatan" class="form-select form-select-sm" onchange="this.form.submit()">
                             <option value="">-- Semua Kecamatan (14 Kecamatan) --</option>
@@ -299,16 +319,25 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted mb-1">Tingkat Keparahan (Severity):</label>
+                        <label class="form-label small fw-semibold text-muted mb-1">Klasifikasi Bangunan / Fraud:</label>
+                        <select name="fraud_category" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">-- Semua Klasifikasi --</option>
+                            <option value="fraud_btt" {{ ($selectedFraud ?? '') === 'fraud_btt' ? 'selected' : '' }}>🚨 Indikasi Kuat Fraud (BTT/Tempat Tinggal)</option>
+                            <option value="wajar_bku" {{ ($selectedFraud ?? '') === 'wajar_bku' ? 'selected' : '' }}>🟢 Potensi Wajar (BKU/Pasar Tradisional)</option>
+                            <option value="campuran" {{ ($selectedFraud ?? '') === 'campuran' ? 'selected' : '' }}>🟡 Campuran (BTT & BKU)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Tingkat Keparahan:</label>
                         <select name="severity" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="">-- Semua Tingkat Keparahan --</option>
+                            <option value="">-- Semua Severity --</option>
                             <option value="ekstrem" {{ $selectedSeverity === 'ekstrem' ? 'selected' : '' }}>🚨 Ekstrem (> 100 Titik)</option>
                             <option value="berat" {{ $selectedSeverity === 'berat' ? 'selected' : '' }}>⚠️ Berat (51 - 100 Titik)</option>
                             <option value="sedang" {{ $selectedSeverity === 'sedang' ? 'selected' : '' }}>🟡 Sedang (21 - 50 Titik)</option>
                             <option value="ringan" {{ $selectedSeverity === 'ringan' ? 'selected' : '' }}>🔵 Ringan (10 - 20 Titik)</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label small fw-semibold text-muted mb-1">Pencarian Petugas / PML / Email:</label>
                         <div class="input-group input-group-sm">
                             <input type="text" name="search" class="form-control" placeholder="Ketik nama petugas / email..." value="{{ $search }}">
@@ -316,7 +345,7 @@
                         </div>
                     </div>
                     <div class="col-md-1 d-flex align-items-end">
-                        @if(!empty($selectedKec) || !empty($selectedSeverity) || !empty($search))
+                        @if(!empty($selectedKec) || !empty($selectedSeverity) || !empty($selectedFraud) || !empty($search))
                             <a href="{{ route('dashboard.anomali-geotag') }}" class="btn btn-outline-danger btn-sm w-100" title="Reset Filter">
                                 <i class="ti ti-x"></i> Reset
                             </a>
@@ -382,22 +411,30 @@
                                 <div class="cluster-item {{ $idx === 0 ? 'active' : '' }}" 
                                      id="cItem_{{ $c['id'] }}"
                                      data-kec="{{ $c['namakec'] }}"
-                                     data-search="{{ strtolower($c['nama_petugas'] . ' ' . $c['email'] . ' ' . $c['namakec']) }}"
+                                     data-search="{{ strtolower($c['nama_petugas'] . ' ' . $c['email'] . ' ' . $c['namakec'] . ' ' . ($c['fraud_label'] ?? '')) }}"
                                      onclick="focusCluster({{ $c['center_lat'] }}, {{ $c['center_lon'] }}, '{{ $c['id'] }}')">
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="badge {{ $c['badge_class'] }} small py-0 px-1">
-                                            {{ $c['cluster_size'] }} Titik Bertumpuk
+                                            {{ $c['cluster_size'] }} Titik
                                         </span>
-                                        <span class="text-muted small" style="font-size: 0.75rem;">
-                                            Radius ~{{ $c['approx_radius_m'] }}m
+                                        <span class="badge {{ $c['fraud_badge'] ?? 'bg-secondary text-white' }} small py-0 px-1" style="font-size: 0.68rem;">
+                                            @if(($c['fraud_category'] ?? '') === 'fraud_btt')
+                                                🚨 Fraud BTT
+                                            @elseif(($c['fraud_category'] ?? '') === 'wajar_bku')
+                                                🟢 Pasar BKU
+                                            @else
+                                                🟡 Campuran
+                                            @endif
                                         </span>
                                     </div>
                                     <div class="fw-bold text-dark small text-truncate" title="{{ $c['nama_petugas'] }}">
                                         {{ $c['nama_petugas'] }}
                                     </div>
-                                    <div class="text-muted small d-flex justify-content-between align-items-center mt-1" style="font-size: 0.775rem;">
+                                    <div class="text-muted small d-flex justify-content-between align-items-center mt-1" style="font-size: 0.725rem;">
                                         <span><i class="ti ti-map-pin text-primary"></i> {{ $c['namakec'] }}</span>
-                                        <span class="text-muted" style="font-size:0.72rem;">PML: {{ $c['pml_nama'] }}</span>
+                                        <span class="fw-semibold {{ ($c['pct_btt'] ?? 0) > 40 ? 'text-danger' : (($c['pct_bku'] ?? 0) > 40 ? 'text-success' : 'text-muted') }}">
+                                            BTT: {{ $c['pct_btt'] ?? 0 }}% | BKU: {{ $c['pct_bku'] ?? 0 }}%
+                                        </span>
                                     </div>
                                 </div>
                             @empty
@@ -433,9 +470,11 @@
                                 <th>Pengawas (PML)</th>
                                 <th class="text-center">Tingkat Risiko</th>
                                 <th class="text-center">Total Klaster</th>
-                                <th class="text-center">Titik Terbanyak 1 Lokasi</th>
-                                <th class="text-center">Total Titik Anomali</th>
-                                <th class="text-center" style="width: 140px;">Aksi</th>
+                                <th class="text-center" style="color: #dc2626;">🚨 BTT (Rumah)</th>
+                                <th class="text-center" style="color: #16a34a;">🟢 BKU (Pasar)</th>
+                                <th class="text-center">Klaster Terbesar</th>
+                                <th class="text-center">Total Titik</th>
+                                <th class="text-center" style="width: 130px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -443,13 +482,13 @@
                                 <tr>
                                     <td class="text-center fw-bold">
                                         @if($p['rank'] === 1)
-                                            <span class="badge bg-danger text-white">#1</span>
+                                             <span class="badge bg-danger text-white">#1</span>
                                         @elseif($p['rank'] === 2)
-                                            <span class="badge bg-orange text-white">#2</span>
+                                             <span class="badge bg-orange text-white">#2</span>
                                         @elseif($p['rank'] === 3)
-                                            <span class="badge bg-warning text-dark">#3</span>
+                                             <span class="badge bg-warning text-dark">#3</span>
                                         @else
-                                            <span class="text-muted">#{{ $p['rank'] }}</span>
+                                             <span class="text-muted">#{{ $p['rank'] }}</span>
                                         @endif
                                     </td>
                                     <td>
@@ -470,6 +509,16 @@
                                     <td class="text-center fw-bold text-secondary">
                                         {{ $p['total_clusters'] }} spot
                                     </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger-lt text-danger fw-bold px-2 py-1">
+                                            {{ number_format($p['total_btt_points'] ?? 0, 0, ',', '.') }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success-lt text-success fw-bold px-2 py-1">
+                                            {{ number_format($p['total_bku_points'] ?? 0, 0, ',', '.') }}
+                                        </span>
+                                    </td>
                                     <td class="text-center fw-bold text-danger">
                                         {{ $p['max_cluster_size'] }} titik
                                     </td>
@@ -478,7 +527,7 @@
                                     </td>
                                     <td class="text-center">
                                         <button class="btn btn-sm btn-outline-primary" onclick="locatePetugasOnMap({{ $p['top_cluster_lat'] }}, {{ $p['top_cluster_lon'] }}, '{{ $p['top_cluster_id'] }}')">
-                                            <i class="ti ti-crosshair me-1"></i> Cek di Peta
+                                            <i class="ti ti-crosshair me-1"></i> Cek Peta
                                         </button>
                                     </td>
                                 </tr>
@@ -501,11 +550,13 @@
                         <thead>
                             <tr class="bg-light text-muted small text-uppercase">
                                 <th>Kecamatan</th>
-                                <th class="text-center">Jumlah Klaster Bertumpuk</th>
-                                <th class="text-center">Jumlah Petugas Terindikasi</th>
+                                <th class="text-center">Jumlah Klaster</th>
+                                <th class="text-center">Jumlah Petugas</th>
+                                <th class="text-center" style="color: #dc2626;">🚨 BTT (Rumah)</th>
+                                <th class="text-center" style="color: #16a34a;">🟢 BKU (Pasar)</th>
                                 <th class="text-center">Klaster Terbesar</th>
-                                <th class="text-center">Total Titik Geotag Anomali</th>
-                                <th class="text-center">Proporsi Terhadap Total (%)</th>
+                                <th class="text-center">Total Titik</th>
+                                <th class="text-center">Proporsi (%)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -526,6 +577,16 @@
                                     </td>
                                     <td class="text-center fw-bold text-primary">
                                         {{ $k['total_petugas'] }} orang
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger-lt text-danger fw-bold px-2 py-1">
+                                            {{ number_format($k['total_btt_points'] ?? 0, 0, ',', '.') }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success-lt text-success fw-bold px-2 py-1">
+                                            {{ number_format($k['total_bku_points'] ?? 0, 0, ',', '.') }}
+                                        </span>
                                     </td>
                                     <td class="text-center fw-bold text-danger">
                                         {{ $k['max_cluster_size'] > 0 ? $k['max_cluster_size'] . ' titik' : '-' }}
@@ -703,13 +764,13 @@
             legend.onAdd = function () {
                 const div = L.DomUtil.create('div', 'map-legend');
                 div.innerHTML = `
-                    <div class="fw-bold mb-1" style="font-size:0.8rem;">Tingkat Keparahan Klaster:</div>
-                    <div class="legend-item"><span class="legend-circle" style="background:#dc2626;"></span> Ekstrem (&gt; 100 Titik)</div>
-                    <div class="legend-item"><span class="legend-circle" style="background:#ea580c;"></span> Berat (51 - 100 Titik)</div>
-                    <div class="legend-item"><span class="legend-circle" style="background:#ca8a04;"></span> Sedang (21 - 50 Titik)</div>
-                    <div class="legend-item"><span class="legend-circle" style="background:#0284c7;"></span> Ringan (10 - 20 Titik)</div>
+                    <div class="fw-bold mb-1" style="font-size:0.8rem;">Klasifikasi Titik & Klaster:</div>
+                    <div class="legend-item"><span class="legend-circle" style="background:#ef4444;"></span> 🚨 BTT (Rumah Tinggal / Indikasi Fraud)</div>
+                    <div class="legend-item"><span class="legend-circle" style="background:#10b981;"></span> 🟢 BKU (Usaha / Potensi Pasar)</div>
+                    <div class="legend-item"><span class="legend-circle" style="background:#f59e0b;"></span> 🟡 Campuran (Usaha & Hunian)</div>
+                    <div class="legend-item"><span class="legend-circle" style="background:#8b5cf6;"></span> 🟣 Lainnya / Bangunan Rusak</div>
                     <div class="text-muted small mt-2 pt-1 border-top" style="font-size:0.7rem;">
-                        Zoom in (zoom &gt;= 15) untuk memecah klaster menjadi titik survei individu.
+                        Zoom in (&ge; 15) untuk melihat titik individu berwarna sesuai tipe bangunannya.
                     </div>
                 `;
                 return div;
@@ -808,7 +869,7 @@
                 const cLat = parseFloat(c.center_lat);
                 const cLon = parseFloat(c.center_lon);
                 const size = parseInt(c.cluster_size) || 1;
-                const points = (Array.isArray(c.points) && c.points.length > 0) ? c.points : [[cLat, cLon, '']];
+                const points = (Array.isArray(c.points) && c.points.length > 0) ? c.points : [[cLat, cLon, '', 'lainnya', '', '#dc2626']];
 
                 // Create main cluster center marker (for centering & popup)
                 const mainMarker = L.circleMarker([cLat, cLon], {
@@ -821,13 +882,24 @@
                 });
 
                 const popupContent = `
-                    <div style="min-width: 260px; font-family: inherit;">
-                        <div class="popup-custom-title d-flex justify-content-between align-items-center">
+                    <div style="min-width: 270px; font-family: inherit;">
+                        <div class="popup-custom-title d-flex justify-content-between align-items-center mb-1">
                             <span class="fw-bold">${c.nama_petugas}</span>
                             <span class="badge ${c.badge_class}" style="font-size:0.75rem;">${size} Titik</span>
                         </div>
                         <div class="text-muted small mb-2" style="font-size:0.75rem;">${c.email}</div>
                         
+                        <div class="p-2 mb-2 rounded bg-light border">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small text-muted">Klasifikasi:</span>
+                                <span class="badge ${c.fraud_badge || 'bg-secondary'}" style="font-size:0.72rem;">${c.fraud_label || '-'}</span>
+                            </div>
+                            <div class="small">
+                                <span class="text-danger fw-bold">🏠 BTT (Rumah): ${c.btt_count || 0} (${c.pct_btt || 0}%)</span><br>
+                                <span class="text-success fw-bold">🏬 BKU (Pasar): ${c.bku_count || 0} (${c.pct_bku || 0}%)</span>
+                            </div>
+                        </div>
+
                         <div class="popup-stat-row">
                             <span class="text-muted">Kecamatan:</span>
                             <span class="fw-semibold text-dark">${c.namakec}</span>
@@ -864,31 +936,56 @@
 
                 markersById[c.id] = mainMarker;
 
-                // Add individual survey points to both clusterGroup and rawPointsGroup
+                // Add individual survey points with specific building color and labels
                 points.forEach((pt, pIdx) => {
                     const pLat = parseFloat(pt[0]) || cLat;
                     const pLon = parseFloat(pt[1]) || cLon;
                     const pAssign = pt[2] || ('#' + (pIdx + 1));
+                    const bType = pt[3] || 'lainnya';
+                    const bLabel = pt[4] || 'Tipe Bangunan Belum Terdata';
+                    const pointColor = pt[5] || (bType === 'bku' ? '#10b981' : (bType === 'btt' ? '#ef4444' : (bType === 'campuran' ? '#f59e0b' : '#8b5cf6')));
+
+                    let bTypeBadge = '<span class="badge bg-secondary text-white">Lainnya</span>';
+                    let bStatusBadge = '';
+                    let bShort = 'Lainnya';
+                    if (bType === 'bku') {
+                        bTypeBadge = '<span class="badge bg-success text-white">🏬 BKU (Usaha/Pasar)</span>';
+                        bStatusBadge = '<div class="badge bg-success-lt text-success w-100 py-1 mb-2">🟢 Potensi Wajar (Pasar / Ruko BKU)</div>';
+                        bShort = 'BKU (Pasar)';
+                    } else if (bType === 'btt') {
+                        bTypeBadge = '<span class="badge bg-danger text-white">🏠 BTT (Tempat Tinggal)</span>';
+                        bStatusBadge = '<div class="badge bg-danger-lt text-danger w-100 py-1 mb-2">🚨 Indikasi Kuat Fraud (Numpuk di Rumah)</div>';
+                        bShort = 'BTT (Rumah)';
+                    } else if (bType === 'campuran') {
+                        bTypeBadge = '<span class="badge bg-warning text-dark">🏢 Bangunan Campuran</span>';
+                        bStatusBadge = '<div class="badge bg-warning-lt text-dark w-100 py-1 mb-2">🟡 Campuran Usaha & Hunian</div>';
+                        bShort = 'Campuran';
+                    }
 
                     const pointMarker = L.circleMarker([pLat, pLon], {
-                        radius: 6,
-                        fillColor: c.marker_color || '#dc2626',
+                        radius: 6.5,
+                        fillColor: pointColor,
                         color: '#ffffff',
                         weight: 1.5,
                         opacity: 1,
-                        fillOpacity: 0.88
+                        fillOpacity: 0.90
                     });
 
                     // Tooltip & Popup for individual point
-                    pointMarker.bindTooltip(`${c.nama_petugas} (Titik #${pIdx + 1})`, {
+                    pointMarker.bindTooltip(`${c.nama_petugas} (#${pIdx + 1} - ${bShort})`, {
                         direction: 'top',
                         offset: [0, -6]
                     });
 
                     pointMarker.bindPopup(`
-                        <div style="min-width: 220px; font-family: inherit;">
+                        <div style="min-width: 250px; font-family: inherit;">
                             <div class="fw-bold text-dark mb-1">${c.nama_petugas}</div>
-                            <div class="badge ${c.badge_class} mb-2">Titik ke-${pIdx + 1} dari ${size} titik</div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge ${c.badge_class}">Titik ke-${pIdx + 1} dari ${size}</span>
+                                ${bTypeBadge}
+                            </div>
+                            ${bStatusBadge}
+                            <div class="small text-muted mb-1">Bangunan: <strong>${bLabel}</strong></div>
                             <div class="small text-muted mb-1">Kecamatan: <strong>${c.namakec}</strong></div>
                             <div class="small text-muted mb-1">Pengawas (PML): <strong>${c.pml_nama}</strong></div>
                             <div class="small text-muted mb-1">Assignment ID: <code>${pAssign}</code></div>
@@ -904,14 +1001,14 @@
 
                     // Add clone to raw points group
                     const rawMarker = L.circleMarker([pLat, pLon], {
-                        radius: 5.5,
-                        fillColor: c.marker_color || '#dc2626',
+                        radius: 6,
+                        fillColor: pointColor,
                         color: '#ffffff',
                         weight: 1.2,
                         opacity: 1,
-                        fillOpacity: 0.85
+                        fillOpacity: 0.88
                     });
-                    rawMarker.bindTooltip(`${c.nama_petugas} (#${pIdx + 1})`);
+                    rawMarker.bindTooltip(`${c.nama_petugas} (#${pIdx + 1} - ${bShort})`);
                     rawMarker.bindPopup(pointMarker.getPopup().getContent());
                     rawPointsGroup.addLayer(rawMarker);
                 });

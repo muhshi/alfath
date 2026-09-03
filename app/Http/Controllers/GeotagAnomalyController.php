@@ -38,7 +38,8 @@ class GeotagAnomalyController extends Controller
             if ($type === 'petugas') {
                 fputcsv($handle, [
                     'Rank', 'Nama Petugas', 'Email', 'Kecamatan', 'PML (Pengawas)',
-                    'Tingkat Risiko', 'Total Klaster', 'Titik Terbanyak 1 Spot', 'Total Titik Anomali', 'Koordinat Klaster Terbesar'
+                    'Tingkat Risiko', 'Total Klaster', 'Titik BTT (Rumah/Fraud)', 'Titik BKU (Pasar/Wajar)',
+                    'Titik Terbanyak 1 Spot', 'Total Titik Anomali', 'Koordinat Klaster Terbesar'
                 ]);
 
                 foreach ($viewData['petugas_ranking'] as $p) {
@@ -50,6 +51,8 @@ class GeotagAnomalyController extends Controller
                         $p['pml_nama'],
                         $p['severity_label'],
                         $p['total_clusters'],
+                        $p['total_btt_points'] ?? 0,
+                        $p['total_bku_points'] ?? 0,
                         $p['max_cluster_size'],
                         $p['total_anomali_points'],
                         $p['top_cluster_lat'] . ', ' . $p['top_cluster_lon'],
@@ -58,6 +61,7 @@ class GeotagAnomalyController extends Controller
             } else {
                 fputcsv($handle, [
                     'ID Klaster', 'Nama Petugas', 'Email', 'Kecamatan', 'PML (Pengawas)',
+                    'Klasifikasi Fraud', 'Komposisi', 'Titik BTT (Rumah)', 'Titik BKU (Pasar)',
                     'Tingkat Keparahan', 'Jumlah Titik Bertumpuk', 'Lat Pusat', 'Lon Pusat',
                     'Radius Sebaran (meter)', 'Akurasi GPS (meter)', 'Google Maps Link'
                 ]);
@@ -69,6 +73,10 @@ class GeotagAnomalyController extends Controller
                         $c['email'],
                         $c['namakec'],
                         $c['pml_nama'],
+                        $c['fraud_label'] ?? '-',
+                        $c['fraud_summary'] ?? '-',
+                        $c['btt_count'] ?? 0,
+                        $c['bku_count'] ?? 0,
                         $c['severity_label'],
                         $c['cluster_size'],
                         $c['center_lat'],
