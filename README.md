@@ -305,6 +305,10 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - **Pencegahan Overwrite Multi-Sheet Keluarga**: Memperbaiki filter sheet di `ImportExcelPemutakhiranKeluarga` menjadi strict `$sheetName === 'KELUARGA'` dan menambahkan validasi header baris 1 (`PROGRES PEMUTAKHIRAN KELUARGA`), sehingga tidak lagi menimpa data utama dengan sheet `ANGGOTA KELUARGA`, `KELUARGA KHUSUS` (98 data), ataupun `USAHA KELUARGA`.
     - **Opsi Custom Date & Tanpa Truncate Default**: Menambahkan opsi `--date=YYYY-MM-DD` pada `import:usaha` dan `import:pemutakhiran-keluarga`, serta menerapkan `--no-truncate` secara default di Filament Scraper Page guna melindungi integritas data historis di database.
     - **Sinkronisasi Data Snapshot 3 September 2026**: Mengimpor data Usaha Perusahaan & Usaha Keluarga dari file `Export_Progres_Pendataan... (11).xlsx` sebagai snapshot 3 September ($30.436$ Usaha Perusahaan dan $149.138$ Usaha Keluarga) serta data Pemutakhiran Keluarga utuh dari `Export_Progres_Pemutakhiran_Keluarga... (10).xlsx` ($374.252$ Keluarga Ditemukan + Baru), memulihkan total Muatan Murni menjadi **404.688**.
+  - **Self-Healing Cache & Versioning Otomatis Dashboard (`PengolahanController.php`)**:
+    - **Auto-Busting Cache Version 3**: Menaikkan cache version base dashboard ke v3 sehingga saat di-deploy (`git pull`), seluruh cache file usang/korup otomatis ditinggalkan tanpa mewajibkan eksekusi manual `cache:clear`.
+    - **Self-Healing Guard Anomali Muatan Murni**: Menambahkan deteksi otomatis jika data yang diambil dari cache memiliki `total_muatan_murni < 50.000` (indikasi data tertimpa/rusak seperti angka 98), sistem otomatis membuang cache tersebut dan menghitung ulang (*re-query*) data utuh dari database.
+    - **Koreksi Subjudul Kartu KPI Muatan Murni**: Memperbaiki label keterangan kartu KPI dari `BKU + UK` menjadi `BKU + KK (Pemutakhiran Keluarga)`.
 
 
 

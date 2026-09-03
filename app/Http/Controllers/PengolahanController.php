@@ -36,9 +36,13 @@ class PengolahanController extends Controller
 
         $data = $this->monitoringService->getFilteredQuery($request);
 
-        $cacheVersion = 2;
+        $cacheVersion = 3;
         try {
-            $cacheVersion = (int) $cacheStore->get('se2026_dash_version', 2);
+            $cacheVersion = (int) $cacheStore->get('se2026_dash_version', 3);
+            if ($cacheVersion < 3) {
+                $cacheVersion = 3;
+                $cacheStore->set('se2026_dash_version', 3);
+            }
         } catch (\Throwable $e) {}
 
         $cacheKey = "se2026_dash_v{$cacheVersion}_" . md5(json_encode([
@@ -70,8 +74,17 @@ class PengolahanController extends Controller
                     'kpiSummary' => $kpiSummary,
                 ];
             });
+
+            // Self-healing guard: jika cache lama berisi muatan murni anomali (< 50.000 untuk Demak), buang cache & hitung ulang
+            if (empty($dashboardData['kpiSummary']['total_muatan_murni']) || $dashboardData['kpiSummary']['total_muatan_murni'] < 50000) {
+                $cacheStore->forget($cacheKey);
+                $dashboardData = null;
+            }
         } catch (\Throwable $e) {
-            // Fallback gracefully without database packet limit failure
+            $dashboardData = null;
+        }
+
+        if ($dashboardData === null) {
             $records = $data['query']->get();
             $pmlRecords = $this->monitoringService->getPmlQuery($request, $data['selectedDate']);
             $slsRecords = $this->monitoringService->getSlsQuery($request, $data['selectedDate']);
@@ -89,6 +102,9 @@ class PengolahanController extends Controller
                 'rankingSummary' => $rankingData['rankingSummary'],
                 'kpiSummary' => $kpiSummary,
             ];
+            try {
+                $cacheStore->put($cacheKey, $dashboardData, now()->addDay());
+            } catch (\Throwable $e) {}
         }
 
         return view('dashboard-pengolahan', [

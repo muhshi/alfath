@@ -391,7 +391,7 @@
                         <div class="card-body p-3">
                             <div class="text-teal font-weight-bold small mb-1">MUATAN MURNI</div>
                             <div class="h2 font-weight-extrabold text-teal mb-0">{{ number_format($kpiSummary['total_muatan_murni'] ?? 0) }}</div>
-                            <div class="small text-teal mt-1">BKU + UK (Usaha Keluarga)</div>
+                            <div class="small text-teal mt-1">BKU + KK (Pemutakhiran Keluarga)</div>
                         </div>
                     </div>
                 </div>
