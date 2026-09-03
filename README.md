@@ -300,7 +300,8 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - **Layer Satelit Hybrid Default**: Mengintegrasikan peta citra satelit Google Hybrid (`mt1.google.com/vt/lyrs=y`) beresolusi tinggi dengan label jalan dan tempat sebagai basemap default, serta opsi switch ke OpenStreetMap dan Esri Satellite.
     - **Penghapusan Tombol Satelit Eksternal**: Menghapus tombol link Google Maps eksternal pada popup dan daftar klaster karena peta satelit sudah tertanam langsung di aplikasi.
     - **Marker Clustering Interaktif**: Menggunakan `Leaflet.markercluster` dengan custom cluster icon bulat besar berangka total titik saat zoom out, dan otomatis terurai (spiderfy / uncluster) menampilkan persebaran titik survei individu saat zoom in hingga level rumah/bangunan.
-    - **Filter & Search Real-Time Sidebar**: Menambahkan dropdown filter Kecamatan dan input pencarian nama/email di atas daftar klaster yang menyaring data seketika (0ms) di sisi klien tanpa reload halaman.
+    - **Mode Titik Survei Individu & Auto-Uncluster**: Menambahkan konfigurasi `disableClusteringAtZoom: 15` sehingga saat zoom in ke tingkat desa/rumah (zoom >= 15), bulatan klaster otomatis bubar dan menampilkan seluruh titik survei individu. Menambahkan pula tombol toggle cepat `[Tampilkan Semua Titik Individu]` di peta untuk melihat sebaran ribuan titik langsung tanpa pengelompokan.
+
 
 
 

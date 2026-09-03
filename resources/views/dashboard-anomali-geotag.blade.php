@@ -576,6 +576,7 @@
         const clustersData = {!! json_encode($clusters, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!};
         let mapInstance = null;
         let clusterGroup = null;
+        let rawPointsGroup = null;
         let markersById = {};
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -697,14 +698,6 @@
                 attribution: '&copy; CartoDB'
             });
 
-            // Layer Control
-            L.control.layers({
-                "🛰️ Google Satellite Hybrid (Default)": googleHybrid,
-                "🗺️ OpenStreetMap": osm,
-                "🌍 Esri Satellite": esriSatellite,
-                "⚪ Carto Clean Light": cartoPositron
-            }, null, { position: 'topright' }).addTo(mapInstance);
-
             // Add Custom Map Legend (Bottom Left)
             const legend = L.control({ position: 'bottomleft' });
             legend.onAdd = function () {
@@ -716,15 +709,26 @@
                     <div class="legend-item"><span class="legend-circle" style="background:#ca8a04;"></span> Sedang (21 - 50 Titik)</div>
                     <div class="legend-item"><span class="legend-circle" style="background:#0284c7;"></span> Ringan (10 - 20 Titik)</div>
                     <div class="text-muted small mt-2 pt-1 border-top" style="font-size:0.7rem;">
-                        Zoom in untuk memecah klaster menjadi titik survei individu.
+                        Zoom in (zoom &gt;= 15) untuk memecah klaster menjadi titik survei individu.
                     </div>
                 `;
                 return div;
             };
             legend.addTo(mapInstance);
 
-            // Render MarkerCluster with individual points
+            // Render MarkerCluster and Raw Points Group
             renderClusterMarkers();
+
+            // Layer Control
+            L.control.layers({
+                "🛰️ Google Satellite Hybrid (Default)": googleHybrid,
+                "🗺️ OpenStreetMap": osm,
+                "🌍 Esri Satellite": esriSatellite,
+                "⚪ Carto Clean Light": cartoPositron
+            }, {
+                "⭕ Mode Klaster Berangka": clusterGroup,
+                "📍 Semua Titik Individu (Langsung)": rawPointsGroup
+            }, { position: 'topright' }).addTo(mapInstance);
 
             // Force recalculation of map container dimensions
             setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 250);
@@ -734,13 +738,15 @@
         function renderClusterMarkers() {
             if (!clustersData || !Array.isArray(clustersData) || clustersData.length === 0) return;
 
-            // Initialize MarkerClusterGroup
+            // 1. Initialize MarkerClusterGroup with auto-break at zoom >= 15
             clusterGroup = L.markerClusterGroup({
                 chunkedLoading: true,
                 showCoverageOnHover: true,
                 zoomToBoundsOnClick: true,
                 spiderfyOnMaxZoom: true,
+                disableClusteringAtZoom: 15, // Zoom >= 15 directly displays all individual points!
                 maxClusterRadius: 40,
+                spiderLegPolylineOptions: { weight: 1.5, color: '#ffffff', opacity: 0.75 },
                 iconCreateFunction: function (cluster) {
                     const count = cluster.getChildCount();
                     let bgClass = 'cluster-ringan';
@@ -756,6 +762,44 @@
                 }
             });
 
+            // 2. Initialize Raw Points Group (for direct individual view)
+            rawPointsGroup = L.featureGroup();
+
+            // Floating Toggle Button on Map
+            const modeToggleControl = L.control({ position: 'topleft' });
+            modeToggleControl.onAdd = function () {
+                const btn = L.DomUtil.create('button', 'btn btn-sm btn-light shadow-sm fw-bold');
+                btn.id = 'toggleClusterModeBtn';
+                btn.style.marginLeft = '48px';
+                btn.style.marginTop = '2px';
+                btn.style.fontSize = '0.78rem';
+                btn.style.borderRadius = '6px';
+                btn.style.border = '1px solid #cbd5e1';
+                btn.style.zIndex = '1000';
+                btn.innerHTML = '<i class="ti ti-point me-1 text-danger"></i> Tampilkan Semua Titik Individu';
+                
+                let isDirectPointsMode = false;
+                btn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    isDirectPointsMode = !isDirectPointsMode;
+                    
+                    if (isDirectPointsMode) {
+                        btn.classList.replace('btn-light', 'btn-primary');
+                        btn.innerHTML = '<i class="ti ti-circles me-1"></i> Kembali ke Mode Klaster';
+                        mapInstance.removeLayer(clusterGroup);
+                        mapInstance.addLayer(rawPointsGroup);
+                    } else {
+                        btn.classList.replace('btn-primary', 'btn-light');
+                        btn.innerHTML = '<i class="ti ti-point me-1 text-danger"></i> Tampilkan Semua Titik Individu';
+                        mapInstance.removeLayer(rawPointsGroup);
+                        mapInstance.addLayer(clusterGroup);
+                    }
+                };
+                return btn;
+            };
+            modeToggleControl.addTo(mapInstance);
+
             clustersData.forEach(c => {
                 if (!c || isNaN(parseFloat(c.center_lat)) || isNaN(parseFloat(c.center_lon))) {
                     return;
@@ -766,14 +810,14 @@
                 const size = parseInt(c.cluster_size) || 1;
                 const points = (Array.isArray(c.points) && c.points.length > 0) ? c.points : [[cLat, cLon, '']];
 
-                // Create main cluster representative marker (for centering & popup)
+                // Create main cluster center marker (for centering & popup)
                 const mainMarker = L.circleMarker([cLat, cLon], {
-                    radius: 7,
+                    radius: 8,
                     fillColor: c.marker_color || '#dc2626',
                     color: '#ffffff',
-                    weight: 2,
-                    opacity: 0.95,
-                    fillOpacity: 0.9
+                    weight: 2.5,
+                    opacity: 1,
+                    fillOpacity: 0.95
                 });
 
                 const popupContent = `
@@ -820,7 +864,7 @@
 
                 markersById[c.id] = mainMarker;
 
-                // Add individual survey points to the cluster group
+                // Add individual survey points to both clusterGroup and rawPointsGroup
                 points.forEach((pt, pIdx) => {
                     const pLat = parseFloat(pt[0]) || cLat;
                     const pLon = parseFloat(pt[1]) || cLon;
@@ -831,12 +875,12 @@
                         fillColor: c.marker_color || '#dc2626',
                         color: '#ffffff',
                         weight: 1.5,
-                        opacity: 0.95,
-                        fillOpacity: 0.85
+                        opacity: 1,
+                        fillOpacity: 0.88
                     });
 
                     // Tooltip & Popup for individual point
-                    pointMarker.bindTooltip(`${c.nama_petugas} (Assignment: ${pAssign})`, {
+                    pointMarker.bindTooltip(`${c.nama_petugas} (Titik #${pIdx + 1})`, {
                         direction: 'top',
                         offset: [0, -6]
                     });
@@ -857,9 +901,23 @@
                     });
 
                     clusterGroup.addLayer(pointMarker);
+
+                    // Add clone to raw points group
+                    const rawMarker = L.circleMarker([pLat, pLon], {
+                        radius: 5.5,
+                        fillColor: c.marker_color || '#dc2626',
+                        color: '#ffffff',
+                        weight: 1.2,
+                        opacity: 1,
+                        fillOpacity: 0.85
+                    });
+                    rawMarker.bindTooltip(`${c.nama_petugas} (#${pIdx + 1})`);
+                    rawMarker.bindPopup(pointMarker.getPopup().getContent());
+                    rawPointsGroup.addLayer(rawMarker);
                 });
             });
 
+            // Add clusterGroup to map by default
             mapInstance.addLayer(clusterGroup);
 
             // Adjust bounds to fit all markers
