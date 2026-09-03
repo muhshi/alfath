@@ -4,7 +4,7 @@
 
 @push('css')
     <!-- Leaflet CSS CDN -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
     <style>
@@ -44,9 +44,11 @@
 
         #anomali-map {
             height: 620px;
+            min-height: 620px;
             width: 100%;
             border-radius: 10px;
-            z-index: 10;
+            z-index: 1;
+            background-color: #f1f5f9;
         }
 
         .map-legend {
@@ -168,19 +170,30 @@
     </div>
 
     <!-- Alert Edukasi / Disclaimer Karakteristik Lapangan (Pasar Tradisional vs Domisili) -->
-    <div class="alert alert-important alert-info alert-dismissible shadow-sm mb-4" role="alert">
-        <div class="d-flex">
-            <div class="me-3 fs-2 text-info">
-                <i class="ti ti-info-circle"></i>
-            </div>
-            <div>
-                <h4 class="alert-title fw-bold mb-1">Catatan Penting Pemeriksaan Lapangan (Pasar vs Domisili):</h4>
-                <div class="text-secondary small">
-                    Klaster titik bertumpuk adalah indikasi awal. Pengawas Lapangan (PML/Koseka) disarankan <strong>selalu memverifikasi fisik lokasi melalui tombol "Google Maps Satelit"</strong> sebelum menjatuhkan teguran, karena pada <strong>Pasar Tradisional</strong> (seperti Pasar Bintoro, Pasar Sayung) atau <strong>Sentra Ruko Padat</strong>, kumpulan titik geotag adalah hal yang <strong>wajar</strong> karena letak kios yang sangat berdekatan. Jika titik berada di rumah pribadi/sawah/warkop, hal tersebut baru dikategorikan sebagai anomali tidak door-to-door.
+    <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #0284c7 !important; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0;">
+        <div class="card-body p-3 p-md-4">
+            <div class="d-flex align-items-start">
+                <div class="me-3 d-flex align-items-center justify-content-center rounded-3 bg-blue-lt p-2 flex-shrink-0" style="width: 44px; height: 44px; color: #0284c7;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-info-circle" width="28" height="28" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                        <path d="M12 9h.01" />
+                        <path d="M11 12h1v4h1" />
+                    </svg>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h4 class="fw-bold mb-0 text-dark" style="font-size: 1rem; color: #0f172a !important;">
+                            Catatan Penting Pemeriksaan Lapangan (Verifikasi Pasar vs Domisili Petugas)
+                        </h4>
+                        <span class="badge bg-blue-lt text-primary fw-bold" style="font-size: 0.75rem;">Panduan Verifikasi</span>
+                    </div>
+                    <div class="small" style="line-height: 1.65; color: #334155 !important;">
+                        Klaster titik koordinat bertumpuk merupakan indikasi awal. Pengawas Lapangan (PML/Koseka) disarankan <strong>selalu memverifikasi fisik lokasi melalui tombol "Cek Satelit"</strong> sebelum mengambil tindakan pembinaan, karena pada <strong style="color: #0369a1;">Pasar Tradisional</strong> (seperti Pasar Bintoro, Pasar Sayung, Pasar Karanganyar) atau <strong style="color: #0369a1;">Sentra Pertokoan/Ruko Padat</strong>, kumpulan titik geotag adalah hal yang <span class="badge bg-success-lt text-success fw-bold px-2 py-0">Wajar / Valid</span> mengingat letak kios usaha yang saling bersebelahan. Sebaliknya, jika titik bertumpuk berada di <strong style="color: #b91c1c;">Rumah Tinggal Pribadi, Warkop, atau Sawah</strong>, hal tersebut baru diindikasikan sebagai <span class="badge bg-danger-lt text-danger fw-bold px-2 py-0">Anomali Tidak Door-to-Door</span>.
+                    </div>
                 </div>
             </div>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="close"></button>
     </div>
 
     <!-- 4 KPI Summary Cards -->
@@ -484,52 +497,77 @@
 @endsection
 
 @push('js')
+    <!-- jQuery CDN (Required by DataTables & reliable DOM operations) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
     <!-- Leaflet JS CDN -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+    <!-- DataTables CDN with AMD safeguard -->
+    <script>
+        window._tempDefine = window.define;
+        window.define = null;
+    </script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        window.define = window._tempDefine;
+    </script>
 
     <script>
         // Pre-loaded clusters from PHP
-        const clustersData = @json($clusters);
+        const clustersData = {!! json_encode($clusters, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!};
         let mapInstance = null;
         let markersById = {};
 
         document.addEventListener('DOMContentLoaded', function () {
-            // Init DataTable for Petugas Ranking
-            $('#petugasRankingTable').DataTable({
-                pageLength: 15,
-                lengthMenu: [10, 15, 25, 50, 100],
-                language: {
-                    search: "Cari:",
-                    lengthMenu: "Tampilkan _MENU_ data",
-                    info: "Menampilkan _START_ s.d _END_ dari _TOTAL_ petugas",
-                    infoEmpty: "Data kosong",
-                    zeroRecords: "Tidak ada petugas yang cocok",
-                    paginate: {
-                        first: "Pertama",
-                        last: "Terakhir",
-                        next: "Berikutnya",
-                        previous: "Sebelumnya"
-                    }
+            // 1. Initialize Leaflet Map FIRST and independently
+            try {
+                initLeafletMap();
+            } catch (err) {
+                console.error("Leaflet initialization failed:", err);
+            }
+
+            // 2. Initialize DataTables for Petugas Ranking inside try-catch
+            try {
+                if (window.jQuery && $.fn && $.fn.DataTable) {
+                    $('#petugasRankingTable').DataTable({
+                        pageLength: 15,
+                        lengthMenu: [10, 15, 25, 50, 100],
+                        language: {
+                            search: "Cari:",
+                            lengthMenu: "Tampilkan _MENU_ data",
+                            info: "Menampilkan _START_ s.d _END_ dari _TOTAL_ petugas",
+                            infoEmpty: "Data kosong",
+                            zeroRecords: "Tidak ada petugas yang cocok",
+                            paginate: {
+                                first: "Pertama",
+                                last: "Terakhir",
+                                next: "Berikutnya",
+                                previous: "Sebelumnya"
+                            }
+                        }
+                    });
                 }
-            });
+            } catch (dtErr) {
+                console.warn("DataTables initialization warning:", dtErr);
+            }
 
-            // Initialize Leaflet Map
-            initLeafletMap();
-
-            // Refresh map dimensions when Tab 1 becomes visible
+            // 3. Refresh map dimensions when Tab 1 becomes visible
             const mapTabBtn = document.getElementById('map-tab');
             if (mapTabBtn) {
                 mapTabBtn.addEventListener('shown.bs.tab', function () {
                     if (mapInstance) {
-                        mapInstance.invalidateSize();
+                        setTimeout(() => { mapInstance.invalidateSize(); }, 150);
                     }
                 });
             }
         });
 
         function initLeafletMap() {
+            const mapContainer = document.getElementById('anomali-map');
+            if (!mapContainer) return;
+
             // Default center Kab. Demak coordinates
             const demakCenter = [-6.8944, 110.6385];
             mapInstance = L.map('anomali-map', {
@@ -538,22 +576,23 @@
                 scrollWheelZoom: true
             });
 
-            // Base Layer: OpenStreetMap
-            const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            // Base Layer: OpenStreetMap (Standard default, highly reliable)
+            const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                attribution: '&copy; OpenStreetMap contributors'
-            });
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(mapInstance);
 
-            // Base Layer: Carto Positron (Clean Modern Light)
+            // Base Layer: Carto Positron (Clean Light)
             const cartoPositron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 maxZoom: 20,
+                subdomains: 'abcd',
                 attribution: '&copy; CartoDB'
-            }).addTo(mapInstance);
+            });
 
             // Layer Control
             L.control.layers({
-                "Carto Clean Light": cartoPositron,
-                "OpenStreetMap": osm
+                "OpenStreetMap (Default)": osm,
+                "Carto Clean Light": cartoPositron
             }, null, { position: 'topright' }).addTo(mapInstance);
 
             // Add Custom Map Legend (Bottom Left)
@@ -573,20 +612,32 @@
 
             // Render Circle Markers for each cluster
             renderClusterMarkers();
+
+            // Force recalculation of map container dimensions
+            setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 250);
+            setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 650);
         }
 
         function renderClusterMarkers() {
-            if (!clustersData || clustersData.length === 0) return;
+            if (!clustersData || !Array.isArray(clustersData) || clustersData.length === 0) return;
 
             const group = new L.featureGroup();
 
             clustersData.forEach(c => {
-                // Sizing circle radius based on cluster_size
-                const r = Math.min(26, Math.max(7, Math.sqrt(c.cluster_size) * 2.2));
+                if (!c || isNaN(parseFloat(c.center_lat)) || isNaN(parseFloat(c.center_lon))) {
+                    return;
+                }
 
-                const circle = L.circleMarker([c.center_lat, c.center_lon], {
+                const lat = parseFloat(c.center_lat);
+                const lon = parseFloat(c.center_lon);
+                const size = parseInt(c.cluster_size) || 1;
+
+                // Sizing circle radius based on cluster_size
+                const r = Math.min(26, Math.max(7, Math.sqrt(size) * 2.2));
+
+                const circle = L.circleMarker([lat, lon], {
                     radius: r,
-                    fillColor: c.marker_color,
+                    fillColor: c.marker_color || '#dc2626',
                     color: '#ffffff',
                     weight: 1.5,
                     opacity: 0.9,
@@ -594,7 +645,7 @@
                 });
 
                 // Tooltip on Hover
-                circle.bindTooltip(`<strong>${c.nama_petugas}</strong>: ${c.cluster_size} titik bertumpuk (${c.namakec})`, {
+                circle.bindTooltip(`<strong>${c.nama_petugas}</strong>: ${size} titik bertumpuk (${c.namakec})`, {
                     direction: 'top',
                     offset: [0, -r]
                 });
@@ -604,7 +655,7 @@
                     <div style="min-width: 250px; font-family: inherit;">
                         <div class="popup-custom-title d-flex justify-content-between align-items-center">
                             <span>${c.nama_petugas}</span>
-                            <span class="badge ${c.badge_class}" style="font-size:0.75rem;">${c.cluster_size} Titik</span>
+                            <span class="badge ${c.badge_class}" style="font-size:0.75rem;">${size} Titik</span>
                         </div>
                         <div class="text-muted small mb-2" style="font-size:0.75rem;">${c.email}</div>
                         
@@ -626,14 +677,14 @@
                         </div>
                         <div class="popup-stat-row">
                             <span class="text-muted">Koordinat:</span>
-                            <span class="font-monospace small">${c.center_lat.toFixed(5)}, ${c.center_lon.toFixed(5)}</span>
+                            <span class="font-monospace small">${lat.toFixed(5)}, ${lon.toFixed(5)}</span>
                         </div>
 
                         <div class="mt-3 pt-2 border-top d-flex gap-2">
                             <a href="${c.google_maps_url}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary flex-grow-1" style="font-size: 0.775rem;">
                                 <i class="ti ti-world me-1"></i> Cek Satelit (Pasar/Rumah)
                             </a>
-                            <button class="btn btn-sm btn-primary" onclick="mapInstance.setView([${c.center_lat}, ${c.center_lon}], 18)" style="font-size: 0.775rem;">
+                            <button class="btn btn-sm btn-primary" onclick="mapInstance.setView([${lat}, ${lon}], 18)" style="font-size: 0.775rem;">
                                 <i class="ti ti-zoom-in"></i> Zoom
                             </button>
                         </div>
@@ -653,8 +704,12 @@
             });
 
             // Adjust bounds to fit all markers if any
-            if (clustersData.length > 0) {
-                mapInstance.fitBounds(group.getBounds().pad(0.08));
+            if (clustersData.length > 0 && group.getLayers().length > 0) {
+                try {
+                    mapInstance.fitBounds(group.getBounds().pad(0.08));
+                } catch (bErr) {
+                    console.warn("fitBounds warning:", bErr);
+                }
             }
         }
 
@@ -685,8 +740,10 @@
         function locatePetugasOnMap(lat, lon, topClusterId) {
             // Switch to Tab 1 (Map)
             const mapTabTrigger = document.querySelector('#map-tab');
-            const tab = new bootstrap.Tab(mapTabTrigger);
-            tab.show();
+            if (mapTabTrigger) {
+                const tab = new bootstrap.Tab(mapTabTrigger);
+                tab.show();
+            }
 
             // Wait brief moment for tab animation then flyTo
             setTimeout(() => {

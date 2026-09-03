@@ -292,7 +292,11 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Panel daftar klaster di samping peta dengan interaksi klik yang otomatis memfokuskan peta (`flyTo`).
     - Tab Ranking Petugas Terindikasi (DataTables) dengan tombol langsung "Cek di Peta".
     - Tab Rekapitulasi Persebaran Klaster di 14 Kecamatan se-Kabupaten Demak.
-  - **Integrasi Tombol Beranda (`home.blade.php`)**: Menambahkan tombol aksi cepat "Anomali Geotag SE2026" beraksen merah (`#dc2626`) pada bilah header halaman Beranda dan jajaran tombol aksi kartu hero banner utama.
+  - **Peningkatan Kontras & Perbaikan Peta Geospasial Leaflet (`dashboard-anomali-geotag.blade.php`)**:
+    - **Peningkatan Kontras Card Panduan Lapangan**: Mengganti alert biru pekat dengan kartu putih korporat beraksen border biru (`#0284c7`), teks charcoal gelap (`#334155`), dan badge kontras tinggi sehingga tulisan panduan verifikasi pasar vs domisili terbaca dengan sangat jelas.
+    - **Perbaikan Inisialisasi Peta Leaflet**: Menambahkan pustaka jQuery CDN dan pengaman AMD loader (`window.define`) untuk mencegah error ReferenceError pada DataTables yang memblokir eksekusi inisialisasi peta Leaflet.
+    - **Optimasi Render Peta**: Memastikan layer OpenStreetMap aktif secara andal dan menambahkan re-kalkulasi dimensi container (`mapInstance.invalidateSize()`) agar peta geospasial tampil penuh dan responsif.
+
 
 
 
