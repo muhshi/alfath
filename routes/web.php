@@ -30,6 +30,8 @@ Route::get('/home', [\App\Http\Controllers\HomeController::class , 'index'])->na
 Route::get('/dashboard-se2026', [\App\Http\Controllers\ExecutiveDashboardController::class , 'index'])->name('dashboard.se2026');
 Route::get('/dashboard-pengolahan', [\App\Http\Controllers\PengolahanController::class , 'index'])->name('dashboard.pengolahan');
 Route::get('/timeline-petugas', [\App\Http\Controllers\TimelinePetugasController::class , 'index'])->name('dashboard.timeline-petugas');
+Route::get('/dashboard-anomali-geotag', [\App\Http\Controllers\GeotagAnomalyController::class , 'index'])->name('dashboard.anomali-geotag');
+Route::get('/dashboard-anomali-geotag/export', [\App\Http\Controllers\GeotagAnomalyController::class , 'export'])->name('dashboard.anomali-geotag.export');
 Route::get('/dashboard-pengolahan/export', [\App\Http\Controllers\PengolahanController::class , 'export'])->name('dashboard.pengolahan.export');
 Route::post('/dashboard-pengolahan/catatan-anomali', [\App\Http\Controllers\PengolahanController::class , 'simpanCatatanAnomali'])->name('dashboard.pengolahan.catatan-anomali');
 Route::get('/debug-db', function () {

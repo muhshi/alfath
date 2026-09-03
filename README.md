@@ -277,9 +277,21 @@ Script `deploy.sh` secara otomatis mengeksekusi:
 
 ### 2026-09-03
 
-- **Perancangan Fitur Dashboard Deteksi Anomali Geotag Petugas (Klaster Lat-Long SE2026)**:
-  - **Analisis & Parsing Dataset Klaster Geotag (`public/SE2026/*.csv`)**: Melakukan audit dan analisis terhadap 13 file CSV (117.000 titik geotag) hasil query SQL Lab yang membentuk 736 titik klaster anomali pada 253 petugas pencacah (PPL).
-  - **Arsitektur Service Layer & High-Performance Caching**: Merancang `Se2026ClusterAnomalyService` untuk memisahkan logika parsing data, agregasi geospasial, join dengan database `fasih` (`master_petugas`, `monitoring_se2026`, `alokasi_pengawas`), serta indexed caching agar beban komputasi tidak membebani server dan respons halaman instan (< 100ms).
-  - **Perancangan Visualisasi Geospasial Interaktif (Leaflet.js)**: Menyusun desain dashboard berbasis Tablar dengan peta interaktif Demak, penandaan klaster bergradasi risiko (Ekstrem >100 titik, Berat 51-100, Sedang 21-50, Ringan 10-20), integrasi tombol cek lokasi Google Maps / Satelit (untuk validasi area pasar/ruko vs domisili warkop/rumah), serta ranking investigasi petugas nakal.
-  - **Penyusunan Rencana Kerja Terstruktur**: Mendokumentasikan alur implementasi di `tasks/plan.md` dan `tasks/todo.md`.
+- **Implementasi Fitur Dashboard Deteksi Anomali Geotag Petugas (Klaster Lat-Long SE2026)**:
+  - **Service Layer Geospasial (`Se2026ClusterAnomalyService.php`)**:
+    - Parsing dan penggabungan 13 file CSV query SQL Lab (`public/SE2026/*.csv`) dengan total **117.000 titik geotag** bertumpuk menjadi **734 titik klaster unik** pada **252 petugas pencacah (PPL)**.
+    - Relasi otomatis ke database `fasih` (`master_petugas`, `monitoring_se2026`, `alokasi_pengawas`) untuk memunculkan nama asli pencacah, kecamatan tugas, dan nama PML penanggung jawab.
+    - Klasifikasi tingkat keparahan: 🚨 Ekstrem (>100 titik: 2 klaster), ⚠️ Berat (51-100 titik: 22 klaster), 🟡 Sedang (21-50 titik: 161 klaster), dan 🔵 Ringan (10-20 titik: 549 klaster).
+    - Mekanisme **Indexed File Caching** yang memangkas waktu load data dari 9,36 detik menjadi **8,46 milidetik**.
+  - **Controller Ringkas & Ekspor Data (`GeotagAnomalyController.php`)**:
+    - Mematuhi batas arsitektur Laravel (< 90 baris kode).
+    - Mendukung filter dinamis (Kecamatan, Tingkat Keparahan, Pencarian) dan streaming ekspor CSV UTF-8 untuk klaster maupun ranking petugas.
+  - **Visualisasi Geospasial Interaktif Leaflet.js (`dashboard-anomali-geotag.blade.php`)**:
+    - Peta interaktif Kabupaten Demak dengan layer Carto Positron & OpenStreetMap, circle marker berskala radius proporsional dan warna sesuai tingkat keparahan.
+    - Popup informatif lengkap dengan radius sebaran titik (meter), akurasi GPS, info PML, dan tombol **"Cek Satelit (Pasar/Rumah)"** ke Google Maps untuk membedakan antara klaster wajar di pasar tradisional vs anomali tidak door-to-door di rumah/warkop.
+    - Panel daftar klaster di samping peta dengan interaksi klik yang otomatis memfokuskan peta (`flyTo`).
+    - Tab Ranking Petugas Terindikasi (DataTables) dengan tombol langsung "Cek di Peta".
+    - Tab Rekapitulasi Persebaran Klaster di 14 Kecamatan se-Kabupaten Demak.
+  - **Routing & Navigasi**: Menambahkan rute `/dashboard-anomali-geotag` dan `/dashboard-anomali-geotag/export` di `routes/web.php` serta menu "Anomali Geotag" di `config/tablar.php`.
+
 

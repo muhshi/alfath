@@ -1,0 +1,492 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+class Se2026ClusterAnomalyService
+{
+    /**
+     * Master 14 Kecamatan Map (Demak BPS Codes)
+     */
+    protected array $kecNameMap = [
+        '3321010' => 'Mranggen',
+        '3321020' => 'Karangawen',
+        '3321030' => 'Guntur',
+        '3321040' => 'Sayung',
+        '3321050' => 'Karangtengah',
+        '3321060' => 'Bonang',
+        '3321070' => 'Demak',
+        '3321080' => 'Wonosalam',
+        '3321090' => 'Dempet',
+        '3321091' => 'Kebonagung',
+        '3321100' => 'Gajah',
+        '3321110' => 'Karanganyar',
+        '3321120' => 'Mijen',
+        '3321130' => 'Wedung',
+    ];
+
+    public function getKecNameMap(): array
+    {
+        return $this->kecNameMap;
+    }
+
+    /**
+     * Get or build cached cluster data from public/SE2026/*.csv and DB relationships.
+     */
+    public function getClusterData(bool $forceRefresh = false): array
+    {
+        $cacheStore = Cache::store('file');
+        $cacheKey = 'se2026_geotag_anomaly_dataset_v1';
+
+        if ($forceRefresh) {
+            $cacheStore->forget($cacheKey);
+        }
+
+        return $cacheStore->remember($cacheKey, now()->addDays(7), function () {
+            return $this->buildDatasetFromCsv();
+        });
+    }
+
+    /**
+     * Process raw CSV files and join with master database.
+     */
+    protected function buildDatasetFromCsv(): array
+    {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(300);
+
+        $csvPattern = public_path('SE2026/*.csv');
+        $files = glob($csvPattern);
+
+        if (empty($files)) {
+            $files = glob(base_path('public/SE2026/*.csv'));
+        }
+
+        // 1. Preload master petugas and region mappings from fasih DB
+        $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
+        $db = $connName ? DB::connection($connName) : DB::connection();
+        $schema = $connName ? Schema::connection($connName) : Schema::connection();
+
+        $masterPetugasMap = [];
+        if ($schema->hasTable('master_petugas')) {
+            $petugasList = $db->table('master_petugas')
+                ->select('email', 'nama_lengkap', 'peran')
+                ->get();
+            foreach ($petugasList as $p) {
+                $emailKey = strtolower(trim($p->email));
+                $masterPetugasMap[$emailKey] = [
+                    'nama' => trim($p->nama_lengkap),
+                    'peran' => trim($p->peran),
+                ];
+            }
+        }
+
+        $pencacahKecMap = [];
+        if ($schema->hasTable('monitoring_se2026')) {
+            $colEmail = $schema->hasColumn('monitoring_se2026', 'email_pencacah') ? 'email_pencacah' : 'pencacah_email';
+            $pencacahKec = $db->table('monitoring_se2026')
+                ->select(DB::raw("LOWER(TRIM($colEmail)) as email, LEFT(region_code, 7) as kodekec, COUNT(*) as cnt"))
+                ->whereNotNull($colEmail)
+                ->where($colEmail, '!=', '')
+                ->groupBy(DB::raw("LOWER(TRIM($colEmail)), LEFT(region_code, 7)"))
+                ->orderBy('cnt', 'desc')
+                ->get();
+
+            foreach ($pencacahKec as $row) {
+                if (!isset($pencacahKecMap[$row->email])) {
+                    $pencacahKecMap[$row->email] = $row->kodekec;
+                }
+            }
+        }
+
+        // Pengawas (PML) mapping per region
+        $alokasiPengawasMap = [];
+        if ($schema->hasTable('alokasi_pengawas')) {
+            $alokasi = $db->table('alokasi_pengawas')
+                ->select(DB::raw("LEFT(region_code, 7) as kodekec, LOWER(TRIM(email_pengawas)) as pml_email"))
+                ->whereNotNull('email_pengawas')
+                ->where('email_pengawas', '!=', '')
+                ->groupBy(DB::raw("LEFT(region_code, 7), LOWER(TRIM(email_pengawas))"))
+                ->get();
+
+            foreach ($alokasi as $a) {
+                if (!isset($alokasiPengawasMap[$a->kodekec])) {
+                    $alokasiPengawasMap[$a->kodekec] = $a->pml_email;
+                }
+            }
+        }
+
+        // 2. Parse CSV files
+        $totalRawPoints = 0;
+        $clusters = [];
+        $batchFiles = [];
+
+        foreach ($files as $filePath) {
+            $filename = basename($filePath);
+            $batchFiles[] = $filename;
+            $handle = fopen($filePath, 'r');
+            if (!$handle) continue;
+
+            $header = fgetcsv($handle);
+            if (!$header) {
+                fclose($handle);
+                continue;
+            }
+
+            $idxEmail = array_search('pencacah_email', $header);
+            $idxSize = array_search('cluster_size', $header);
+            $idxCenterLat = array_search('cluster_center_lat', $header);
+            $idxCenterLon = array_search('cluster_center_lon', $header);
+            $idxMinLat = array_search('cluster_min_lat', $header);
+            $idxMaxLat = array_search('cluster_max_lat', $header);
+            $idxMinLon = array_search('cluster_min_lon', $header);
+            $idxMaxLon = array_search('cluster_max_lon', $header);
+            $idxAvgAcc = array_search('cluster_avg_accuracy', $header);
+            $idxAssign = array_search('assignment_id', $header);
+            $idxPointLat = array_search('point_lat', $header);
+            $idxPointLon = array_search('point_lon', $header);
+
+            while (($row = fgetcsv($handle)) !== false) {
+                $totalRawPoints++;
+                $email = strtolower(trim($row[$idxEmail] ?? ''));
+                $cLat = trim($row[$idxCenterLat] ?? '');
+                $cLon = trim($row[$idxCenterLon] ?? '');
+
+                if (empty($email) || empty($cLat) || empty($cLon)) {
+                    continue;
+                }
+
+                $clusterKey = $email . '|' . $cLat . '|' . $cLon;
+
+                if (!isset($clusters[$clusterKey])) {
+                    $size = (int) ($row[$idxSize] ?? 0);
+                    $minLat = (float) ($row[$idxMinLat] ?? $cLat);
+                    $maxLat = (float) ($row[$idxMaxLat] ?? $cLat);
+                    $minLon = (float) ($row[$idxMinLon] ?? $cLon);
+                    $maxLon = (float) ($row[$idxMaxLon] ?? $cLon);
+                    $avgAcc = (float) ($row[$idxAvgAcc] ?? 0);
+
+                    // Calculate bounding diameter in meters
+                    $latDistM = abs($maxLat - $minLat) * 111320;
+                    $lonDistM = abs($maxLon - $minLon) * 111320 * cos(deg2rad((float) $cLat));
+                    $approxRadiusM = round(sqrt(pow($latDistM, 2) + pow($lonDistM, 2)), 1);
+
+                    // Severity Classification
+                    if ($size > 100) {
+                        $severity = 'ekstrem';
+                        $severityLabel = '🚨 Ekstrem (>100)';
+                        $badgeClass = 'bg-danger text-white';
+                        $markerColor = '#dc2626'; // red-600
+                    } elseif ($size > 50) {
+                        $severity = 'berat';
+                        $severityLabel = '⚠️ Berat (51-100)';
+                        $badgeClass = 'bg-orange text-white';
+                        $markerColor = '#ea580c'; // orange-600
+                    } elseif ($size > 20) {
+                        $severity = 'sedang';
+                        $severityLabel = '🟡 Sedang (21-50)';
+                        $badgeClass = 'bg-warning text-dark';
+                        $markerColor = '#ca8a04'; // yellow-600
+                    } else {
+                        $severity = 'ringan';
+                        $severityLabel = '🔵 Ringan (10-20)';
+                        $badgeClass = 'bg-azure text-white';
+                        $markerColor = '#0284c7'; // sky-600
+                    }
+
+                    // Resolve Officer Name
+                    $namaPetugas = $masterPetugasMap[$email]['nama'] ?? $this->formatEmailToName($email);
+
+                    // Resolve Kecamatan
+                    $kodeKec = $pencacahKecMap[$email] ?? null;
+                    $namaKec = $kodeKec && isset($this->kecNameMap[$kodeKec]) ? $this->kecNameMap[$kodeKec] : 'Demak (Umum)';
+
+                    // Resolve PML
+                    $pmlEmail = $kodeKec && isset($alokasiPengawasMap[$kodeKec]) ? $alokasiPengawasMap[$kodeKec] : null;
+                    $pmlNama = $pmlEmail && isset($masterPetugasMap[$pmlEmail]['nama']) ? $masterPetugasMap[$pmlEmail]['nama'] : ($pmlEmail ? $this->formatEmailToName($pmlEmail) : '-');
+
+                    $clusterId = 'cls_' . substr(md5($clusterKey), 0, 10);
+
+                    $clusters[$clusterKey] = [
+                        'id' => $clusterId,
+                        'key' => $clusterKey,
+                        'email' => $email,
+                        'nama_petugas' => $namaPetugas,
+                        'kodekec' => $kodeKec,
+                        'namakec' => $namaKec,
+                        'pml_email' => $pmlEmail,
+                        'pml_nama' => $pmlNama,
+                        'cluster_size' => $size,
+                        'center_lat' => (float) $cLat,
+                        'center_lon' => (float) $cLon,
+                        'min_lat' => $minLat,
+                        'max_lat' => $maxLat,
+                        'min_lon' => $minLon,
+                        'max_lon' => $maxLon,
+                        'approx_radius_m' => $approxRadiusM,
+                        'avg_accuracy' => $avgAcc,
+                        'severity' => $severity,
+                        'severity_label' => $severityLabel,
+                        'badge_class' => $badgeClass,
+                        'marker_color' => $markerColor,
+                        'google_maps_url' => "https://www.google.com/maps?q={$cLat},{$cLon}&z=19&t=k",
+                        'sample_assignments' => [trim($row[$idxAssign] ?? '')],
+                    ];
+                } else {
+                    if (count($clusters[$clusterKey]['sample_assignments']) < 3) {
+                        $clusters[$clusterKey]['sample_assignments'][] = trim($row[$idxAssign] ?? '');
+                    }
+                }
+            }
+            fclose($handle);
+        }
+
+        // Sort clusters by cluster_size desc
+        uasort($clusters, function ($a, $b) {
+            return $b['cluster_size'] <=> $a['cluster_size'];
+        });
+
+        // 3. Build Petugas Ranking
+        $petugasGroups = [];
+        foreach ($clusters as $c) {
+            $email = $c['email'];
+            if (!isset($petugasGroups[$email])) {
+                $petugasGroups[$email] = [
+                    'email' => $email,
+                    'nama' => $c['nama_petugas'],
+                    'kodekec' => $c['kodekec'],
+                    'namakec' => $c['namakec'],
+                    'pml_nama' => $c['pml_nama'],
+                    'pml_email' => $c['pml_email'],
+                    'total_clusters' => 0,
+                    'max_cluster_size' => 0,
+                    'total_anomali_points' => 0,
+                    'top_cluster_id' => $c['id'],
+                    'top_cluster_lat' => $c['center_lat'],
+                    'top_cluster_lon' => $c['center_lon'],
+                    'clusters' => [],
+                ];
+            }
+
+            $petugasGroups[$email]['total_clusters']++;
+            $petugasGroups[$email]['total_anomali_points'] += $c['cluster_size'];
+            if ($c['cluster_size'] > $petugasGroups[$email]['max_cluster_size']) {
+                $petugasGroups[$email]['max_cluster_size'] = $c['cluster_size'];
+                $petugasGroups[$email]['top_cluster_id'] = $c['id'];
+                $petugasGroups[$email]['top_cluster_lat'] = $c['center_lat'];
+                $petugasGroups[$email]['top_cluster_lon'] = $c['center_lon'];
+            }
+            $petugasGroups[$email]['clusters'][] = $c['id'];
+        }
+
+        // Assign severity & rank to Petugas
+        uasort($petugasGroups, function ($a, $b) {
+            if ($b['total_anomali_points'] === $a['total_anomali_points']) {
+                return $b['max_cluster_size'] <=> $a['max_cluster_size'];
+            }
+            return $b['total_anomali_points'] <=> $a['total_anomali_points'];
+        });
+
+        $petugasRanking = [];
+        $rank = 1;
+        foreach ($petugasGroups as $email => $p) {
+            $maxSize = $p['max_cluster_size'];
+            if ($maxSize > 100) {
+                $pSev = 'ekstrem';
+                $pBadge = 'bg-danger text-white';
+                $pLabel = '🚨 Kritis';
+            } elseif ($maxSize > 50) {
+                $pSev = 'berat';
+                $pBadge = 'bg-orange text-white';
+                $pLabel = '⚠️ Tinggi';
+            } elseif ($maxSize > 20) {
+                $pSev = 'sedang';
+                $pBadge = 'bg-warning text-dark';
+                $pLabel = '🟡 Sedang';
+            } else {
+                $pSev = 'ringan';
+                $pBadge = 'bg-azure text-white';
+                $pLabel = '🔵 Rendah';
+            }
+
+            $p['rank'] = $rank++;
+            $p['severity'] = $pSev;
+            $p['severity_label'] = $pLabel;
+            $p['badge_class'] = $pBadge;
+            $petugasRanking[] = $p;
+        }
+
+        // 4. Build Kecamatan Aggregation
+        $kecamatanSummary = [];
+        foreach ($this->kecNameMap as $code => $name) {
+            $kecamatanSummary[$code] = [
+                'code' => $code,
+                'name' => $name,
+                'total_clusters' => 0,
+                'total_petugas' => 0,
+                'total_points' => 0,
+                'max_cluster_size' => 0,
+                'petugas_emails' => [],
+            ];
+        }
+
+        // Also add general Demak bucket if any
+        $kecamatanSummary['other'] = [
+            'code' => 'other',
+            'name' => 'Lainnya / Tidak Terpetakan',
+            'total_clusters' => 0,
+            'total_petugas' => 0,
+            'total_points' => 0,
+            'max_cluster_size' => 0,
+            'petugas_emails' => [],
+        ];
+
+        foreach ($clusters as $c) {
+            $kCode = $c['kodekec'] ?? 'other';
+            if (!isset($kecamatanSummary[$kCode])) {
+                $kCode = 'other';
+            }
+            $kecamatanSummary[$kCode]['total_clusters']++;
+            $kecamatanSummary[$kCode]['total_points'] += $c['cluster_size'];
+            if ($c['cluster_size'] > $kecamatanSummary[$kCode]['max_cluster_size']) {
+                $kecamatanSummary[$kCode]['max_cluster_size'] = $c['cluster_size'];
+            }
+            $kecamatanSummary[$kCode]['petugas_emails'][$c['email']] = true;
+        }
+
+        foreach ($kecamatanSummary as $kCode => &$kData) {
+            $kData['total_petugas'] = count($kData['petugas_emails']);
+            unset($kData['petugas_emails']);
+        }
+        unset($kData);
+
+        // Sort kecamatan by total_points desc
+        uasort($kecamatanSummary, function ($a, $b) {
+            return $b['total_points'] <=> $a['total_points'];
+        });
+
+        // 5. Build KPI Summary
+        $severityCounts = [
+            'ekstrem' => 0,
+            'berat' => 0,
+            'sedang' => 0,
+            'ringan' => 0,
+        ];
+        $maxClusterOverall = 0;
+        foreach ($clusters as $c) {
+            $severityCounts[$c['severity']]++;
+            if ($c['cluster_size'] > $maxClusterOverall) {
+                $maxClusterOverall = $c['cluster_size'];
+            }
+        }
+
+        $clusterList = array_values($clusters);
+
+        return [
+            'total_raw_points' => $totalRawPoints,
+            'total_clusters' => count($clusterList),
+            'total_petugas' => count($petugasRanking),
+            'max_cluster_size' => $maxClusterOverall,
+            'severity_counts' => $severityCounts,
+            'batch_files' => $batchFiles,
+            'clusters' => $clusterList,
+            'petugas_ranking' => $petugasRanking,
+            'kecamatan_summary' => array_values($kecamatanSummary),
+            'generated_at' => date('d M Y | H:i') . ' WIB',
+        ];
+    }
+
+    /**
+     * Filter the cached dataset according to user inputs.
+     */
+    public function getFilteredViewData(Request $request): array
+    {
+        $forceRefresh = $request->has('fresh') || $request->has('refresh');
+        $raw = $this->getClusterData($forceRefresh);
+
+        $selectedKec = trim((string) $request->get('kecamatan', ''));
+        $selectedSeverity = trim((string) $request->get('severity', ''));
+        $search = trim((string) $request->get('search', ''));
+
+        $filteredClusters = $raw['clusters'];
+        $filteredPetugas = $raw['petugas_ranking'];
+
+        // Filter Clusters
+        if (!empty($selectedKec)) {
+            $filteredClusters = array_values(array_filter($filteredClusters, function ($c) use ($selectedKec) {
+                return ($c['kodekec'] === $selectedKec) || ($selectedKec === 'other' && empty($c['kodekec']));
+            }));
+        }
+
+        if (!empty($selectedSeverity)) {
+            $filteredClusters = array_values(array_filter($filteredClusters, function ($c) use ($selectedSeverity) {
+                return $c['severity'] === $selectedSeverity;
+            }));
+        }
+
+        if (!empty($search)) {
+            $searchLower = strtolower($search);
+            $filteredClusters = array_values(array_filter($filteredClusters, function ($c) use ($searchLower) {
+                return str_contains(strtolower($c['nama_petugas']), $searchLower)
+                    || str_contains(strtolower($c['email']), $searchLower)
+                    || str_contains(strtolower($c['pml_nama']), $searchLower)
+                    || str_contains(strtolower($c['namakec']), $searchLower);
+            }));
+        }
+
+        // Filter Petugas
+        if (!empty($selectedKec)) {
+            $filteredPetugas = array_values(array_filter($filteredPetugas, function ($p) use ($selectedKec) {
+                return ($p['kodekec'] === $selectedKec) || ($selectedKec === 'other' && empty($p['kodekec']));
+            }));
+        }
+
+        if (!empty($selectedSeverity)) {
+            $filteredPetugas = array_values(array_filter($filteredPetugas, function ($p) use ($selectedSeverity) {
+                return $p['severity'] === $selectedSeverity;
+            }));
+        }
+
+        if (!empty($search)) {
+            $searchLower = strtolower($search);
+            $filteredPetugas = array_values(array_filter($filteredPetugas, function ($p) use ($searchLower) {
+                return str_contains(strtolower($p['nama']), $searchLower)
+                    || str_contains(strtolower($p['email']), $searchLower)
+                    || str_contains(strtolower($p['pml_nama']), $searchLower)
+                    || str_contains(strtolower($p['namakec']), $searchLower);
+            }));
+        }
+
+        return [
+            'kecNameMap' => $this->kecNameMap,
+            'selectedKec' => $selectedKec,
+            'selectedSeverity' => $selectedSeverity,
+            'search' => $search,
+            'kpi' => [
+                'total_points' => $raw['total_raw_points'],
+                'total_clusters' => count($filteredClusters),
+                'total_petugas' => count($filteredPetugas),
+                'max_cluster' => !empty($filteredClusters) ? max(array_column($filteredClusters, 'cluster_size')) : 0,
+                'severity_counts' => $raw['severity_counts'],
+            ],
+            'clusters' => $filteredClusters,
+            'petugas_ranking' => $filteredPetugas,
+            'kecamatan_summary' => $raw['kecamatan_summary'],
+            'generated_at' => $raw['generated_at'],
+        ];
+    }
+
+    /**
+     * Fallback to turn email (e.g. fakrizainul0@gmail.com) into readable title-case name.
+     */
+    protected function formatEmailToName(string $email): string
+    {
+        $prefix = explode('@', $email)[0] ?? $email;
+        $clean = preg_replace('/[0-9_\-\.]+/', ' ', $prefix);
+        return ucwords(trim($clean)) ?: $email;
+    }
+}

@@ -165,6 +165,13 @@ return [
         ],
 
         [
+            'text' => 'Anomali Geotag',
+            'url' => 'dashboard-anomali-geotag',
+            'icon' => 'ti ti-map-pin-cancel',
+            'active' => ['dashboard-anomali-geotag*'],
+        ],
+
+        [
             'text' => 'Monitoring',
             'url' => 'surveys?category=monitoring',
             'icon' => 'ti ti-clipboard-data',
