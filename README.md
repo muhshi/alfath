@@ -292,6 +292,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Panel daftar klaster di samping peta dengan interaksi klik yang otomatis memfokuskan peta (`flyTo`).
     - Tab Ranking Petugas Terindikasi (DataTables) dengan tombol langsung "Cek di Peta".
     - Tab Rekapitulasi Persebaran Klaster di 14 Kecamatan se-Kabupaten Demak.
-  - **Routing & Navigasi**: Menambahkan rute `/dashboard-anomali-geotag` dan `/dashboard-anomali-geotag/export` di `routes/web.php` serta menu "Anomali Geotag" di `config/tablar.php`.
+  - **Integrasi Tombol Beranda (`home.blade.php`)**: Menambahkan tombol aksi cepat "Anomali Geotag SE2026" beraksen merah (`#dc2626`) pada bilah header halaman Beranda dan jajaran tombol aksi kartu hero banner utama.
+
 
 

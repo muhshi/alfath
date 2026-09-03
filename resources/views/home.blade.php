@@ -20,6 +20,15 @@
                 </svg>
                 Timeline / Heatmap Submit
             </a>
+            <a href="{{ route('dashboard.anomali-geotag') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #dc2626; border-color: #dc2626; border-radius: 10px; padding: 0.6rem 1.2rem; position: relative; z-index: 10; cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-pin-off me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M9.442 9.432a3 3 0 0 0 4.113 4.134m1.445 -2.566a3 3 0 0 0 -3 -3" />
+                    <path d="M17.152 17.162l-3.714 3.712a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 0 1 -.48 -10.795m2.583 -1.427a8.018 8.018 0 0 1 10.902 1.458" />
+                    <path d="M3 3l18 18" />
+                </svg>
+                Anomali Geotag SE2026
+            </a>
             <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px; padding: 0.6rem 1.4rem; position: relative; z-index: 10; cursor: pointer;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -77,6 +86,15 @@
                                                 <path d="M18 16.496v1.504l1 1" />
                                             </svg>
                                             Timeline / Heatmap Submit
+                                        </a>
+                                        <a href="{{ route('dashboard.anomali-geotag') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #dc2626; border-color: #dc2626; border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-pin-off me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                                <path d="M9.442 9.432a3 3 0 0 0 4.113 4.134m1.445 -2.566a3 3 0 0 0 -3 -3" />
+                                                <path d="M17.152 17.162l-3.714 3.712a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 0 1 -.48 -10.795m2.583 -1.427a8.018 8.018 0 0 1 10.902 1.458" />
+                                                <path d="M3 3l18 18" />
+                                            </svg>
+                                            Anomali Geotag SE2026
                                         </a>
                                     </div>
                                 </div>
