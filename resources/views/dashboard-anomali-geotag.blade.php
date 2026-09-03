@@ -881,6 +881,10 @@
                     fillOpacity: 0.95
                 });
 
+                const sampleNamesHtml = (c.sample_names && c.sample_names.length > 0)
+                    ? `<div class="small text-muted mb-2">Sampel Nama/Tempat: <strong class="text-dark">${c.sample_names.join(', ')}</strong></div>`
+                    : '';
+
                 const popupContent = `
                     <div style="min-width: 270px; font-family: inherit;">
                         <div class="popup-custom-title d-flex justify-content-between align-items-center mb-1">
@@ -899,6 +903,8 @@
                                 <span class="text-success fw-bold">🏬 BKU (Pasar): ${c.bku_count || 0} (${c.pct_bku || 0}%)</span>
                             </div>
                         </div>
+
+                        ${sampleNamesHtml}
 
                         <div class="popup-stat-row">
                             <span class="text-muted">Kecamatan:</span>
@@ -944,6 +950,8 @@
                     const bType = pt[3] || 'lainnya';
                     const bLabel = pt[4] || 'Tipe Bangunan Belum Terdata';
                     const pointColor = pt[5] || (bType === 'bku' ? '#10b981' : (bType === 'btt' ? '#ef4444' : (bType === 'campuran' ? '#f59e0b' : '#8b5cf6')));
+                    const pNamaAssign = pt[6] || '';
+                    const pNoBang = pt[7] || '';
 
                     let bTypeBadge = '<span class="badge bg-secondary text-white">Lainnya</span>';
                     let bStatusBadge = '';
@@ -971,11 +979,15 @@
                         fillOpacity: 0.90
                     });
 
-                    // Tooltip & Popup for individual point
-                    pointMarker.bindTooltip(`${c.nama_petugas} (#${pIdx + 1} - ${bShort})`, {
+                    const tooltipText = pNamaAssign ? `${c.nama_petugas} (#${pIdx + 1} - ${pNamaAssign})` : `${c.nama_petugas} (#${pIdx + 1} - ${bShort})`;
+                    pointMarker.bindTooltip(tooltipText, {
                         direction: 'top',
                         offset: [0, -6]
                     });
+
+                    const assignNameHtml = pNamaAssign
+                        ? `<div class="small mb-1 text-dark">Tempat/Responden: <strong class="text-primary">${pNamaAssign}</strong> ${pNoBang ? '<span class="badge bg-secondary-lt">No. ' + pNoBang + '</span>' : ''}</div>`
+                        : '';
 
                     pointMarker.bindPopup(`
                         <div style="min-width: 250px; font-family: inherit;">
@@ -985,6 +997,7 @@
                                 ${bTypeBadge}
                             </div>
                             ${bStatusBadge}
+                            ${assignNameHtml}
                             <div class="small text-muted mb-1">Bangunan: <strong>${bLabel}</strong></div>
                             <div class="small text-muted mb-1">Kecamatan: <strong>${c.namakec}</strong></div>
                             <div class="small text-muted mb-1">Pengawas (PML): <strong>${c.pml_nama}</strong></div>
@@ -1008,7 +1021,7 @@
                         opacity: 1,
                         fillOpacity: 0.88
                     });
-                    rawMarker.bindTooltip(`${c.nama_petugas} (#${pIdx + 1} - ${bShort})`);
+                    rawMarker.bindTooltip(tooltipText);
                     rawMarker.bindPopup(pointMarker.getPopup().getContent());
                     rawPointsGroup.addLayer(rawMarker);
                 });

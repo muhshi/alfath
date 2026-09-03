@@ -40,7 +40,7 @@ class Se2026ClusterAnomalyService
     public function getClusterData(bool $forceRefresh = false): array
     {
         $cacheStore = Cache::store('file');
-        $cacheKey = 'se2026_geotag_anomaly_dataset_v4';
+        $cacheKey = 'se2026_geotag_anomaly_dataset_v5';
 
         if ($forceRefresh) {
             $cacheStore->forget($cacheKey);
@@ -59,17 +59,27 @@ class Se2026ClusterAnomalyService
         ini_set('memory_limit', '1024M');
         set_time_limit(300);
 
-        // Priority 1: New dataset with building classification labels
-        $files = glob(public_path('SE2026/fraud bangunan/*.csv'));
-        if (empty($files)) {
-            $files = glob(base_path('public/SE2026/fraud bangunan/*.csv'));
+        // Priority 1: Clean consolidated & deduplicated query (Sep 3 16:42 query with nama_assignment)
+        $cleanCandidate = public_path('SE2026/sqllab_untitled_query_6_20260903T164219.csv');
+        if (!file_exists($cleanCandidate)) {
+            $cleanCandidate = base_path('public/SE2026/sqllab_untitled_query_6_20260903T164219.csv');
         }
-        // Priority 2: Fallback to original SE2026 CSVs
-        if (empty($files)) {
-            $files = glob(public_path('SE2026/*.csv'));
-        }
-        if (empty($files)) {
-            $files = glob(base_path('public/SE2026/*.csv'));
+
+        if (file_exists($cleanCandidate)) {
+            $files = [$cleanCandidate];
+        } else {
+            // Priority 2: Multi-file fraud bangunan
+            $files = glob(public_path('SE2026/fraud bangunan/*.csv'));
+            if (empty($files)) {
+                $files = glob(base_path('public/SE2026/fraud bangunan/*.csv'));
+            }
+            // Priority 3: Fallback to original SE2026 CSVs
+            if (empty($files)) {
+                $files = glob(public_path('SE2026/*.csv'));
+            }
+            if (empty($files)) {
+                $files = glob(base_path('public/SE2026/*.csv'));
+            }
         }
 
         // 1. Preload master petugas and region mappings from fasih DB
@@ -147,6 +157,8 @@ class Se2026ClusterAnomalyService
             $idxSize = array_search('cluster_size', $header);
             $idxNonBku = array_search('cluster_non_bku_size', $header);
             $idxLabel = array_search('kode_bang_label', $header);
+            $idxNamaAssign = array_search('nama_assignment', $header);
+            $idxNoBang = array_search('no_bang', $header);
             $idxCenterLat = array_search('cluster_center_lat', $header);
             $idxCenterLon = array_search('cluster_center_lon', $header);
             $idxMinLat = array_search('cluster_min_lat', $header);
@@ -234,6 +246,8 @@ class Se2026ClusterAnomalyService
                         'btt_count' => 0,
                         'campuran_count' => 0,
                         'lainnya_count' => 0,
+                        'pasar_kw_count' => 0,
+                        'sample_names' => [],
                         'center_lat' => (float) $cLat,
                         'center_lon' => (float) $cLon,
                         'min_lat' => $minLat,
@@ -258,19 +272,30 @@ class Se2026ClusterAnomalyService
 
                 $assignId = trim($row[$idxAssign] ?? '');
                 $label = $idxLabel !== false ? trim($row[$idxLabel] ?? '') : '';
+                $namaAssign = $idxNamaAssign !== false ? trim($row[$idxNamaAssign] ?? '') : '';
+                $noBang = $idxNoBang !== false ? trim($row[$idxNoBang] ?? '') : '';
                 $pLat = (float) ($row[$idxPointLat] ?? $cLat);
                 $pLon = (float) ($row[$idxPointLon] ?? $cLon);
+
+                if (!empty($namaAssign) && count($clusters[$clusterKey]['sample_names']) < 3 && !in_array($namaAssign, $clusters[$clusterKey]['sample_names'])) {
+                    $clusters[$clusterKey]['sample_names'][] = $namaAssign;
+                }
 
                 if (!empty($assignId) && !isset($clusters[$clusterKey]['points'][$assignId])) {
                     $isBku = strpos($label, '1. Bangunan Khusus Usaha') !== false;
                     $isBtt = strpos($label, '3. Bangunan Tempat Tinggal') !== false;
                     $isCampuran = strpos($label, '2. Bangunan Campuran') !== false;
+                    $isPasarKw = !empty($namaAssign) && preg_match('/\b(pasar|los|kios|lapak|toko|warung|ruko|pedagang|ikan|sayur|buah)\b/i', $namaAssign);
+
+                    if ($isPasarKw) {
+                        $clusters[$clusterKey]['pasar_kw_count']++;
+                    }
 
                     $bType = 'lainnya';
                     $pointColor = '#8b5cf6'; // Ungu untuk Bangunan Lainnya/Kosong
-                    if ($isBku) {
+                    if ($isBku || $isPasarKw) {
                         $bType = 'bku';
-                        $pointColor = '#10b981'; // Hijau Segar untuk BKU (Pasar/Usaha)
+                        $pointColor = '#10b981'; // Hijau Segar untuk BKU / Pasar
                         $clusters[$clusterKey]['bku_count']++;
                     } elseif ($isBtt) {
                         $bType = 'btt';
@@ -291,6 +316,8 @@ class Se2026ClusterAnomalyService
                         $bType,
                         $label,
                         $pointColor,
+                        $namaAssign,
+                        $noBang,
                     ];
                 }
             }
@@ -309,6 +336,7 @@ class Se2026ClusterAnomalyService
             $btt = $c['btt_count'];
             $campuran = $c['campuran_count'];
             $lainnya = $c['lainnya_count'];
+            $pasarKw = $c['pasar_kw_count'] ?? 0;
 
             $pctBku = round(($bku / max(1, $total)) * 100);
             $pctBtt = round(($btt / max(1, $total)) * 100);
@@ -320,13 +348,13 @@ class Se2026ClusterAnomalyService
             $c['pct_campuran'] = $pctCampuran;
             $c['pct_lainnya'] = $pctLainnya;
 
-            // Classification: BKU (Pasar/Wajar) vs BTT (Tempat Tinggal/Fraud)
-            if ($bku >= ($total * 0.50)) {
+            // Classification: BKU or Pasar Keywords (Pasar/Wajar) vs BTT (Tempat Tinggal/Fraud)
+            if ($bku >= ($total * 0.40) || $pasarKw >= ($total * 0.40)) {
                 $c['fraud_category'] = 'wajar_bku';
                 $c['fraud_label'] = '🟢 Potensi Wajar (Pasar / Ruko BKU)';
                 $c['fraud_badge'] = 'bg-success text-white';
-                $c['fraud_summary'] = "{$pctBku}% BKU (Pasar/Usaha)";
-            } elseif ($btt >= ($total * 0.40) || (($btt + $lainnya) >= ($total * 0.65) && $bku < ($total * 0.25))) {
+                $c['fraud_summary'] = ($bku >= $pasarKw) ? "{$pctBku}% BKU (Pasar/Usaha)" : "Sentra Pasar/Kios";
+            } elseif ($btt >= ($total * 0.35) && $pasarKw < ($total * 0.20)) {
                 $c['fraud_category'] = 'fraud_btt';
                 $c['fraud_label'] = '🚨 Indikasi Kuat Fraud (BTT/Tempat Tinggal)';
                 $c['fraud_badge'] = 'bg-danger text-white';

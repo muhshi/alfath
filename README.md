@@ -308,24 +308,9 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - **Self-Healing Cache & Versioning Otomatis Dashboard (`PengolahanController.php`)**:
     - **Auto-Busting Cache Version 3**: Menaikkan cache version base dashboard ke v3 sehingga saat di-deploy (`git pull`), seluruh cache file usang/korup otomatis ditinggalkan tanpa mewajibkan eksekusi manual `cache:clear`.
     - **Self-Healing Guard Anomali Muatan Murni**: Menambahkan deteksi otomatis jika data yang diambil dari cache memiliki `total_muatan_murni < 50.000` (indikasi data tertimpa/rusak seperti angka 98), sistem otomatis membuang cache tersebut dan menghitung ulang (*re-query*) data utuh dari database.
-    - **Deteksi Otomatis Pasar vs Fraud Berbasis Tipe Bangunan BKU vs BTT (`kode_bang_label`)**:
-    - **Integrasi Dataset Bangunan (`public/SE2026/fraud bangunan/*.csv`)**:
-      - Membaca 11 batch file CSV dengan total **99.000 baris data titik** yang memuat kolom `kode_bang_label` dan `cluster_non_bku_size`.
-      - Mengklasifikasikan tipe bangunan setiap titik survei:
-        - `1. Bangunan Khusus Usaha` (BKU) -> 🟢 Potensi Pasar Tradisional / Sentra Ruko (Wajar karena kios bersebelahan).
-        - `3. Bangunan Tempat Tinggal` (BTT) -> 🚨 Indikasi Kuat Fraud (Petugas mengetag dari rumah tinggal / warkop tanpa door-to-door).
-        - `2. Bangunan Campuran` & Lainnya -> 🟡 Campuran / Perlu Verifikasi.
-    - **Klasifikasi Klaster Otomatis (`Se2026ClusterAnomalyService.php`)**:
-      - Menghitung komposisi persentase BKU vs BTT per klaster.
-      - Hasil klasifikasi otomatis terhadap 442 klaster anomali:
-        - **374 klaster (7.899 titik)**: 🚨 **Indikasi Kuat Fraud (Dominan BTT / Rumah Tinggal)**.
-        - **13 klaster (506 titik)**: 🟢 **Potensi Wajar (Dominan BKU / Sentra Pasar Tradisional)**.
-        - **55 klaster (1.694 titik)**: 🟡 **Campuran**.
-    - **Pembaruan Antarmuka & Peta Interaktif (`dashboard-anomali-geotag.blade.php`)**:
-      - **4 Kartu KPI Baru**: Total Titik Geotag, Indikasi Kuat Fraud (BTT), Potensi Wajar (BKU/Pasar), dan Campuran.
-      - **Filter Dropdown Baru**: Filter khusus "Klasifikasi Bangunan / Fraud" (Semua, Fraud BTT, Wajar BKU, Campuran).
-      - **Marker Titik Individu Berwarna Spesifik**: Titik BTT (Merah), Titik BKU (Hijau), Campuran (Oranye), Lainnya (Ungu).
-      - **Popup Titik Survei & Klaster**: Memuat badge tipe bangunan dan status indikasi fraud vs pasar.
-      - **Kolom Titik BTT vs BKU**: Ditampilkan di Tab Ranking Petugas dan Rekap Kecamatan.
-      - **Ekspor CSV Laporan**: Memuat kolom klasifikasi fraud, komposisi, titik BTT, dan titik BKU.
-    - **Koreksi Subjudul Kartu KPI Muatan Murni**: Memperbaiki label keterangan kartu KPI dari `BKU + UK` menjadi `BKU + KK (Pemutakhiran Keluarga)`.
+    - **Konsolidasi Dataset Geotag Bersih & Bebas Duplikasi (`sqllab_untitled_query_6_20260903T164219.csv`)**:
+    - Mengganti kumpulan file duplikat batch dengan satu file query SQL Lab bersih hasil deduping berukuran **5,06 MB (8.763 titik unik, 346 klaster, 128 petugas)**.
+    - **Ekstraksi Informasi Tempat (`nama_assignment` & `no_bang`)**: Menampilkan nama responden/tempat/kios usaha langsung pada tooltip hover dan popup titik survei (contoh: `LOS PASAR 129`, `KIOS SEMBAKO BU SALMA`, `PEDANG IKAN ASAP`).
+    - **Deteksi Pasar Berbasis Kata Kunci & BKU**: Memadukan klasifikasi `kode_bang_label` dengan nama assignment (seperti `pasar`, `los`, `kios`, `lapak`, `ruko`) sehingga area los/kios pasar yang berkode bangunan kosong tetap terdeteksi akurat sebagai **🟢 Potensi Wajar / Sentra Pasar** (103 klaster wajar vs 180 klaster fraud BTT vs 63 klaster campuran).
+    - Menghapus berkas duplikasi lama sehingga ukuran repository git tetap sangat ramping dan proses deploy jauh lebih cepat.
+
