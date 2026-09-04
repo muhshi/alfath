@@ -336,6 +336,11 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - **Pencegahan Overlapping Titik Bertumpuk via Micro-Spread Spiral (`dashboard-anomali-geotag.blade.php` & Standalone)**:
     - Menangani kasus anomali ekstrem di mana puluhan titik survei memiliki koordinat yang 100% identik (selisih 0 meter) sehingga saling menutupi di layar monitor.
     - Menerapkan algoritma *Golden Angle Spiral Jitter* yang memekarkan titik-titik kembar secara radial dalam radius 1–5 meter di sekeliling pusat bangunan. Semua titik (BTT merah, BKU hijau, campuran) kini terlihat utuh, dapat di-hover, dan dapat diklik secara individual dengan koordinat asli tetap terlindungi.
+  - **Perbaikan Akurasi Relasi PML (Pengawas) Langsung per PPL (`Se2026ClusterAnomalyService.php`)**:
+    - Memperbaiki logika penentuan PML yang sebelumnya mengagregasi pengawas per kecamatan (`LEFT(region_code, 7)` dengan PML pertama di kecamatan), sehingga petugas seperti Agus Supriyadi di Dempet sempat salah terlabeli sebagai diawasi oleh Ainun Najib.
+    - Mengintegrasikan relasi langsung (*direct join*) antara `monitoring_se2026` dan `alokasi_pengawas` berbasis `region_code` SLS tugas pencacah. Kini Agus Supriyadi terpetakan akurat ke pengawas aslinya, yaitu **Shofiyatul Hanani** (`najwadwi648@gmail.com`).
+    - Meremajakan (*cache busting*) dataset anomali geotag v5 untuk memastikan seluruh tampilan dashboard dan ranking petugas memuat nama PML yang tepat.
+
 
 
 

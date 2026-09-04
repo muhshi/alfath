@@ -119,9 +119,34 @@ class Se2026ClusterAnomalyService
             }
         }
 
-        // Pengawas (PML) mapping per region
+        // Pengawas (PML) direct mapping from PPL assignment and fallback per region
+        $pencacahPmlMap = [];
         $alokasiPengawasMap = [];
         if ($schema->hasTable('alokasi_pengawas')) {
+            if ($schema->hasTable('monitoring_se2026')) {
+                $colEmail = $schema->hasColumn('monitoring_se2026', 'email_pencacah') ? 'email_pencacah' : 'pencacah_email';
+                $pmlDirect = $db->table('monitoring_se2026 as m')
+                    ->join('alokasi_pengawas as a', 'm.region_code', '=', 'a.region_code')
+                    ->select(
+                        DB::raw("LOWER(TRIM(m.$colEmail)) as ppl_email"),
+                        DB::raw("LOWER(TRIM(a.email_pengawas)) as pml_email"),
+                        DB::raw("COUNT(*) as cnt")
+                    )
+                    ->whereNotNull("m.$colEmail")
+                    ->where("m.$colEmail", '!=', '')
+                    ->whereNotNull('a.email_pengawas')
+                    ->where('a.email_pengawas', '!=', '')
+                    ->groupBy(DB::raw("LOWER(TRIM(m.$colEmail)), LOWER(TRIM(a.email_pengawas))"))
+                    ->orderBy('cnt', 'desc')
+                    ->get();
+
+                foreach ($pmlDirect as $p) {
+                    if (!isset($pencacahPmlMap[$p->ppl_email])) {
+                        $pencacahPmlMap[$p->ppl_email] = $p->pml_email;
+                    }
+                }
+            }
+
             $alokasi = $db->table('alokasi_pengawas')
                 ->select(DB::raw("LEFT(region_code, 7) as kodekec, LOWER(TRIM(email_pengawas)) as pml_email"))
                 ->whereNotNull('email_pengawas')
@@ -225,8 +250,8 @@ class Se2026ClusterAnomalyService
                     $kodeKec = $pencacahKecMap[$email] ?? null;
                     $namaKec = $kodeKec && isset($this->kecNameMap[$kodeKec]) ? $this->kecNameMap[$kodeKec] : 'Demak (Umum)';
 
-                    // Resolve PML
-                    $pmlEmail = $kodeKec && isset($alokasiPengawasMap[$kodeKec]) ? $alokasiPengawasMap[$kodeKec] : null;
+                    // Resolve PML (Direct assignment first, fallback to district)
+                    $pmlEmail = $pencacahPmlMap[$email] ?? ($kodeKec && isset($alokasiPengawasMap[$kodeKec]) ? $alokasiPengawasMap[$kodeKec] : null);
                     $pmlNama = $pmlEmail && isset($masterPetugasMap[$pmlEmail]['nama']) ? $masterPetugasMap[$pmlEmail]['nama'] : ($pmlEmail ? $this->formatEmailToName($pmlEmail) : '-');
 
                     $clusterId = 'cls_' . substr(md5($clusterKey), 0, 10);
