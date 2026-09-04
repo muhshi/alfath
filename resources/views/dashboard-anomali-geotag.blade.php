@@ -189,6 +189,55 @@
             border: 1.5px dashed #e11d48;
             background: rgba(244, 63, 94, 0.35);
         }
+
+        .avatar-circle-sm {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .officer-accordion-item {
+            transition: background 0.15s ease-in-out;
+        }
+        .officer-header {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .officer-header:hover {
+            background-color: #f8fafc;
+        }
+        .sub-cluster-card {
+            transition: all 0.15s ease-in-out;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+        .sub-cluster-card:hover {
+            border-color: #cbd5e1;
+            background-color: #f8fafc !important;
+            transform: translateX(2px);
+        }
+        .sub-cluster-card.active {
+            border-left: 3px solid #0284c7 !important;
+            background-color: #eff6ff !important;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.15);
+        }
+        .btn-xs {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+        }
+        .pulse-dot {
+            animation: pulse-animation 1.5s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.15); }
+            100% { opacity: 1; transform: scale(1); }
+        }
     </style>
 @endpush
 
@@ -213,18 +262,27 @@
                 <i class="ti ti-refresh me-1"></i> Refresh Cache
             </a>
             <div class="dropdown">
-                <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn btn-primary btn-sm dropdown-toggle shadow-sm fw-bold" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="ti ti-download me-1"></i> Ekspor CSV Laporan
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width: 280px;">
                     <li>
                         <a class="dropdown-item py-2" href="{{ route('dashboard.anomali-geotag.export', array_merge(request()->all(), ['type' => 'clusters'])) }}">
-                            <i class="ti ti-map-pin text-primary me-2"></i> Ekspor 734 Klaster Anomali
+                            <div class="fw-bold text-dark"><i class="ti ti-map-pin text-primary me-2"></i> Ekspor Klaster (Dengan Wilayah)</div>
+                            <div class="text-muted small ps-4" style="font-size: 0.72rem;">Memuat Nama Desa, SLS, Sub-SLS & Landmark</div>
                         </a>
                     </li>
                     <li>
+                        <a class="dropdown-item py-2" href="{{ route('dashboard.anomali-geotag.export', array_merge(request()->all(), ['type' => 'titik'])) }}">
+                            <div class="fw-bold text-danger"><i class="ti ti-point text-danger me-2"></i> Ekspor Semua Titik Bangunan (Baru ✨)</div>
+                            <div class="text-muted small ps-4" style="font-size: 0.72rem;">Daftar fisik seluruh bangunan yang bertumpuk</div>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <li>
                         <a class="dropdown-item py-2" href="{{ route('dashboard.anomali-geotag.export', array_merge(request()->all(), ['type' => 'petugas'])) }}">
-                            <i class="ti ti-users text-danger me-2"></i> Ekspor Ranking 252 Petugas Terindikasi
+                            <div class="fw-bold text-dark"><i class="ti ti-users text-warning me-2"></i> Ekspor Ranking Petugas Terindikasi</div>
+                            <div class="text-muted small ps-4" style="font-size: 0.72rem;">Akumulasi titik, klaster & evaluasi risiko</div>
                         </a>
                     </li>
                 </ul>
@@ -405,15 +463,34 @@
                 <div class="col-lg-8 col-xl-9">
                     <div class="card anomali-card p-2 position-relative">
                         <div id="anomali-map"></div>
+                        <!-- Floating Spotlight Banner -->
+                        <div id="spotlightBanner" class="position-absolute top-0 start-50 translate-middle-x mt-3 shadow-lg p-2 px-3 rounded-pill bg-dark text-white d-none" style="z-index: 1050; font-size: 0.8rem; backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.94) !important; border: 1px solid rgba(255,255,255,0.15);">
+                            <div class="d-flex align-items-center gap-2">
+                                <span><span class="badge bg-danger pulse-dot me-1">🎯 FOKUS</span> <strong id="spotlightTitle">Klaster</strong></span>
+                                <span class="text-white-50 small d-none d-md-inline" id="spotlightSubtitle"></span>
+                                <button type="button" class="btn btn-xs btn-outline-light rounded-pill py-0 px-2" onclick="openClusterDetailModal(activeSpotlightClusterId)">
+                                    <i class="ti ti-list-details me-1"></i> Rincian Titik
+                                </button>
+                                <button type="button" class="btn btn-xs btn-light rounded-pill py-0 px-2 text-dark fw-bold" onclick="resetSpotlight()">
+                                    <i class="ti ti-x me-1"></i> Tampilkan Semua
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-lg-4 col-xl-3">
                     <div class="card anomali-card">
                         <div class="card-header bg-white py-2 px-3 flex-column align-items-stretch border-bottom">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold small text-uppercase text-muted">Daftar Klaster</span>
-                                <span class="badge bg-secondary-lt fw-normal" id="sidebarClusterCount">{{ count($clusters) }} spot</span>
+                            <!-- Toggle View Segmented Buttons -->
+                            <div class="btn-group w-100 mb-2 p-1 bg-light rounded border" role="group">
+                                <button type="button" class="btn btn-sm btn-white active fw-bold py-1 shadow-sm" id="btnModePetugas" onclick="setSidebarMode('petugas')" style="font-size:0.75rem;">
+                                    <i class="ti ti-users me-1 text-primary"></i> Per Petugas ({{ count($petugas_with_clusters) }})
+                                </button>
+                                <button type="button" class="btn btn-sm text-muted fw-bold py-1" id="btnModeSemua" onclick="setSidebarMode('semua')" style="font-size:0.75rem;">
+                                    <i class="ti ti-circles me-1"></i> Semua Klaster ({{ count($clusters) }})
+                                </button>
                             </div>
+
                             <div class="row g-1">
                                 <div class="col-12">
                                     <select id="sidebarKecFilter" class="form-select form-select-sm" style="font-size: 0.8rem;">
@@ -424,16 +501,93 @@
                                     </select>
                                 </div>
                                 <div class="col-12">
-                                    <input type="text" id="sidebarSearchInput" class="form-control form-control-sm" placeholder="🔍 Cari nama / email di list..." style="font-size: 0.8rem;">
+                                    <input type="text" id="sidebarSearchInput" class="form-control form-control-sm" placeholder="🔍 Cari nama / desa / SLS di list..." style="font-size: 0.8rem;">
                                 </div>
                             </div>
                         </div>
-                        <div class="cluster-list-container" id="clusterList">
+
+                        <!-- CONTAINER 1: Mode Per Petugas (Hierarchical Accordion) -->
+                        <div class="cluster-list-container" id="clusterListPetugas">
+                            @forelse($petugas_with_clusters as $pIdx => $p)
+                                <div class="officer-accordion-item border-bottom" 
+                                     id="officerCard_{{ md5($p['email']) }}" 
+                                     data-kec="{{ $p['namakec'] }}" 
+                                     data-search="{{ strtolower($p['nama'] . ' ' . $p['email'] . ' ' . $p['namakec']) }}">
+                                    <div class="officer-header p-2 d-flex justify-content-between align-items-center" onclick="toggleOfficerAccordion('{{ md5($p['email']) }}')">
+                                        <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                            <div class="avatar-circle-sm bg-primary-lt text-primary fw-bold">
+                                                {{ strtoupper(substr($p['nama'], 0, 1)) }}
+                                            </div>
+                                            <div class="text-truncate">
+                                                <div class="fw-bold text-dark small text-truncate" title="{{ $p['nama'] }}">{{ $p['nama'] }}</div>
+                                                <div class="text-muted small" style="font-size: 0.7rem;">
+                                                    <i class="ti ti-map-pin text-primary"></i> {{ $p['namakec'] }} • {{ $p['total_clusters'] }} Klaster
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-end flex-shrink-0 ms-2">
+                                            <span class="badge {{ $p['total_points'] > 100 ? 'bg-danger' : ($p['total_points'] > 50 ? 'bg-orange text-white' : 'bg-warning text-dark') }} fw-bold" style="font-size: 0.72rem;">
+                                                {{ $p['total_points'] }} Titik
+                                            </span>
+                                            <i class="ti ti-chevron-down text-muted ms-1" id="arrow_{{ md5($p['email']) }}" style="transition: transform 0.2s;"></i>
+                                        </div>
+                                    </div>
+                                    <!-- Sub-Clusters Container -->
+                                    <div class="officer-clusters-sublist bg-light p-2 border-top" id="sublist_{{ md5($p['email']) }}" style="{{ $pIdx === 0 ? '' : 'display: none;' }}">
+                                        @foreach($p['clusters'] as $c)
+                                            <div class="sub-cluster-card p-2 mb-1.5 rounded bg-white border"
+                                                 id="cItemSub_{{ $c['id'] }}"
+                                                 data-id="{{ $c['id'] }}"
+                                                 data-kec="{{ $c['namakec'] }}"
+                                                 data-search="{{ strtolower($p['nama'] . ' ' . $p['email'] . ' ' . $c['namakec'] . ' ' . $c['namadesa'] . ' ' . $c['namasls'] . ' ' . ($c['landmark'] ?? '')) }}"
+                                                 onclick="focusCluster({{ $c['center_lat'] }}, {{ $c['center_lon'] }}, '{{ $c['id'] }}')">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="fw-bold text-dark" style="font-size: 0.78rem;">
+                                                        {{ $c['cluster_title'] ?? 'Klaster' }}
+                                                    </span>
+                                                    <span class="badge {{ $c['fraud_badge'] ?? 'bg-secondary' }}" style="font-size: 0.65rem;">
+                                                        @if(($c['fraud_category'] ?? '') === 'fraud_btt')
+                                                            🚨 Fraud BTT
+                                                        @elseif(($c['fraud_category'] ?? '') === 'wajar_bku')
+                                                            🟢 Pasar BKU
+                                                        @else
+                                                            🟡 Campuran
+                                                        @endif
+                                                    </span>
+                                                </div>
+                                                <div class="text-secondary small" style="font-size: 0.72rem;">
+                                                    <strong class="text-dark">Desa {{ $c['namadesa'] }}</strong> • {{ $c['namasls'] }}
+                                                </div>
+                                                @if(!empty($c['landmark']))
+                                                    <div class="badge bg-purple-lt text-purple mt-1 text-truncate" style="font-size: 0.68rem; max-width: 100%;">
+                                                        <i class="ti ti-building-store me-1"></i> {{ $c['landmark'] }}
+                                                    </div>
+                                                @endif
+                                                <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="font-size: 0.7rem;">
+                                                    <span class="text-muted">BTT: {{ $c['pct_btt'] ?? 0 }}% | BKU: {{ $c['pct_bku'] ?? 0 }}%</span>
+                                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1" onclick="event.stopPropagation(); openClusterDetailModal('{{ $c['id'] }}')">
+                                                        <i class="ti ti-list-details"></i> Titik ({{ $c['cluster_size'] }})
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="p-4 text-center text-muted small">
+                                    <i class="ti ti-search-off fs-2 d-block mb-1"></i>
+                                    Tidak ada data petugas yang sesuai filter.
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <!-- CONTAINER 2: Mode Semua Klaster (Flat List) -->
+                        <div class="cluster-list-container" id="clusterListSemua" style="display: none;">
                             @forelse($clusters as $idx => $c)
                                 <div class="cluster-item {{ $idx === 0 ? 'active' : '' }}" 
                                      id="cItem_{{ $c['id'] }}"
                                      data-kec="{{ $c['namakec'] }}"
-                                     data-search="{{ strtolower($c['nama_petugas'] . ' ' . $c['email'] . ' ' . $c['namakec'] . ' ' . ($c['fraud_label'] ?? '')) }}"
+                                     data-search="{{ strtolower($c['nama_petugas'] . ' ' . $c['email'] . ' ' . $c['namakec'] . ' ' . $c['namadesa'] . ' ' . $c['namasls'] . ' ' . ($c['landmark'] ?? '')) }}"
                                      onclick="focusCluster({{ $c['center_lat'] }}, {{ $c['center_lon'] }}, '{{ $c['id'] }}')">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="badge {{ $c['badge_class'] }} small py-0 px-1">
@@ -450,13 +604,21 @@
                                         </span>
                                     </div>
                                     <div class="fw-bold text-dark small text-truncate" title="{{ $c['nama_petugas'] }}">
-                                        {{ $c['nama_petugas'] }}
+                                        {{ $c['cluster_title'] ?? 'Klaster' }} - {{ $c['nama_petugas'] }}
                                     </div>
-                                    <div class="text-muted small d-flex justify-content-between align-items-center mt-1" style="font-size: 0.725rem;">
+                                    <div class="text-secondary small mt-0.5" style="font-size: 0.72rem;">
+                                        <strong>Desa {{ $c['namadesa'] }}</strong> • {{ $c['namasls'] }}
+                                    </div>
+                                    @if(!empty($c['landmark']))
+                                        <div class="badge bg-purple-lt text-purple mt-1 text-truncate" style="font-size: 0.68rem; max-width: 100%;">
+                                            <i class="ti ti-building-store me-1"></i> {{ $c['landmark'] }}
+                                        </div>
+                                    @endif
+                                    <div class="text-muted small d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="font-size: 0.7rem;">
                                         <span><i class="ti ti-map-pin text-primary"></i> {{ $c['namakec'] }}</span>
-                                        <span class="fw-semibold {{ ($c['pct_btt'] ?? 0) > 40 ? 'text-danger' : (($c['pct_bku'] ?? 0) > 40 ? 'text-success' : 'text-muted') }}">
-                                            BTT: {{ $c['pct_btt'] ?? 0 }}% | BKU: {{ $c['pct_bku'] ?? 0 }}%
-                                        </span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1" onclick="event.stopPropagation(); openClusterDetailModal('{{ $c['id'] }}')">
+                                            <i class="ti ti-list-details"></i> {{ $c['cluster_size'] }} Titik
+                                        </button>
                                     </div>
                                 </div>
                             @empty
@@ -632,6 +794,62 @@
             </div>
         </div>
     </div>
+<!-- Modal Detail Titik Bangunan di Klaster -->
+<div class="modal fade" id="clusterPointsModal" tabindex="-1" aria-labelledby="clusterPointsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+            <div class="modal-header bg-dark text-white py-3">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="clusterPointsModalLabel">
+                        <i class="ti ti-building me-2 text-danger"></i> Rincian Titik Bangunan yang Menumpuk di Klaster
+                    </h5>
+                    <div class="text-white-50 small mt-1" id="clusterPointsModalSubtitle">Memuat data klaster...</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="#" id="modalExportClusterCsvBtn" class="btn btn-sm btn-primary fw-bold shadow-sm">
+                        <i class="ti ti-download me-1"></i> Ekspor CSV Titik Klaster Ini
+                    </a>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body p-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 p-2 bg-light rounded border gap-2">
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="small fw-semibold text-muted me-1">Komposisi:</span>
+                        <span class="badge bg-danger" id="modalBadgeBtt">0 BTT (Rumah)</span>
+                        <span class="badge bg-success" id="modalBadgeBku">0 BKU (Pasar)</span>
+                        <span class="badge bg-warning text-dark" id="modalBadgeCampuran">0 Campuran</span>
+                    </div>
+                    <div style="min-width: 260px;">
+                        <input type="text" id="modalSearchPoints" class="form-control form-control-sm" placeholder="🔍 Cari nama usaha / no bangunan...">
+                    </div>
+                </div>
+                <div class="table-responsive" style="max-height: 480px;">
+                    <table class="table table-sm table-hover table-striped align-middle" id="modalPointsTable">
+                        <thead class="table-light sticky-top" style="font-size: 0.78rem;">
+                            <tr>
+                                <th class="text-center" style="width: 45px;">No</th>
+                                <th style="width: 75px;">No Bang</th>
+                                <th>Nama Bangunan / Usaha</th>
+                                <th style="width: 140px;">Tipe Bangunan</th>
+                                <th>Wilayah (Desa & SLS)</th>
+                                <th style="width: 90px;">Akurasi GPS</th>
+                                <th class="text-center" style="width: 85px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalPointsTableBody" style="font-size: 0.8125rem;">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <span class="text-muted small me-auto" id="modalPointsCountInfo"></span>
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 @endsection
 
@@ -665,6 +883,7 @@
         let slsFraudLayer = null;
         let isSlsLayerVisible = true;
         let layerControlInstance = null;
+        let activeSpotlightClusterId = null;
 
         document.addEventListener('DOMContentLoaded', function () {
             // 1. Initialize Leaflet Map FIRST and independently
@@ -711,37 +930,99 @@
                     }
                 });
             }
+
+            // 5. ESC Key shortcut to reset Spotlight Mode
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && activeSpotlightClusterId) {
+                    resetSpotlight();
+                }
+            });
         });
+
+        let currentSidebarMode = 'petugas';
+
+        function setSidebarMode(mode) {
+            currentSidebarMode = mode;
+            const btnPetugas = document.getElementById('btnModePetugas');
+            const btnSemua = document.getElementById('btnModeSemua');
+            const listPetugas = document.getElementById('clusterListPetugas');
+            const listSemua = document.getElementById('clusterListSemua');
+
+            if (mode === 'petugas') {
+                if (btnPetugas) btnPetugas.className = 'btn btn-sm btn-white active fw-bold py-1 shadow-sm';
+                if (btnSemua) btnSemua.className = 'btn btn-sm text-muted fw-bold py-1';
+                if (listPetugas) listPetugas.style.display = 'block';
+                if (listSemua) listSemua.style.display = 'none';
+            } else {
+                if (btnSemua) btnSemua.className = 'btn btn-sm btn-white active fw-bold py-1 shadow-sm';
+                if (btnPetugas) btnPetugas.className = 'btn btn-sm text-muted fw-bold py-1';
+                if (listSemua) listSemua.style.display = 'block';
+                if (listPetugas) listPetugas.style.display = 'none';
+            }
+        }
+
+        function toggleOfficerAccordion(hash) {
+            const sublist = document.getElementById('sublist_' + hash);
+            const arrow = document.getElementById('arrow_' + hash);
+            if (!sublist) return;
+
+            if (sublist.style.display === 'none') {
+                sublist.style.display = 'block';
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                sublist.style.display = 'none';
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
 
         function initSidebarFilter() {
             const kecSelect = document.getElementById('sidebarKecFilter');
             const searchInput = document.getElementById('sidebarSearchInput');
-            const countBadge = document.getElementById('sidebarClusterCount');
-            const items = document.querySelectorAll('.cluster-item');
 
             function filterItems() {
                 const selectedKec = (kecSelect ? kecSelect.value : '').toLowerCase().trim();
                 const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
-                let visibleCount = 0;
 
-                items.forEach(el => {
+                // 1. Filter Flat Cluster Items (Mode Semua)
+                const flatItems = document.querySelectorAll('#clusterListSemua .cluster-item');
+                flatItems.forEach(el => {
                     const itemKec = (el.getAttribute('data-kec') || '').toLowerCase();
                     const itemSearch = (el.getAttribute('data-search') || '').toLowerCase();
-
                     const matchKec = !selectedKec || itemKec.includes(selectedKec);
                     const matchQuery = !query || itemSearch.includes(query);
 
-                    if (matchKec && matchQuery) {
+                    el.style.display = (matchKec && matchQuery) ? 'block' : 'none';
+                });
+
+                // 2. Filter Officer Accordion Items (Mode Per Petugas)
+                const officerItems = document.querySelectorAll('.officer-accordion-item');
+                officerItems.forEach(el => {
+                    const itemKec = (el.getAttribute('data-kec') || '').toLowerCase();
+                    const itemSearch = (el.getAttribute('data-search') || '').toLowerCase();
+                    const matchKec = !selectedKec || itemKec.includes(selectedKec);
+
+                    // Filter sub-cards inside this officer
+                    const subCards = el.querySelectorAll('.sub-cluster-card');
+                    let anySubMatch = false;
+                    subCards.forEach(sc => {
+                        const scSearch = (sc.getAttribute('data-search') || '').toLowerCase();
+                        const scMatch = (!selectedKec || (sc.getAttribute('data-kec') || '').toLowerCase().includes(selectedKec))
+                                     && (!query || scSearch.includes(query));
+                        sc.style.display = scMatch ? 'block' : 'none';
+                        if (scMatch) anySubMatch = true;
+                    });
+
+                    if (matchKec && (!query || itemSearch.includes(query) || anySubMatch)) {
                         el.style.display = 'block';
-                        visibleCount++;
+                        // If searching, auto-expand matching accordion
+                        if (query.length >= 2 && anySubMatch) {
+                            const sublist = el.querySelector('.officer-clusters-sublist');
+                            if (sublist) sublist.style.display = 'block';
+                        }
                     } else {
                         el.style.display = 'none';
                     }
                 });
-
-                if (countBadge) {
-                    countBadge.innerText = visibleCount + ' spot';
-                }
             }
 
             if (kecSelect) kecSelect.addEventListener('change', filterItems);
@@ -1074,18 +1355,22 @@
                     opacity: 1,
                     fillOpacity: 0.95
                 });
+                mainMarker._clusterId = c.id;
 
                 const sampleNamesHtml = (c.sample_names && c.sample_names.length > 0)
-                    ? `<div class="small text-muted mb-2">Sampel Nama/Tempat: <strong class="text-dark">${c.sample_names.join(', ')}</strong></div>`
+                    ? `<div class="small text-muted mb-2">Sampel Tempat: <strong class="text-dark">${c.sample_names.join(', ')}</strong></div>`
                     : '';
 
                 const popupContent = `
-                    <div style="min-width: 270px; font-family: inherit;">
+                    <div style="min-width: 275px; font-family: inherit;">
                         <div class="popup-custom-title d-flex justify-content-between align-items-center mb-1">
                             <span class="fw-bold">${c.nama_petugas}</span>
                             <span class="badge ${c.badge_class}" style="font-size:0.75rem;">${size} Titik</span>
                         </div>
-                        <div class="text-muted small mb-2" style="font-size:0.75rem;">${c.email}</div>
+                        <div class="d-flex align-items-center gap-1 mb-2">
+                            <span class="badge bg-secondary-lt text-dark" style="font-size:0.7rem;">${c.cluster_ordinal_text || 'Klaster'}</span>
+                            <span class="text-muted small" style="font-size:0.72rem;">${c.email}</span>
+                        </div>
                         
                         <div class="p-2 mb-2 rounded bg-light border">
                             <div class="d-flex justify-content-between align-items-center mb-1">
@@ -1100,6 +1385,18 @@
 
                         ${sampleNamesHtml}
 
+                        <div class="popup-stat-row">
+                            <span class="text-muted">Desa / Kelurahan:</span>
+                            <span class="fw-semibold text-dark">${c.namadesa || '-'}</span>
+                        </div>
+                        <div class="popup-stat-row">
+                            <span class="text-muted">SLS / RT-RW:</span>
+                            <span class="fw-semibold text-dark">${c.namasls || '-'}</span>
+                        </div>
+                        <div class="popup-stat-row">
+                            <span class="text-muted">Kode Sub-SLS:</span>
+                            <span class="font-monospace small text-primary">${c.sub_sls_short || c.kodesubsls || '-'}</span>
+                        </div>
                         <div class="popup-stat-row">
                             <span class="text-muted">Kecamatan:</span>
                             <span class="fw-semibold text-dark">${c.namakec}</span>
@@ -1121,9 +1418,12 @@
                             <span class="font-monospace small">${cLat.toFixed(5)}, ${cLon.toFixed(5)}</span>
                         </div>
 
-                        <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
-                            <button class="btn btn-sm btn-primary w-100" onclick="mapInstance.setView([${cLat}, ${cLon}], 19)" style="font-size: 0.775rem;">
-                                <i class="ti ti-zoom-in me-1"></i> Zoom In Detail Titik (Level Bangunan)
+                        <div class="mt-3 pt-2 border-top d-flex flex-column gap-1">
+                            <button class="btn btn-sm btn-outline-danger w-100" onclick="openClusterDetailModal('${c.id}')" style="font-size: 0.775rem;">
+                                <i class="ti ti-list-details me-1"></i> Rincian ${size} Titik Bangunan di Klaster Ini
+                            </button>
+                            <button class="btn btn-sm btn-primary w-100" onclick="focusCluster(${cLat}, ${cLon}, '${c.id}')" style="font-size: 0.775rem;">
+                                <i class="ti ti-focus-2 me-1"></i> Sorot & Fokus Klaster Ini
                             </button>
                         </div>
                     </div>
@@ -1131,6 +1431,7 @@
 
                 mainMarker.bindPopup(popupContent);
                 mainMarker.on('click', () => {
+                    applySpotlightEffect(c.id);
                     highlightListItem(c.id);
                 });
 
@@ -1160,9 +1461,7 @@
                         coordSeen[k] = order + 1;
 
                         if (order > 0) {
-                            // Golden angle spiral (137.5 degrees)
                             const angle = order * 2.39996;
-                            // Radius bertahap dari 1.2m hingga maks ~6m (seukuran tapak bangunan/rumah)
                             const rMeter = 1.2 + Math.sqrt(order) * 0.95;
                             const dLat = (rMeter * Math.cos(angle)) / 111320;
                             const dLon = (rMeter * Math.sin(angle)) / (111320 * Math.cos(cLat * Math.PI / 180));
@@ -1177,6 +1476,10 @@
                     const pointColor = pt[5] || (bType === 'bku' ? '#10b981' : (bType === 'btt' ? '#ef4444' : (bType === 'campuran' ? '#f59e0b' : '#8b5cf6')));
                     const pNamaAssign = pt[6] || '';
                     const pNoBang = pt[7] || '';
+                    const ptSubSls = pt[9] || c.kodesubsls || '-';
+                    const ptDesa = pt[10] || c.namadesa || '-';
+                    const ptSls = pt[11] || c.namasls || '-';
+                    const ptAcc = pt[12] ? pt[12] + ' m' : (c.avg_accuracy + ' m');
 
                     let bTypeBadge = '<span class="badge bg-secondary text-white">Lainnya</span>';
                     let bStatusBadge = '';
@@ -1203,6 +1506,7 @@
                         opacity: 1,
                         fillOpacity: 0.90
                     });
+                    pointMarker._clusterId = c.id;
 
                     const tooltipText = pNamaAssign ? `${c.nama_petugas} (#${pIdx + 1} - ${pNamaAssign})` : `${c.nama_petugas} (#${pIdx + 1} - ${bShort})`;
                     pointMarker.bindTooltip(tooltipText, {
@@ -1229,14 +1533,27 @@
                             ${spreadNoticeHtml}
                             ${assignNameHtml}
                             <div class="small text-muted mb-1">Bangunan: <strong>${bLabel}</strong></div>
+                            <div class="small text-muted mb-1">Wilayah: <strong>${ptDesa}, SLS: ${ptSls}</strong></div>
+                            <div class="small text-muted mb-1">Sub-SLS: <code class="text-primary">${ptSubSls}</code></div>
                             <div class="small text-muted mb-1">Kecamatan: <strong>${c.namakec}</strong></div>
                             <div class="small text-muted mb-1">Pengawas (PML): <strong>${c.pml_nama}</strong></div>
+                            <div class="small text-muted mb-1">Akurasi GPS: <strong>${ptAcc}</strong></div>
                             <div class="small text-muted mb-1">Assignment ID: <code>${pAssign}</code></div>
-                            <div class="small text-muted">Koordinat Asli: <code>${origLat.toFixed(6)}, ${origLon.toFixed(6)}</code></div>
+                            <div class="small text-muted mb-2">Koordinat Asli: <code>${origLat.toFixed(6)}, ${origLon.toFixed(6)}</code></div>
+
+                            <div class="d-grid gap-1 pt-2 border-top">
+                                <button class="btn btn-sm btn-outline-danger" onclick="openClusterDetailModal('${c.id}')" style="font-size: 0.75rem;">
+                                    <i class="ti ti-list-details me-1"></i> Rincian ${size} Titik Klaster Ini
+                                </button>
+                                <button class="btn btn-sm btn-light border" onclick="applySpotlightEffect('${c.id}')" style="font-size: 0.75rem;">
+                                    <i class="ti ti-focus-2 me-1"></i> Sorot Klaster Ini Saja
+                                </button>
+                            </div>
                         </div>
                     `);
 
                     pointMarker.on('click', () => {
+                        applySpotlightEffect(c.id);
                         highlightListItem(c.id);
                     });
 
@@ -1251,8 +1568,13 @@
                         opacity: 1,
                         fillOpacity: 0.88
                     });
+                    rawMarker._clusterId = c.id;
                     rawMarker.bindTooltip(tooltipText);
                     rawMarker.bindPopup(pointMarker.getPopup().getContent());
+                    rawMarker.on('click', () => {
+                        applySpotlightEffect(c.id);
+                        highlightListItem(c.id);
+                    });
                     rawPointsGroup.addLayer(rawMarker);
                 });
             });
@@ -1278,6 +1600,8 @@
                 duration: 1.0
             });
 
+            applySpotlightEffect(id);
+
             if (markersById[id]) {
                 markersById[id].openPopup();
             }
@@ -1285,13 +1609,283 @@
             highlightListItem(id);
         }
 
-        function highlightListItem(id) {
-            document.querySelectorAll('.cluster-item').forEach(el => el.classList.remove('active'));
-            const targetEl = document.getElementById('cItem_' + id);
-            if (targetEl) {
-                targetEl.classList.add('active');
-                targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        function applySpotlightEffect(clusterId) {
+            activeSpotlightClusterId = clusterId;
+            const targetCluster = clustersData.find(c => String(c.id) === String(clusterId));
+
+            // 1. Dim / Highlight layers in clusterGroup
+            if (clusterGroup) {
+                clusterGroup.eachLayer(layer => {
+                    if (layer._clusterId !== undefined) {
+                        if (String(layer._clusterId) === String(clusterId)) {
+                            if (layer.setStyle) {
+                                layer.setStyle({ opacity: 1, fillOpacity: 0.95, weight: (markersById[clusterId] === layer ? 3.5 : 2) });
+                            }
+                            if (layer.bringToFront) layer.bringToFront();
+                        } else {
+                            if (layer.setStyle) {
+                                layer.setStyle({ opacity: 0.12, fillOpacity: 0.08, weight: 0.5 });
+                            }
+                        }
+                    }
+                });
             }
+
+            // 2. Dim / Highlight layers in rawPointsGroup
+            if (rawPointsGroup) {
+                rawPointsGroup.eachLayer(layer => {
+                    if (layer._clusterId !== undefined) {
+                        if (String(layer._clusterId) === String(clusterId)) {
+                            if (layer.setStyle) {
+                                layer.setStyle({ opacity: 1, fillOpacity: 0.95, weight: 2 });
+                            }
+                            if (layer.bringToFront) layer.bringToFront();
+                        } else {
+                            if (layer.setStyle) {
+                                layer.setStyle({ opacity: 0.12, fillOpacity: 0.08, weight: 0.5 });
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 3. Highlight main marker
+            Object.keys(markersById).forEach(id => {
+                const m = markersById[id];
+                if (String(id) === String(clusterId)) {
+                    m.setStyle({ opacity: 1, fillOpacity: 1, radius: 10, weight: 3.5, color: '#facc15' });
+                    m.bringToFront();
+                } else {
+                    m.setStyle({ opacity: 0.15, fillOpacity: 0.10, radius: 6, weight: 1, color: '#ffffff' });
+                }
+            });
+
+            // 4. Update and display floating Spotlight Banner
+            showSpotlightBanner(targetCluster);
+
+            // 5. Highlight corresponding list cards in sidebar
+            highlightListItem(clusterId);
+        }
+
+        function resetSpotlight() {
+            activeSpotlightClusterId = null;
+
+            // Reset clusterGroup layers
+            if (clusterGroup) {
+                clusterGroup.eachLayer(layer => {
+                    if (layer._clusterId !== undefined) {
+                        const isMain = markersById[layer._clusterId] === layer;
+                        if (layer.setStyle) {
+                            layer.setStyle({
+                                opacity: 1,
+                                fillOpacity: isMain ? 0.95 : 0.90,
+                                weight: isMain ? 2.5 : 1.5,
+                                radius: isMain ? 8 : 6.5,
+                                color: '#ffffff'
+                            });
+                        }
+                    }
+                });
+            }
+
+            // Reset rawPointsGroup
+            if (rawPointsGroup) {
+                rawPointsGroup.eachLayer(layer => {
+                    if (layer._clusterId !== undefined) {
+                        if (layer.setStyle) {
+                            layer.setStyle({ opacity: 1, fillOpacity: 0.88, weight: 1.2, color: '#ffffff' });
+                        }
+                    }
+                });
+            }
+
+            // Reset main markers
+            Object.keys(markersById).forEach(id => {
+                const m = markersById[id];
+                const c = clustersData.find(item => String(item.id) === String(id));
+                m.setStyle({
+                    opacity: 1,
+                    fillOpacity: 0.95,
+                    radius: 8,
+                    weight: 2.5,
+                    color: '#ffffff',
+                    fillColor: c ? (c.marker_color || '#dc2626') : '#dc2626'
+                });
+            });
+
+            hideSpotlightBanner();
+
+            document.querySelectorAll('.cluster-item, .sub-cluster-card').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+
+        function showSpotlightBanner(c) {
+            const banner = document.getElementById('spotlightBanner');
+            if (!banner || !c) return;
+
+            const ordText = c.cluster_ordinal_text ? ` (${c.cluster_ordinal_text})` : '';
+            const titleEl = document.getElementById('spotlightTitle');
+            const subEl = document.getElementById('spotlightSubtitle');
+
+            if (titleEl) titleEl.textContent = `${c.nama_petugas}${ordText}`;
+            if (subEl) {
+                const desa = c.namadesa || 'Desa -';
+                const sls = c.namasls || 'SLS -';
+                const subsls = c.sub_sls_short || c.kodesubsls || '-';
+                subEl.textContent = `${c.cluster_size || 0} Titik • ${desa}, ${sls} (${subsls})`;
+            }
+
+            banner.classList.remove('d-none');
+        }
+
+        function hideSpotlightBanner() {
+            const banner = document.getElementById('spotlightBanner');
+            if (banner) banner.classList.add('d-none');
+        }
+
+        function highlightListItem(id) {
+            document.querySelectorAll('.cluster-item, .sub-cluster-card').forEach(el => el.classList.remove('active'));
+
+            // Flat mode item
+            const flatEl = document.getElementById('cItem_' + id);
+            if (flatEl) {
+                flatEl.classList.add('active');
+                if (currentSidebarMode === 'semua') {
+                    flatEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+
+            // Officer accordion sub-item
+            const subEl = document.getElementById('cItemSub_' + id);
+            if (subEl) {
+                subEl.classList.add('active');
+                const parentSublist = subEl.closest('.officer-clusters-sublist');
+                if (parentSublist) {
+                    parentSublist.style.display = 'block';
+                    const parentCard = parentSublist.closest('.officer-accordion-item');
+                    if (parentCard) {
+                        const arrow = parentCard.querySelector('.ti-chevron-down');
+                        if (arrow) arrow.style.transform = 'rotate(180deg)';
+                    }
+                }
+                if (currentSidebarMode === 'petugas') {
+                    subEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+        }
+
+        function openClusterDetailModal(clusterId) {
+            const c = clustersData.find(item => String(item.id) === String(clusterId));
+            if (!c) {
+                alert('Data klaster tidak ditemukan.');
+                return;
+            }
+
+            const modalEl = document.getElementById('clusterPointsModal');
+            if (!modalEl) return;
+
+            // Subtitle
+            const ordText = c.cluster_ordinal_text ? ` (${c.cluster_ordinal_text})` : '';
+            const subtitleEl = document.getElementById('clusterPointsModalSubtitle');
+            if (subtitleEl) {
+                const desa = c.namadesa || '-';
+                const sls = c.namasls || '-';
+                const subsls = c.sub_sls_short || c.kodesubsls || '-';
+                subtitleEl.innerHTML = `Petugas: <strong class="text-white">${c.nama_petugas}${ordText}</strong> &bull; Wilayah: <span class="text-warning">${desa}, SLS: ${sls} (Sub-SLS: ${subsls})</span>, Kec. ${c.namakec || '-'}`;
+            }
+
+            // Export button URL
+            const exportBtn = document.getElementById('modalExportClusterCsvBtn');
+            if (exportBtn) {
+                exportBtn.href = "{{ route('dashboard.anomali-geotag.export') }}?type=titik&cluster_id=" + encodeURIComponent(c.id);
+            }
+
+            // Badges
+            const bttBadge = document.getElementById('modalBadgeBtt');
+            if (bttBadge) bttBadge.textContent = `${c.btt_count || 0} BTT (Rumah)`;
+            const bkuBadge = document.getElementById('modalBadgeBku');
+            if (bkuBadge) bkuBadge.textContent = `${c.bku_count || 0} BKU (Pasar)`;
+            const campBadge = document.getElementById('modalBadgeCampuran');
+            if (campBadge) {
+                const otherCount = Math.max(0, (c.cluster_size || 0) - (c.btt_count || 0) - (c.bku_count || 0));
+                campBadge.textContent = `${otherCount} Campuran/Lainnya`;
+            }
+
+            // Render table rows
+            const tbody = document.getElementById('modalPointsTableBody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                const points = Array.isArray(c.points) ? c.points : [];
+
+                points.forEach((pt, idx) => {
+                    const ptLat = parseFloat(pt[0]);
+                    const ptLon = parseFloat(pt[1]);
+                    const bType = pt[3] || 'lainnya';
+                    const bLabel = pt[4] || 'Lainnya';
+                    const namaAssign = pt[6] || '-';
+                    const noBang = pt[7] || '-';
+                    const subSls = pt[9] || c.kodesubsls || '-';
+                    const desaName = pt[10] || c.namadesa || '-';
+                    const slsName = pt[11] || c.namasls || '-';
+                    const acc = pt[12] ? pt[12] + ' m' : (c.avg_accuracy ? c.avg_accuracy + ' m' : '-');
+
+                    let badgeHtml = '<span class="badge bg-secondary text-white">Lainnya</span>';
+                    if (bType === 'btt') badgeHtml = '<span class="badge bg-danger text-white">🏠 BTT (Rumah)</span>';
+                    else if (bType === 'bku') badgeHtml = '<span class="badge bg-success text-white">🏬 BKU (Pasar/Usaha)</span>';
+                    else if (bType === 'campuran') badgeHtml = '<span class="badge bg-warning text-dark">🏢 Campuran</span>';
+
+                    const row = document.createElement('tr');
+                    row.className = 'point-table-row';
+                    row.setAttribute('data-search', `${namaAssign} ${noBang} ${bLabel} ${desaName} ${slsName} ${subSls}`.toLowerCase());
+
+                    row.innerHTML = `
+                        <td class="text-center text-muted">${idx + 1}</td>
+                        <td><span class="badge bg-light text-dark border">${noBang}</span></td>
+                        <td>
+                            <div class="fw-bold text-dark">${namaAssign !== '-' ? namaAssign : '<span class="text-muted fst-italic">Tanpa Nama Usaha</span>'}</div>
+                            <div class="text-muted small">${bLabel}</div>
+                        </td>
+                        <td>${badgeHtml}</td>
+                        <td>
+                            <div class="fw-semibold text-dark small">${desaName}</div>
+                            <div class="text-muted small">${slsName} <code class="small text-primary">${subSls}</code></div>
+                        </td>
+                        <td class="font-monospace small">${acc}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-ghost-primary p-1" title="Lihat di Google Maps" onclick="window.open('https://www.google.com/maps?q=${ptLat},${ptLon}', '_blank')">
+                                <i class="ti ti-map-pin"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                const countInfo = document.getElementById('modalPointsCountInfo');
+                if (countInfo) countInfo.textContent = `Menampilkan ${points.length} titik bangunan di klaster ini`;
+            }
+
+            // Setup real-time search filter inside modal
+            const searchInput = document.getElementById('modalSearchPoints');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.oninput = function() {
+                    const q = this.value.trim().toLowerCase();
+                    const rows = document.querySelectorAll('.point-table-row');
+                    let visibleCount = 0;
+                    rows.forEach(r => {
+                        const hay = r.getAttribute('data-search') || '';
+                        const show = !q || hay.includes(q);
+                        r.style.display = show ? '' : 'none';
+                        if (show) visibleCount++;
+                    });
+                    const countInfo = document.getElementById('modalPointsCountInfo');
+                    if (countInfo) countInfo.textContent = `Menampilkan ${visibleCount} dari ${rows.length} titik bangunan`;
+                };
+            }
+
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modalInstance.show();
         }
 
         function locatePetugasOnMap(lat, lon, topClusterId) {

@@ -72,10 +72,74 @@ class GeotagAnomalyController extends Controller
                         $p['top_cluster_lat'] . ', ' . $p['top_cluster_lon'],
                     ]);
                 }
+            } elseif ($type === 'titik' || $type === 'detail_bangunan') {
+                // Export Detail Setiap Titik Bangunan di dalam Klaster
+                fputcsv($handle, [
+                    'No', 'ID Klaster', 'Label Klaster', 'Nama Petugas', 'Email Petugas', 'Kecamatan',
+                    'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS',
+                    'ID Assignment', 'No Bangunan', 'Nama Usaha / Responden',
+                    'Jenis Bangunan', 'Tipe Anomali', 'Latitude Titik', 'Longitude Titik', 'Akurasi GPS (meter)', 'Google Maps Link Titik'
+                ]);
+
+                $pointNo = 1;
+                $targetClusterId = $request->get('cluster_id');
+
+                foreach ($viewData['clusters'] as $c) {
+                    if (!empty($targetClusterId) && $c['id'] !== $targetClusterId) {
+                        continue;
+                    }
+
+                    $clusterLabel = $c['cluster_title'] ?? ('Klaster #' . ($c['officer_cluster_num'] ?? 1));
+
+                    foreach ($c['points'] as $pt) {
+                        $pLat = $pt[0] ?? $c['center_lat'];
+                        $pLon = $pt[1] ?? $c['center_lon'];
+                        $bType = $pt[3] ?? 'lainnya';
+                        $bLabel = $pt[4] ?? '-';
+                        $namaAssign = $pt[6] ?? '';
+                        $noBang = $pt[7] ?? '';
+                        $fullAssignId = $pt[8] ?? ($pt[2] ?? '');
+                        $subSls = $pt[9] ?? ($c['id_sub_sls'] ?? '');
+                        $ptDesa = !empty($pt[10]) && $pt[10] !== '-' ? $pt[10] : ($c['namadesa'] ?? '');
+                        $ptSls = !empty($pt[11]) && $pt[11] !== '-' ? $pt[11] : ($c['namasls'] ?? '');
+                        $pAcc = $pt[12] ?? ($c['avg_accuracy'] ?? '');
+
+                        $bTypeName = match($bType) {
+                            'bku' => 'BKU (Khusus Usaha)',
+                            'btt' => 'BTT (Tempat Tinggal)',
+                            'campuran' => 'Campuran (Usaha & Hunian)',
+                            default => 'Lainnya / Bangunan Rusak',
+                        };
+
+                        fputcsv($handle, [
+                            $pointNo++,
+                            $c['id'],
+                            $clusterLabel,
+                            $c['nama_petugas'],
+                            $c['email'],
+                            $c['namakec'],
+                            $c['kodedesa'] ?? '',
+                            $ptDesa,
+                            $c['kodesls'] ?? '',
+                            $ptSls,
+                            $subSls,
+                            $fullAssignId,
+                            $noBang,
+                            $namaAssign,
+                            $bTypeName,
+                            $bLabel,
+                            $pLat,
+                            $pLon,
+                            $pAcc,
+                            "https://www.google.com/maps?q={$pLat},{$pLon}&z=20&t=k",
+                        ]);
+                    }
+                }
             } else {
                 fputcsv($handle, [
-                    'ID Klaster', 'Nama Petugas', 'Email', 'Kecamatan', 'PML (Pengawas)',
-                    'Klasifikasi Fraud', 'Komposisi', 'Titik BTT (Rumah)', 'Titik BKU (Pasar)',
+                    'ID Klaster', 'Label Klaster', 'Nama Petugas', 'Email', 'Kecamatan',
+                    'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS', 'Landmark / Usaha Utama',
+                    'PML (Pengawas)', 'Klasifikasi Fraud', 'Komposisi', 'Titik BTT (Rumah)', 'Titik BKU (Pasar)',
                     'Tingkat Keparahan', 'Jumlah Titik Bertumpuk', 'Lat Pusat', 'Lon Pusat',
                     'Radius Sebaran (meter)', 'Akurasi GPS (meter)', 'Google Maps Link'
                 ]);
@@ -83,9 +147,16 @@ class GeotagAnomalyController extends Controller
                 foreach ($viewData['clusters'] as $c) {
                     fputcsv($handle, [
                         $c['id'],
+                        $c['cluster_title'] ?? ('Klaster #' . ($c['officer_cluster_num'] ?? 1)),
                         $c['nama_petugas'],
                         $c['email'],
                         $c['namakec'],
+                        $c['kodedesa'] ?? '',
+                        $c['namadesa'] ?? '',
+                        $c['kodesls'] ?? '',
+                        $c['namasls'] ?? '',
+                        $c['id_sub_sls'] ?? '',
+                        $c['landmark'] ?? '',
                         $c['pml_nama'],
                         $c['fraud_label'] ?? '-',
                         $c['fraud_summary'] ?? '-',

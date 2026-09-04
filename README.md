@@ -67,6 +67,18 @@ Script `deploy.sh` secara otomatis mengeksekusi:
 
 ## 📜 Changelog
 
+### 2026-09-04
+
+- **Pembaruan UX Klaster Geotag Anomali SE2026 & Deteksi Wilayah Terpadu**:
+  - **Dukungan Dataset Sub-SLS Baru**: Memprioritaskan pembacaan dataset fraud detector terbaru `public/SE2026/sqllab_fraud_detector_se2026_20260904T153317.csv` yang memuat kolom `id_sub_sls` (16 digit) dan `no_bang`.
+  - **Resolusi Hierarki Wilayah (Desa, SLS, Sub-SLS)**: Melakukan decode otomatis kode sub-SLS 16 digit dan mencocokkannya dengan master GeoJSON desa serta tabel `monitoring_sls_se2026`, menampilkan nama Desa/Kelurahan dan SLS (RT/RW) pada setiap klaster.
+  - **Sidebar Navigasi Hirarki Per Petugas (Accordion)**: Mengelompokkan klaster per nama petugas dengan penomoran ordinal (*Klaster #1 (90 Titik)*, *Klaster #2 (34 Titik)*) dalam bentuk list kartu accordion interaktif dengan toggle mode ("Per Petugas" vs "Semua Klaster").
+  - **Fitur Spotlight / Focus Mode pada Peta Leaflet**: Saat sebuah klaster dipilih/diklik, peta melakukan zoom-in halus ke klaster tersebut dan meredupkan (dimming) seluruh klaster & titik lain di sekitarnya, serta menampilkan floating banner spotlight interaktif dengan tombol shortcut reset (shortcut ESC).
+  - **Modal Rincian Titik Bangunan**: Menambahkan modal pop-up inspeksi seluruh bangunan fisik yang menumpuk di dalam klaster terpilih (Nomor Bangunan, Nama Tempat/Usaha, Klasifikasi BTT/BKU, Akurasi GPS, dan tautan Google Maps langsung) disertai kolom pencarian instan.
+  - **Ekspor CSV Lengkap dengan Nama Wilayah & Detail Bangunan**:
+    - Ekspor klaster diperkaya kolom wilayah (`Kecamatan`, `Kode Desa`, `Nama Desa`, `Kode SLS`, `Nama SLS`, `Kode Sub-SLS`, `Landmark Usaha`).
+    - Penambahan jenis ekspor baru (`type=titik`) untuk mengunduh rincian seluruh fisik bangunan/titik yang terdeteksi anomali pada klaster, lengkap dengan opsi unduh per klaster langsung dari modal.
+
 ### 2026-07-29
 
 - **Executive Public Dashboard Sensus Ekonomi 2026**:

@@ -40,7 +40,7 @@ class Se2026ClusterAnomalyService
     public function getClusterData(bool $forceRefresh = false): array
     {
         $cacheStore = Cache::store('file');
-        $cacheKey = 'se2026_geotag_anomaly_dataset_v5';
+        $cacheKey = 'se2026_geotag_anomaly_dataset_v7';
 
         if ($forceRefresh) {
             $cacheStore->forget($cacheKey);
@@ -59,10 +59,16 @@ class Se2026ClusterAnomalyService
         ini_set('memory_limit', '1024M');
         set_time_limit(300);
 
-        // Priority 1: Clean consolidated & deduplicated query (Sep 3 16:42 query with nama_assignment)
-        $cleanCandidate = public_path('SE2026/sqllab_untitled_query_6_20260903T164219.csv');
+        // Priority 1: Clean consolidated & deduplicated query with id_sub_sls (Sep 4 15:33)
+        $cleanCandidate = public_path('SE2026/sqllab_fraud_detector_se2026_20260904T153317.csv');
         if (!file_exists($cleanCandidate)) {
-            $cleanCandidate = base_path('public/SE2026/sqllab_untitled_query_6_20260903T164219.csv');
+            $cleanCandidate = base_path('public/SE2026/sqllab_fraud_detector_se2026_20260904T153317.csv');
+        }
+        if (!file_exists($cleanCandidate)) {
+            $cleanCandidate = public_path('SE2026/sqllab_untitled_query_6_20260903T164219.csv');
+            if (!file_exists($cleanCandidate)) {
+                $cleanCandidate = base_path('public/SE2026/sqllab_untitled_query_6_20260903T164219.csv');
+            }
         }
 
         if (file_exists($cleanCandidate)) {
@@ -161,7 +167,53 @@ class Se2026ClusterAnomalyService
             }
         }
 
-        // 2. Parse CSV files
+        // 2. Preload Master Desa and Master SLS from monitoring_sls_se2026 & GeoJSON
+        $desaMap = [];
+        $slsMap = [];
+
+        if ($schema->hasTable('monitoring_sls_se2026')) {
+            $slsDbRows = $db->table('monitoring_sls_se2026')
+                ->where('nmsls', '!=', '-')
+                ->get(['level_4_full_code', 'level_5_full_code', 'nmsls']);
+            foreach ($slsDbRows as $r) {
+                $code14 = trim($r->level_5_full_code ?? '');
+                if (!empty($code14) && !isset($slsMap[$code14])) {
+                    $slsMap[$code14] = trim($r->nmsls);
+                }
+            }
+        }
+
+        $geojsonMasterPath = public_path('SE2026/peta_sls_202513321 (2).geojson');
+        if (!file_exists($geojsonMasterPath)) {
+            $geojsonMasterPath = base_path('public/SE2026/peta_sls_202513321 (2).geojson');
+        }
+        if (file_exists($geojsonMasterPath)) {
+            $gH = fopen($geojsonMasterPath, 'r');
+            if ($gH) {
+                while (!feof($gH)) {
+                    $line = fgets($gH);
+                    $iddesa = null; $nmdesa = null; $nmkec = null; $idsls = null; $nmsls = null;
+                    if (preg_match('/"iddesa":\s*"([^"]+)"/', $line, $m)) $iddesa = $m[1];
+                    if (preg_match('/"nmdesa":\s*"([^"]+)"/', $line, $m)) $nmdesa = $m[1];
+                    if (preg_match('/"nmkec":\s*"([^"]+)"/', $line, $m)) $nmkec = $m[1];
+                    if (preg_match('/"idsls":\s*"([^"]+)"/', $line, $m)) $idsls = $m[1];
+                    if (preg_match('/"nmsls":\s*"([^"]+)"/', $line, $m)) $nmsls = $m[1];
+
+                    if ($iddesa && $nmdesa && !isset($desaMap[$iddesa])) {
+                        $desaMap[$iddesa] = [
+                            'nmdesa' => trim($nmdesa),
+                            'nmkec' => trim($nmkec ?? ''),
+                        ];
+                    }
+                    if ($idsls && $nmsls && !isset($slsMap[$idsls])) {
+                        $slsMap[$idsls] = trim($nmsls);
+                    }
+                }
+                fclose($gH);
+            }
+        }
+
+        // 3. Parse CSV files
         $totalRawPoints = 0;
         $clusters = [];
         $batchFiles = [];
@@ -184,6 +236,7 @@ class Se2026ClusterAnomalyService
             $idxLabel = array_search('kode_bang_label', $header);
             $idxNamaAssign = array_search('nama_assignment', $header);
             $idxNoBang = array_search('no_bang', $header);
+            $idxSubSls = array_search('id_sub_sls', $header);
             $idxCenterLat = array_search('cluster_center_lat', $header);
             $idxCenterLon = array_search('cluster_center_lon', $header);
             $idxMinLat = array_search('cluster_min_lat', $header);
@@ -194,6 +247,7 @@ class Se2026ClusterAnomalyService
             $idxAssign = array_search('assignment_id', $header);
             $idxPointLat = array_search('point_lat', $header);
             $idxPointLon = array_search('point_lon', $header);
+            $idxPointAcc = array_search('point_accuracy', $header);
 
             while (($row = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
                 $totalRawPoints++;
@@ -206,6 +260,18 @@ class Se2026ClusterAnomalyService
                 }
 
                 $clusterKey = $email . '|' . $cLat . '|' . $cLon;
+
+                // Decode wilayah from id_sub_sls if available
+                $rawSubSls = $idxSubSls !== false ? trim($row[$idxSubSls] ?? '') : '';
+                $kdKec = !empty($rawSubSls) ? substr($rawSubSls, 0, 7) : ($pencacahKecMap[$email] ?? null);
+                $kdDesa = !empty($rawSubSls) ? substr($rawSubSls, 0, 10) : null;
+                $kdSls = !empty($rawSubSls) ? substr($rawSubSls, 0, 14) : null;
+
+                $nmKec = ($kdKec && isset($this->kecNameMap[$kdKec]))
+                    ? $this->kecNameMap[$kdKec]
+                    : (($kdDesa && isset($desaMap[$kdDesa]['nmkec'])) ? $desaMap[$kdDesa]['nmkec'] : 'Demak (Umum)');
+                $nmDesa = ($kdDesa && isset($desaMap[$kdDesa]['nmdesa'])) ? $desaMap[$kdDesa]['nmdesa'] : '-';
+                $nmSls = ($kdSls && isset($slsMap[$kdSls])) ? $slsMap[$kdSls] : (!empty($kdSls) ? 'SLS ' . substr($kdSls, -4) : '-');
 
                 if (!isset($clusters[$clusterKey])) {
                     $size = (int) ($row[$idxSize] ?? 0);
@@ -246,12 +312,8 @@ class Se2026ClusterAnomalyService
                     // Resolve Officer Name
                     $namaPetugas = $masterPetugasMap[$email]['nama'] ?? $this->formatEmailToName($email);
 
-                    // Resolve Kecamatan
-                    $kodeKec = $pencacahKecMap[$email] ?? null;
-                    $namaKec = $kodeKec && isset($this->kecNameMap[$kodeKec]) ? $this->kecNameMap[$kodeKec] : 'Demak (Umum)';
-
                     // Resolve PML (Direct assignment first, fallback to district)
-                    $pmlEmail = $pencacahPmlMap[$email] ?? ($kodeKec && isset($alokasiPengawasMap[$kodeKec]) ? $alokasiPengawasMap[$kodeKec] : null);
+                    $pmlEmail = $pencacahPmlMap[$email] ?? ($kdKec && isset($alokasiPengawasMap[$kdKec]) ? $alokasiPengawasMap[$kdKec] : null);
                     $pmlNama = $pmlEmail && isset($masterPetugasMap[$pmlEmail]['nama']) ? $masterPetugasMap[$pmlEmail]['nama'] : ($pmlEmail ? $this->formatEmailToName($pmlEmail) : '-');
 
                     $clusterId = 'cls_' . substr(md5($clusterKey), 0, 10);
@@ -261,8 +323,13 @@ class Se2026ClusterAnomalyService
                         'key' => $clusterKey,
                         'email' => $email,
                         'nama_petugas' => $namaPetugas,
-                        'kodekec' => $kodeKec,
-                        'namakec' => $namaKec,
+                        'kodekec' => $kdKec,
+                        'namakec' => $nmKec,
+                        'kodedesa' => $kdDesa,
+                        'namadesa' => $nmDesa,
+                        'kodesls' => $kdSls,
+                        'namasls' => $nmSls,
+                        'id_sub_sls' => $rawSubSls,
                         'pml_email' => $pmlEmail,
                         'pml_nama' => $pmlNama,
                         'cluster_size' => $size,
@@ -293,6 +360,17 @@ class Se2026ClusterAnomalyService
                     if (count($clusters[$clusterKey]['sample_assignments']) < 3) {
                         $clusters[$clusterKey]['sample_assignments'][] = trim($row[$idxAssign] ?? '');
                     }
+                    if ($nmDesa !== '-' && $clusters[$clusterKey]['namadesa'] === '-') {
+                        $clusters[$clusterKey]['kodedesa'] = $kdDesa;
+                        $clusters[$clusterKey]['namadesa'] = $nmDesa;
+                    }
+                    if ($nmSls !== '-' && $clusters[$clusterKey]['namasls'] === '-') {
+                        $clusters[$clusterKey]['kodesls'] = $kdSls;
+                        $clusters[$clusterKey]['namasls'] = $nmSls;
+                    }
+                    if (!empty($rawSubSls) && empty($clusters[$clusterKey]['id_sub_sls'])) {
+                        $clusters[$clusterKey]['id_sub_sls'] = $rawSubSls;
+                    }
                 }
 
                 $assignId = trim($row[$idxAssign] ?? '');
@@ -301,8 +379,9 @@ class Se2026ClusterAnomalyService
                 $noBang = $idxNoBang !== false ? trim($row[$idxNoBang] ?? '') : '';
                 $pLat = (float) ($row[$idxPointLat] ?? $cLat);
                 $pLon = (float) ($row[$idxPointLon] ?? $cLon);
+                $pAcc = (float) ($idxPointAcc !== false ? ($row[$idxPointAcc] ?? 0) : 0);
 
-                if (!empty($namaAssign) && count($clusters[$clusterKey]['sample_names']) < 3 && !in_array($namaAssign, $clusters[$clusterKey]['sample_names'])) {
+                if (!empty($namaAssign) && count($clusters[$clusterKey]['sample_names']) < 4 && !in_array($namaAssign, $clusters[$clusterKey]['sample_names'])) {
                     $clusters[$clusterKey]['sample_names'][] = $namaAssign;
                 }
 
@@ -343,6 +422,11 @@ class Se2026ClusterAnomalyService
                         $pointColor,
                         $namaAssign,
                         $noBang,
+                        $assignId,
+                        $rawSubSls,
+                        $nmDesa,
+                        $nmSls,
+                        $pAcc,
                     ];
                 }
             }
@@ -397,6 +481,17 @@ class Se2026ClusterAnomalyService
         uasort($clusters, function ($a, $b) {
             return $b['cluster_size'] <=> $a['cluster_size'];
         });
+
+        // Assign ordinal number per officer (Klaster #1, Klaster #2, ...)
+        $officerClusterCounts = [];
+        foreach ($clusters as &$c) {
+            $email = $c['email'];
+            $officerClusterCounts[$email] = ($officerClusterCounts[$email] ?? 0) + 1;
+            $c['officer_cluster_num'] = $officerClusterCounts[$email];
+            $c['cluster_title'] = "Klaster #{$c['officer_cluster_num']} ({$c['cluster_size']} Titik)";
+            $c['landmark'] = !empty($c['sample_names']) ? $c['sample_names'][0] : '';
+        }
+        unset($c);
 
         // 3. Build Petugas Ranking
         $petugasGroups = [];
@@ -666,6 +761,35 @@ class Se2026ClusterAnomalyService
         $fraudSlsData = $this->getFraudSlsGeoJson();
         $totalFraudSls = count($fraudSlsData['features'] ?? []);
 
+        // Group filtered clusters per officer for hierarchical accordion view
+        $petugasGrouped = [];
+        foreach ($filteredClusters as $c) {
+            $email = $c['email'];
+            if (!isset($petugasGrouped[$email])) {
+                $petugasGrouped[$email] = [
+                    'email' => $email,
+                    'nama' => $c['nama_petugas'],
+                    'namakec' => $c['namakec'],
+                    'pml_nama' => $c['pml_nama'],
+                    'total_clusters' => 0,
+                    'total_points' => 0,
+                    'total_btt' => 0,
+                    'total_bku' => 0,
+                    'max_cluster_size' => 0,
+                    'clusters' => [],
+                ];
+            }
+            $petugasGrouped[$email]['total_clusters']++;
+            $petugasGrouped[$email]['total_points'] += $c['cluster_size'];
+            $petugasGrouped[$email]['total_btt'] += $c['btt_count'];
+            $petugasGrouped[$email]['total_bku'] += $c['bku_count'];
+            if ($c['cluster_size'] > $petugasGrouped[$email]['max_cluster_size']) {
+                $petugasGrouped[$email]['max_cluster_size'] = $c['cluster_size'];
+            }
+            $petugasGrouped[$email]['clusters'][] = $c;
+        }
+        uasort($petugasGrouped, fn($a, $b) => $b['total_points'] <=> $a['total_points']);
+
         return [
             'kecNameMap' => $this->kecNameMap,
             'selectedKec' => $selectedKec,
@@ -688,6 +812,7 @@ class Se2026ClusterAnomalyService
             ],
             'clusters' => $filteredClusters,
             'petugas_ranking' => $filteredPetugas,
+            'petugas_with_clusters' => array_values($petugasGrouped),
             'kecamatan_summary' => $raw['kecamatan_summary'],
             'generated_at' => $raw['generated_at'],
         ];
