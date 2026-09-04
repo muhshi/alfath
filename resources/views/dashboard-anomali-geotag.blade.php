@@ -1136,10 +1136,41 @@
 
                 markersById[c.id] = mainMarker;
 
+                // Deteksi koordinat kembar di dalam klaster ini
+                const coordCounts = {};
+                points.forEach(pt => {
+                    const k = `${parseFloat(pt[0]).toFixed(6)}_${parseFloat(pt[1]).toFixed(6)}`;
+                    coordCounts[k] = (coordCounts[k] || 0) + 1;
+                });
+
+                const coordSeen = {};
+
                 // Add individual survey points with specific building color and labels
                 points.forEach((pt, pIdx) => {
-                    const pLat = parseFloat(pt[0]) || cLat;
-                    const pLon = parseFloat(pt[1]) || cLon;
+                    const origLat = parseFloat(pt[0]) || cLat;
+                    const origLon = parseFloat(pt[1]) || cLon;
+                    const k = `${origLat.toFixed(6)}_${origLon.toFixed(6)}`;
+
+                    let pLat = origLat;
+                    let pLon = origLon;
+
+                    // Jika ada titik bertumpuk pada koordinat yang sama, sebarkan dalam formasi spiral indah (1-6 meter)
+                    if (coordCounts[k] > 1) {
+                        const order = coordSeen[k] || 0;
+                        coordSeen[k] = order + 1;
+
+                        if (order > 0) {
+                            // Golden angle spiral (137.5 degrees)
+                            const angle = order * 2.39996;
+                            // Radius bertahap dari 1.2m hingga maks ~6m (seukuran tapak bangunan/rumah)
+                            const rMeter = 1.2 + Math.sqrt(order) * 0.95;
+                            const dLat = (rMeter * Math.cos(angle)) / 111320;
+                            const dLon = (rMeter * Math.sin(angle)) / (111320 * Math.cos(cLat * Math.PI / 180));
+                            pLat = origLat + dLat;
+                            pLon = origLon + dLon;
+                        }
+                    }
+
                     const pAssign = pt[2] || ('#' + (pIdx + 1));
                     const bType = pt[3] || 'lainnya';
                     const bLabel = pt[4] || 'Tipe Bangunan Belum Terdata';
