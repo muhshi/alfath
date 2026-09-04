@@ -167,6 +167,28 @@
             padding: 2px 0;
             border-bottom: 1px dashed #e2e8f0;
         }
+
+        .sls-tooltip {
+            background: rgba(15, 23, 42, 0.94) !important;
+            color: #ffffff !important;
+            border: 1px solid #475569 !important;
+            border-radius: 8px !important;
+            padding: 6px 10px !important;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.35) !important;
+            font-size: 0.78rem !important;
+        }
+        .sls-tooltip::before {
+            border-top-color: rgba(15, 23, 42, 0.94) !important;
+        }
+        .legend-square {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-right: 8px;
+            border: 1.5px dashed #e11d48;
+            background: rgba(244, 63, 94, 0.35);
+        }
     </style>
 @endpush
 
@@ -276,7 +298,7 @@
                     <span class="badge bg-danger text-white px-2 py-1"><i class="ti ti-alert-triangle"></i> BTT</span>
                 </div>
                 <h2 class="fw-bold mb-1 text-danger">{{ number_format($kpi['total_fraud_points'], 0, ',', '.') }}</h2>
-                <div class="text-muted small">{{ $kpi['total_fraud_clusters'] }} klaster dominan Rumah Tinggal (BTT)</div>
+                <div class="text-muted small">{{ $kpi['total_fraud_clusters'] }} klaster BTT di <strong class="text-danger">{{ $kpi['total_fraud_sls'] ?? 137 }} SLS</strong></div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
@@ -639,6 +661,10 @@
         let clusterGroup = null;
         let rawPointsGroup = null;
         let markersById = {};
+        let slsGeojsonData = null;
+        let slsFraudLayer = null;
+        let isSlsLayerVisible = true;
+        let layerControlInstance = null;
 
         document.addEventListener('DOMContentLoaded', function () {
             // 1. Initialize Leaflet Map FIRST and independently
@@ -769,6 +795,7 @@
                     <div class="legend-item"><span class="legend-circle" style="background:#10b981;"></span> 🟢 BKU (Usaha / Potensi Pasar)</div>
                     <div class="legend-item"><span class="legend-circle" style="background:#f59e0b;"></span> 🟡 Campuran (Usaha & Hunian)</div>
                     <div class="legend-item"><span class="legend-circle" style="background:#8b5cf6;"></span> 🟣 Lainnya / Bangunan Rusak</div>
+                    <div class="legend-item mt-1 pt-1 border-top"><span class="legend-square"></span> 🏘️ Batas SLS Terdampak Fraud (137 SLS)</div>
                     <div class="text-muted small mt-2 pt-1 border-top" style="font-size:0.7rem;">
                         Zoom in (&ge; 15) untuk melihat titik individu berwarna sesuai tipe bangunannya.
                     </div>
@@ -781,7 +808,7 @@
             renderClusterMarkers();
 
             // Layer Control
-            L.control.layers({
+            layerControlInstance = L.control.layers({
                 "🛰️ Google Satellite Hybrid (Default)": googleHybrid,
                 "🗺️ OpenStreetMap": osm,
                 "🌍 Esri Satellite": esriSatellite,
@@ -791,9 +818,150 @@
                 "📍 Semua Titik Individu (Langsung)": rawPointsGroup
             }, { position: 'topright' }).addTo(mapInstance);
 
+            // Load SLS Fraud Boundary GeoJSON (asynchronously)
+            loadSlsFraudGeoJson();
+
             // Force recalculation of map container dimensions
             setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 250);
             setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(); }, 650);
+        }
+
+        function loadSlsFraudGeoJson() {
+            const slsUrl = "{{ route('dashboard.anomali-geotag.sls-geojson') }}";
+
+            fetch(slsUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error("Gagal memuat data SLS (" + res.status + ")");
+                    return res.json();
+                })
+                .then(geojson => {
+                    slsGeojsonData = geojson;
+                    renderSlsFraudLayer();
+                })
+                .catch(err => {
+                    console.error("Gagal memuat GeoJSON SLS Fraud:", err);
+                });
+        }
+
+        function renderSlsFraudLayer() {
+            if (!mapInstance || !slsGeojsonData) return;
+
+            if (slsFraudLayer) {
+                mapInstance.removeLayer(slsFraudLayer);
+                if (layerControlInstance) {
+                    layerControlInstance.removeLayer(slsFraudLayer);
+                }
+            }
+
+            const currentKec = "{{ $selectedKec }}";
+
+            slsFraudLayer = L.geoJSON(slsGeojsonData, {
+                filter: function (feature) {
+                    if (!currentKec || currentKec === 'other') return true;
+                    return (feature.properties && String(feature.properties.kd_kec_bps) === String(currentKec));
+                },
+                style: function (feature) {
+                    return {
+                        color: '#e11d48',
+                        weight: 2,
+                        dashArray: '5, 5',
+                        fillColor: '#f43f5e',
+                        fillOpacity: 0.16
+                    };
+                },
+                onEachFeature: function (feature, layer) {
+                    const props = feature.properties || {};
+                    const nmsls = props.nmsls || 'SLS';
+                    const nmdesa = props.nmdesa || '-';
+                    const nmkec = props.nmkec || '-';
+                    const cCount = props.fraud_clusters_count || 0;
+                    const pCount = props.fraud_points_count || 0;
+                    const petugasArr = props.petugas_list || [];
+                    const petugasStr = petugasArr.length > 0
+                        ? petugasArr.slice(0, 3).join(', ') + (petugasArr.length > 3 ? ' (+' + (petugasArr.length - 3) + ' lainnya)' : '')
+                        : '-';
+
+                    layer.on('mouseover', function () {
+                        this.setStyle({
+                            weight: 3.5,
+                            dashArray: '',
+                            color: '#be123c',
+                            fillColor: '#dc2626',
+                            fillOpacity: 0.38
+                        });
+                    });
+
+                    layer.on('mouseout', function () {
+                        slsFraudLayer.resetStyle(this);
+                    });
+
+                    layer.bindTooltip(`
+                        <div style="font-size:0.8rem; line-height: 1.4;">
+                            <div class="fw-bold text-danger"><i class="ti ti-polygon"></i> ${nmsls}</div>
+                            <div class="text-white-50 small">${nmdesa}, Kec. ${nmkec}</div>
+                            <div class="mt-1 d-flex gap-1">
+                                <span class="badge bg-danger" style="font-size:0.7rem;">${cCount} Klaster Fraud</span>
+                                <span class="badge bg-dark" style="font-size:0.7rem;">${pCount} Titik BTT</span>
+                            </div>
+                        </div>
+                    `, { sticky: true, className: 'sls-tooltip' });
+
+                    layer.bindPopup(`
+                        <div style="min-width: 260px; font-family: inherit;">
+                            <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                <span class="badge bg-danger text-white">Batas SLS Terdampak Fraud</span>
+                                <span class="badge bg-light text-muted" style="font-size:0.7rem;">${props.idsls || ''}</span>
+                            </div>
+                            <div class="fw-bold text-dark fs-5 mt-1 mb-0">${nmsls}</div>
+                            <div class="text-muted small mb-2">Desa ${nmdesa}, Kec. ${nmkec}</div>
+
+                            <div class="p-2 mb-2 rounded bg-light border">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="small text-muted">Klaster Fraud (BTT):</span>
+                                    <strong class="text-danger">${cCount} Klaster</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="small text-muted">Total Titik Anomali:</span>
+                                    <strong class="text-dark">${pCount} Titik BTT</strong>
+                                </div>
+                                <div class="small text-muted mt-2 pt-1 border-top">
+                                    Petugas Terindikasi: <br><strong class="text-dark">${petugasStr}</strong>
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button class="btn btn-sm btn-outline-danger" onclick="mapInstance.fitBounds(slsFraudLayer.getLayer('${layer._leaflet_id}').getBounds(), { padding: [30, 30] })">
+                                    <i class="ti ti-zoom-in me-1"></i> Perbesar ke SLS Ini
+                                </button>
+                            </div>
+                        </div>
+                    `);
+
+                    layer.on('click', function (e) {
+                        mapInstance.fitBounds(this.getBounds(), { padding: [35, 35] });
+                    });
+                }
+            });
+
+            if (isSlsLayerVisible) {
+                mapInstance.addLayer(slsFraudLayer);
+            }
+
+            const visibleSlsCount = slsFraudLayer.getLayers().length;
+
+            if (layerControlInstance) {
+                layerControlInstance.addOverlay(slsFraudLayer, "🏘️ Batas SLS Fraud (" + visibleSlsCount + " SLS)");
+            }
+
+            const btn = document.getElementById('toggleSlsLayerBtn');
+            if (btn) {
+                btn.innerHTML = '<i class="ti ti-polygon me-1"></i> Batas SLS Fraud (' + visibleSlsCount + ' SLS)';
+                if (isSlsLayerVisible) {
+                    btn.className = 'btn btn-sm btn-danger shadow-sm fw-bold me-2';
+                } else {
+                    btn.className = 'btn btn-sm btn-light shadow-sm fw-bold me-2';
+                }
+            }
         }
 
         function renderClusterMarkers() {
@@ -826,40 +994,66 @@
             // 2. Initialize Raw Points Group (for direct individual view)
             rawPointsGroup = L.featureGroup();
 
-            // Floating Toggle Button on Map
-            const modeToggleControl = L.control({ position: 'topleft' });
-            modeToggleControl.onAdd = function () {
-                const btn = L.DomUtil.create('button', 'btn btn-sm btn-light shadow-sm fw-bold');
-                btn.id = 'toggleClusterModeBtn';
-                btn.style.marginLeft = '48px';
-                btn.style.marginTop = '2px';
-                btn.style.fontSize = '0.78rem';
-                btn.style.borderRadius = '6px';
-                btn.style.border = '1px solid #cbd5e1';
-                btn.style.zIndex = '1000';
-                btn.innerHTML = '<i class="ti ti-point me-1 text-danger"></i> Tampilkan Semua Titik Individu';
+            // Floating Toggle Buttons Toolbar on Map
+            const mapToolbarControl = L.control({ position: 'topleft' });
+            mapToolbarControl.onAdd = function () {
+                const container = L.DomUtil.create('div', 'd-flex align-items-center');
+                container.style.marginLeft = '48px';
+                container.style.marginTop = '2px';
+                container.style.zIndex = '1000';
+
+                // Button 1: Toggle SLS Fraud Overlay
+                const slsBtn = L.DomUtil.create('button', 'btn btn-sm btn-danger shadow-sm fw-bold me-2', container);
+                slsBtn.id = 'toggleSlsLayerBtn';
+                slsBtn.style.fontSize = '0.78rem';
+                slsBtn.style.borderRadius = '6px';
+                slsBtn.innerHTML = '<i class="ti ti-polygon me-1"></i> Batas SLS Fraud (137 SLS)';
+                slsBtn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!slsFraudLayer) return;
+
+                    if (mapInstance.hasLayer(slsFraudLayer)) {
+                        mapInstance.removeLayer(slsFraudLayer);
+                        isSlsLayerVisible = false;
+                        slsBtn.className = 'btn btn-sm btn-light shadow-sm fw-bold me-2';
+                    } else {
+                        mapInstance.addLayer(slsFraudLayer);
+                        isSlsLayerVisible = true;
+                        slsBtn.className = 'btn btn-sm btn-danger shadow-sm fw-bold me-2';
+                    }
+                };
+
+                // Button 2: Toggle Cluster vs Raw Points Mode
+                const modeBtn = L.DomUtil.create('button', 'btn btn-sm btn-light shadow-sm fw-bold', container);
+                modeBtn.id = 'toggleClusterModeBtn';
+                modeBtn.style.fontSize = '0.78rem';
+                modeBtn.style.borderRadius = '6px';
+                modeBtn.style.border = '1px solid #cbd5e1';
+                modeBtn.innerHTML = '<i class="ti ti-point me-1 text-danger"></i> Tampilkan Semua Titik Individu';
                 
                 let isDirectPointsMode = false;
-                btn.onclick = function (e) {
+                modeBtn.onclick = function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     isDirectPointsMode = !isDirectPointsMode;
                     
                     if (isDirectPointsMode) {
-                        btn.classList.replace('btn-light', 'btn-primary');
-                        btn.innerHTML = '<i class="ti ti-circles me-1"></i> Kembali ke Mode Klaster';
+                        modeBtn.classList.replace('btn-light', 'btn-primary');
+                        modeBtn.innerHTML = '<i class="ti ti-circles me-1"></i> Kembali ke Mode Klaster';
                         mapInstance.removeLayer(clusterGroup);
                         mapInstance.addLayer(rawPointsGroup);
                     } else {
-                        btn.classList.replace('btn-primary', 'btn-light');
-                        btn.innerHTML = '<i class="ti ti-point me-1 text-danger"></i> Tampilkan Semua Titik Individu';
+                        modeBtn.classList.replace('btn-primary', 'btn-light');
+                        modeBtn.innerHTML = '<i class="ti ti-point me-1 text-danger"></i> Tampilkan Semua Titik Individu';
                         mapInstance.removeLayer(rawPointsGroup);
                         mapInstance.addLayer(clusterGroup);
                     }
                 };
-                return btn;
+
+                return container;
             };
-            modeToggleControl.addTo(mapInstance);
+            mapToolbarControl.addTo(mapInstance);
 
             clustersData.forEach(c => {
                 if (!c || isNaN(parseFloat(c.center_lat)) || isNaN(parseFloat(c.center_lon))) {

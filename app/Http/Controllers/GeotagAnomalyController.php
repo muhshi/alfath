@@ -23,6 +23,20 @@ class GeotagAnomalyController extends Controller
     }
 
     /**
+     * Return filtered GeoJSON containing only SLS polygons with fraud anomalies.
+     */
+    public function slsGeojson(Request $request)
+    {
+        $forceRefresh = $request->boolean('refresh', false);
+        $geojson = $this->clusterService->getFraudSlsGeoJson($forceRefresh);
+
+        return response()->json($geojson, 200, [
+            'Content-Type' => 'application/geo+json; charset=UTF-8',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    /**
      * Export anomaly cluster records or officer rankings to CSV.
      */
     public function export(Request $request): StreamedResponse

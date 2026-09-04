@@ -638,6 +638,9 @@ class Se2026ClusterAnomalyService
         $wajarClusters = array_filter($filteredClusters, fn($c) => ($c['fraud_category'] ?? '') === 'wajar_bku');
         $campuranClusters = array_filter($filteredClusters, fn($c) => ($c['fraud_category'] ?? '') === 'campuran');
 
+        $fraudSlsData = $this->getFraudSlsGeoJson();
+        $totalFraudSls = count($fraudSlsData['features'] ?? []);
+
         return [
             'kecNameMap' => $this->kecNameMap,
             'selectedKec' => $selectedKec,
@@ -651,6 +654,7 @@ class Se2026ClusterAnomalyService
                 'max_cluster' => !empty($filteredClusters) ? max(array_column($filteredClusters, 'cluster_size')) : 0,
                 'total_fraud_clusters' => count($fraudClusters),
                 'total_fraud_points' => array_sum(array_column($fraudClusters, 'cluster_size')),
+                'total_fraud_sls' => $totalFraudSls,
                 'total_wajar_clusters' => count($wajarClusters),
                 'total_wajar_points' => array_sum(array_column($wajarClusters, 'cluster_size')),
                 'total_campuran_clusters' => count($campuranClusters),
@@ -662,6 +666,220 @@ class Se2026ClusterAnomalyService
             'kecamatan_summary' => $raw['kecamatan_summary'],
             'generated_at' => $raw['generated_at'],
         ];
+    }
+
+    /**
+     * Get filtered SLS GeoJSON containing only SLS with fraud clusters.
+     */
+    public function getFraudSlsGeoJson(bool $forceRefresh = false): array
+    {
+        $filteredFile = public_path('SE2026/peta_sls_fraud_filtered.geojson');
+        if (!file_exists($filteredFile)) {
+            $filteredFile = base_path('public/SE2026/peta_sls_fraud_filtered.geojson');
+        }
+
+        if (!$forceRefresh && file_exists($filteredFile)) {
+            $content = file_get_contents($filteredFile);
+            $decoded = json_decode($content, true);
+            if (!empty($decoded['features'])) {
+                return $decoded;
+            }
+        }
+
+        return $this->buildFraudSlsGeoJson();
+    }
+
+    /**
+     * Spatial matching: Filter raw Demak SLS GeoJSON (25MB) to only SLS with fraud clusters.
+     */
+    public function buildFraudSlsGeoJson(): array
+    {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(180);
+
+        $dataset = $this->getClusterData();
+        $fraudClusters = [];
+        foreach ($dataset['clusters'] as $c) {
+            if (($c['fraud_category'] ?? '') === 'fraud_btt') {
+                $fraudClusters[] = [
+                    'id' => $c['id'],
+                    'lat' => (float) $c['center_lat'],
+                    'lon' => (float) $c['center_lon'],
+                    'petugas' => $c['nama_petugas'] ?? '',
+                    'kec_code' => $c['kodekec'] ?? '',
+                    'points_count' => count($c['points'] ?? []),
+                ];
+            }
+        }
+
+        $geojsonPath = public_path('SE2026/peta_sls_202513321 (2).geojson');
+        if (!file_exists($geojsonPath)) {
+            $geojsonPath = base_path('public/SE2026/peta_sls_202513321 (2).geojson');
+        }
+
+        if (!file_exists($geojsonPath)) {
+            return ['type' => 'FeatureCollection', 'features' => []];
+        }
+
+        $raw = file_get_contents($geojsonPath);
+        $geojson = json_decode($raw, true);
+        unset($raw);
+
+        if (empty($geojson['features'])) {
+            return ['type' => 'FeatureCollection', 'features' => []];
+        }
+
+        $indexed = [];
+        foreach ($geojson['features'] as $f) {
+            $geom = $f['geometry'] ?? null;
+            if (!$geom) continue;
+            $minX = 180.0; $minY = 90.0; $maxX = -180.0; $maxY = -90.0;
+            if ($geom['type'] === 'Polygon') {
+                foreach ($geom['coordinates'] as $ring) {
+                    $this->scanRingBbox($ring, $minX, $minY, $maxX, $maxY);
+                }
+            } elseif ($geom['type'] === 'MultiPolygon') {
+                foreach ($geom['coordinates'] as $poly) {
+                    foreach ($poly as $ring) {
+                        $this->scanRingBbox($ring, $minX, $minY, $maxX, $maxY);
+                    }
+                }
+            }
+            $indexed[] = [
+                'minX' => $minX, 'minY' => $minY, 'maxX' => $maxX, 'maxY' => $maxY,
+                'geom' => $geom,
+                'props' => $f['properties'] ?? [],
+                'feat' => $f,
+            ];
+        }
+
+        $matchedSls = [];
+        foreach ($fraudClusters as $fc) {
+            $px = $fc['lon'];
+            $py = $fc['lat'];
+            foreach ($indexed as $item) {
+                if ($px >= $item['minX'] && $px <= $item['maxX'] && $py >= $item['minY'] && $py <= $item['maxY']) {
+                    if ($this->pointInGeom($px, $py, $item['geom'])) {
+                        $idsls = $item['props']['idsls'] ?? ($item['props']['idsubsls'] ?? uniqid('sls_'));
+                        if (!isset($matchedSls[$idsls])) {
+                            $matchedSls[$idsls] = [
+                                'feature' => $item['feat'],
+                                'orig_props' => $item['props'],
+                                'fraud_clusters' => [],
+                                'fraud_points_count' => 0,
+                                'petugas' => [],
+                                'kec_codes' => [],
+                            ];
+                        }
+                        $matchedSls[$idsls]['fraud_clusters'][] = $fc['id'];
+                        $matchedSls[$idsls]['fraud_points_count'] += $fc['points_count'];
+                        if (!empty($fc['petugas']) && !in_array($fc['petugas'], $matchedSls[$idsls]['petugas'])) {
+                            $matchedSls[$idsls]['petugas'][] = $fc['petugas'];
+                        }
+                        if (!empty($fc['kec_code']) && !in_array($fc['kec_code'], $matchedSls[$idsls]['kec_codes'])) {
+                            $matchedSls[$idsls]['kec_codes'][] = $fc['kec_code'];
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        $cleanFeatures = [];
+        foreach ($matchedSls as $idsls => $data) {
+            $feat = $data['feature'];
+            $orig = $data['orig_props'];
+            $kdKecBps = !empty($data['kec_codes']) ? $data['kec_codes'][0] : ('3321' . ($orig['kdkec'] ?? ''));
+
+            $feat['properties'] = [
+                'idsls' => (string) $idsls,
+                'nmsls' => $orig['nmsls'] ?? ($orig['nama_sls'] ?? ('SLS ' . $idsls)),
+                'nmdesa' => $orig['nmdesa'] ?? '',
+                'nmkec' => $orig['nmkec'] ?? '',
+                'kdkec' => $orig['kdkec'] ?? '',
+                'kd_kec_bps' => $kdKecBps,
+                'fraud_clusters_count' => count($data['fraud_clusters']),
+                'fraud_points_count' => $data['fraud_points_count'],
+                'petugas_list' => $data['petugas'],
+                'cluster_ids' => $data['fraud_clusters'],
+            ];
+            $cleanFeatures[] = $feat;
+        }
+
+        $result = [
+            'type' => 'FeatureCollection',
+            'name' => 'sls_fraud_overlay_demak',
+            'crs' => ['type' => 'name', 'properties' => ['name' => 'urn:ogc:def:crs:OGC:1.3:CRS84']],
+            'features' => $cleanFeatures,
+        ];
+
+        // Save filtered GeoJSON for lightning-fast subsequent access
+        $outPath = public_path('SE2026/peta_sls_fraud_filtered.geojson');
+        @file_put_contents($outPath, json_encode($result, JSON_UNESCAPED_UNICODE));
+
+        return $result;
+    }
+
+    protected function scanRingBbox(array $ring, float &$minX, float &$minY, float &$maxX, float &$maxY): void
+    {
+        foreach ($ring as $pt) {
+            $x = $pt[0]; $y = $pt[1];
+            if ($x < $minX) $minX = $x;
+            if ($x > $maxX) $maxX = $x;
+            if ($y < $minY) $minY = $y;
+            if ($y > $maxY) $maxY = $y;
+        }
+    }
+
+    protected function pointInRing(float $px, float $py, array $ring): bool
+    {
+        $n = count($ring);
+        $inside = false;
+        $p1x = $ring[0][0]; $p1y = $ring[0][1];
+        for ($i = 1; $i <= $n; $i++) {
+            $p2x = $ring[$i % $n][0];
+            $p2y = $ring[$i % $n][1];
+            if ($py > min($p1y, $p2y) && $py <= max($p1y, $p2y) && $px <= max($p1x, $p2x)) {
+                if ($p1y != $p2y) {
+                    $xinters = ($py - $p1y) * ($p2x - $p1x) / ($p2y - $p1y) + $p1x;
+                } else {
+                    $xinters = $p1x;
+                }
+                if ($p1x == $p2x || $px <= $xinters) {
+                    $inside = !$inside;
+                }
+            }
+            $p1x = $p2x; $p1y = $p2y;
+        }
+        return $inside;
+    }
+
+    protected function pointInGeom(float $px, float $py, array $geom): bool
+    {
+        $type = $geom['type'] ?? '';
+        $coords = $geom['coordinates'] ?? [];
+        if ($type === 'Polygon') {
+            if (!$this->pointInRing($px, $py, $coords[0])) return false;
+            for ($i = 1; $i < count($coords); $i++) {
+                if ($this->pointInRing($px, $py, $coords[$i])) return false;
+            }
+            return true;
+        } elseif ($type === 'MultiPolygon') {
+            foreach ($coords as $poly) {
+                if ($this->pointInRing($px, $py, $poly[0])) {
+                    $inHole = false;
+                    for ($i = 1; $i < count($poly); $i++) {
+                        if ($this->pointInRing($px, $py, $poly[$i])) {
+                            $inHole = true;
+                            break;
+                        }
+                    }
+                    if (!$inHole) return true;
+                }
+            }
+            return false;
+        }
+        return false;
     }
 
     /**

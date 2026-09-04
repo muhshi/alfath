@@ -314,3 +314,17 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - **Deteksi Pasar Berbasis Kata Kunci & BKU**: Memadukan klasifikasi `kode_bang_label` dengan nama assignment (seperti `pasar`, `los`, `kios`, `lapak`, `ruko`) sehingga area los/kios pasar yang berkode bangunan kosong tetap terdeteksi akurat sebagai **🟢 Potensi Wajar / Sentra Pasar** (103 klaster wajar vs 180 klaster fraud BTT vs 63 klaster campuran).
     - Menghapus berkas duplikasi lama sehingga ukuran repository git tetap sangat ramping dan proses deploy jauh lebih cepat.
 
+### 2026-09-04
+
+- **Overlay Spasial Batas SLS Terdampak Fraud Geotag (`peta_sls_fraud_filtered.geojson`)**:
+  - **Optimasi Bobot GeoJSON (Pengurangan 99,2%)**: Memfilter file GeoJSON batas SLS mentah Kabupaten Demak (`peta_sls_202513321 (2).geojson`, 25,32 MB, 8.270 SLS) menggunakan algoritma geospasial *Point-in-Polygon* (ray-casting & bounding box pre-index) murni di backend PHP menjadi file GeoJSON terfokus yang sangat ringan (**203 KB, 137 SLS terdampak fraud BTT**) sehingga peta di browser tidak mengalami lag atau beban memori.
+  - **Endpoint API Asinkron (`/dashboard-anomali-geotag/sls-geojson`)**: Menambahkan route dan controller endpoint dengan caching HTTP untuk melayani payload GeoJSON batas SLS secara asinkron tanpa membebani load awal halaman.
+  - **Visualisasi Poligon Interaktif di Leaflet (`dashboard-anomali-geotag.blade.php`)**:
+    - Poligon batas SLS digambarkan dengan garis putus-putus merah marun (`#e11d48`) dan isian transparan (`rgba(244, 63, 94, 0.16)`).
+    - Efek highlight saat kursor melintas (hover), sticky tooltip informasi SLS, serta popup detail berisi nama SLS, desa, kecamatan, ID SLS, jumlah klaster fraud BTT, jumlah titik anomali, dan daftar petugas yang terindikasi.
+    - Interaksi klik pada poligon SLS langsung melakukan *smart zoom* (`fitBounds`) ke area SLS yang dipilih.
+    - Sinkronisasi filter otomatis: saat pengguna memilih filter Kecamatan di dashboard, poligon batas SLS otomatis terfilter hanya menampilkan SLS di kecamatan tersebut.
+  - **Bilah Kontrol Layer & Tombol Toggle Cepat**: Menambahkan opsi overlay *"🏘️ Batas SLS Fraud"* pada kontrol layer Leaflet (kanan atas) serta tombol cepat toggle `[🏘️ Batas SLS Fraud]` pada bilah alat peta (kiri atas) lengkap dengan indikator badge jumlah SLS.
+  - **Informasi Agregasi KPI**: Menampilkan jumlah SLS terdampak fraud (137 SLS) pada kartu metrik KPI "Indikasi Kuat Fraud" dan legenda peta.
+
+
