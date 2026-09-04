@@ -218,14 +218,28 @@ class GeotagAnomalyEngine:
                 cls_obj['lainnya_count'] += 1
                 b_type = 'Lainnya'
 
-            if len(cls_obj['points']) < 50:
-                cls_obj['points'].append({
-                    'lat': p_lat,
-                    'lon': p_lon,
-                    'name': nama_assign,
-                    'type': b_type,
-                    'label': label,
-                })
+            assign_id = row[idx_assign].strip() if idx_assign is not None and len(row) > idx_assign else ""
+            no_bang = row[idx_no_bang].strip() if idx_no_bang is not None and len(row) > idx_no_bang else ""
+
+            if b_type == 'BKU':
+                point_color = '#10b981'
+            elif b_type == 'BTT':
+                point_color = '#ef4444'
+            elif b_type == 'Campuran':
+                point_color = '#f59e0b'
+            else:
+                point_color = '#8b5cf6'
+
+            cls_obj['points'].append([
+                p_lat,
+                p_lon,
+                assign_id,
+                b_type.lower(),
+                label,
+                point_color,
+                nama_assign,
+                no_bang
+            ])
 
         if should_close:
             f.close()
@@ -272,6 +286,10 @@ class GeotagAnomalyEngine:
             bku = c['bku_count']
             cmp = c['campuran_count']
             oth = c['lainnya_count']
+
+            tot_b = btt + bku
+            c['pct_btt'] = round((btt / tot_b * 100)) if tot_b > 0 else (100 if btt > 0 else 0)
+            c['pct_bku'] = round((bku / tot_b * 100)) if tot_b > 0 else (100 if bku > 0 else 0)
 
             # Fraud categorization
             if btt > 0 and bku == 0:

@@ -7,7 +7,8 @@
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Leaflet & MarkerCluster CSS -->
+    <!-- Tabler Icons & Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
@@ -23,7 +24,7 @@
     <style>
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f8fafc;
+            background-color: #f4f6fa;
             color: #1e293b;
         }
 
@@ -33,7 +34,7 @@
         }
 
         .stat-card {
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 1.1rem 1.25rem;
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -54,11 +55,11 @@
             bottom: 0;
             width: 4px;
         }
-        .stat-danger::before { background-color: #dc2626; }
-        .stat-orange::before { background-color: #ea580c; }
-        .stat-warning::before { background-color: #ca8a04; }
-        .stat-info::before { background-color: #0284c7; }
-        .stat-success::before { background-color: #16a34a; }
+        .stat-card.stat-danger::before { background-color: #dc2626; }
+        .stat-card.stat-orange::before { background-color: #ea580c; }
+        .stat-card.stat-warning::before { background-color: #ca8a04; }
+        .stat-card.stat-info::before { background-color: #0284c7; }
+        .stat-card.stat-success::before { background-color: #16a34a; }
 
         .stat-title {
             font-size: 0.78rem;
@@ -74,19 +75,121 @@
             color: #0f172a;
         }
 
-        #map-container {
+        #anomali-map {
             height: 650px;
+            min-height: 650px;
             width: 100%;
-            border-radius: 12px;
+            border-radius: 10px;
             z-index: 1;
             background-color: #1e293b;
         }
 
-        /* Custom Badges */
-        .badge-ekstrem { background-color: #dc2626; color: #fff; }
-        .badge-berat { background-color: #ea580c; color: #fff; }
-        .badge-sedang { background-color: #ca8a04; color: #fff; }
-        .badge-ringan { background-color: #0284c7; color: #fff; }
+        /* MarkerCluster Custom Badges */
+        .custom-cluster-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+        .custom-cluster-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.85rem;
+            border: 2.5px solid #ffffff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+            transition: transform 0.15s ease-in-out;
+        }
+        .custom-cluster-badge:hover {
+            transform: scale(1.2);
+        }
+        .custom-cluster-badge.cluster-ekstrem {
+            background: #dc2626;
+            box-shadow: 0 0 16px rgba(220, 38, 38, 0.8);
+        }
+        .custom-cluster-badge.cluster-berat {
+            background: #ea580c;
+            box-shadow: 0 0 14px rgba(234, 88, 12, 0.7);
+        }
+        .custom-cluster-badge.cluster-sedang {
+            background: #ca8a04;
+            box-shadow: 0 0 10px rgba(202, 138, 4, 0.6);
+        }
+        .custom-cluster-badge.cluster-ringan {
+            background: #0284c7;
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.6);
+        }
+
+        /* Map Legend */
+        .map-legend {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .legend-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.3);
+        }
+        .legend-square {
+            width: 12px;
+            height: 12px;
+            display: inline-block;
+            margin-right: 8px;
+            border: 2px dashed #e11d48;
+            background: rgba(244, 63, 94, 0.2);
+        }
+
+        /* Sidebar Cluster List */
+        .cluster-list-container {
+            max-height: 650px;
+            overflow-y: auto;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+        .cluster-item {
+            cursor: pointer;
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.15s ease-in-out;
+        }
+        .cluster-item:hover {
+            background-color: #f8fafc;
+        }
+        .cluster-item.active {
+            background-color: #eff6ff;
+            border-left: 4px solid #0284c7;
+        }
+
+        /* Tabs */
+        .nav-pills .nav-link {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.6rem 1.25rem;
+            color: #475569;
+            transition: all 0.2s;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0f172a;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+        }
 
         /* Dropzone Box */
         .dropzone-box {
@@ -103,32 +206,17 @@
             background-color: #eff6ff;
         }
 
-        .map-legend {
-            background: rgba(255, 255, 255, 0.96);
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            font-size: 0.82rem;
-            line-height: 1.5;
+        /* Tooltip and popup styling */
+        .sls-tooltip {
+            background: rgba(15, 23, 42, 0.92);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
         }
-        .legend-color {
-            width: 13px;
-            height: 13px;
-            display: inline-block;
-            border-radius: 50%;
-            margin-right: 6px;
-            vertical-align: middle;
-        }
-
-        /* Table Styling */
-        .table-custom th {
-            background-color: #f1f5f9;
-            color: #475569;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
+        .bg-danger-lt { background-color: rgba(220, 38, 38, 0.12); }
+        .bg-success-lt { background-color: rgba(22, 163, 74, 0.12); }
+        .bg-warning-lt { background-color: rgba(202, 138, 4, 0.15); }
     </style>
 </head>
 <body>
@@ -249,7 +337,7 @@
         <ul class="nav nav-pills mb-3" id="mainTab" role="tablist">
             <li class="nav-item">
                 <button class="nav-link active fw-semibold" id="map-tab" data-bs-toggle="tab" data-bs-target="#tab-map">
-                    🗺️ Peta Geospasial Interaktif
+                    🗺️ Peta Geospasial & Panel Investigasi
                 </button>
             </li>
             <li class="nav-item">
@@ -266,11 +354,37 @@
 
         <!-- Tab Contents -->
         <div class="tab-content" id="mainTabContent">
-            <!-- TAB 1: PETA -->
+            <!-- TAB 1: PETA & SIDEBAR (2-Column Layout) -->
             <div class="tab-pane fade show active" id="tab-map">
-                <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
-                    <div class="card-body p-0 position-relative">
-                        <div id="map-container"></div>
+                <div class="row g-3">
+                    <!-- Left: Leaflet Map -->
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm rounded-3 overflow-hidden position-relative">
+                            <div class="card-body p-0">
+                                <div id="anomali-map"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Sidebar List of Clusters -->
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm rounded-3 h-100">
+                            <div class="card-header bg-white py-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold mb-0">Daftar Spot / Klaster Anomali</h6>
+                                    <span class="badge bg-danger" id="sidebarClusterCount">0 spot</span>
+                                </div>
+                                <input type="text" id="sidebarSearchInput" class="form-control form-control-sm mb-2" placeholder="Cari nama responden / tempat / email...">
+                                <select id="sidebarKecFilter" class="form-select form-select-sm">
+                                    <option value="">Semua Kecamatan</option>
+                                </select>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="cluster-list-container" id="clusterListContainer">
+                                    <!-- Populated via JavaScript -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -396,61 +510,141 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 
     <script>
-        let map;
-        let clusterMarkersGroup;
-        let slsGeojsonLayer;
+        let mapInstance = null;
+        let clusterGroup = null;
+        let rawPointsGroup = null;
+        let slsFraudLayer = null;
+        let isSlsLayerVisible = true;
+        let layerControlInstance = null;
+        let markersById = {};
         let globalData = null;
-        let tablePetugas;
-        let tableClusters;
+        let tablePetugas = null;
+        let tableClusters = null;
 
         // Inisialisasi Peta
-        function initMap() {
-            // Default center Demak / Indonesia
-            map = L.map('map-container').setView([-6.8944, 110.6385], 11);
+        function initLeafletMap() {
+            const mapContainer = document.getElementById('anomali-map');
+            if (!mapContainer) return;
 
-            const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            // Default center
+            mapInstance = L.map('anomali-map', {
+                center: [-6.8944, 110.6385],
+                zoom: 11,
+                scrollWheelZoom: true
+            });
+
+            // Base Layer 1: Google Hybrid (DEFAULT)
+            const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                attribution: '&copy; Google Maps Satellite'
+            }).addTo(mapInstance);
+
+            // Base Layer 2: OSM
+            const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
                 attribution: '&copy; OpenStreetMap'
             });
 
-            const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            // Base Layer 3: Esri Satellite
+            const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
                 attribution: '&copy; Esri World Imagery'
             });
 
-            const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            // Base Layer 4: Carto Positron
+            const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20,
+                subdomains: 'abcd',
                 attribution: '&copy; CARTO'
             });
 
-            // Default Esri Satelit
-            satellite.addTo(map);
-
-            L.control.layers({
-                "🛰️ Citra Satelit (Esri)": satellite,
-                "🗺️ OpenStreetMap": osm,
-                "🏙️ Peta Bersih (Carto)": carto
-            }).addTo(map);
-
-            clusterMarkersGroup = L.markerClusterGroup({
-                maxClusterRadius: 35,
-                spiderfyOnMaxZoom: true,
-                showCoverageOnHover: false,
-            }).addTo(map);
-
             // Legend
-            const legend = L.control({ position: 'bottomright' });
+            const legend = L.control({ position: 'bottomleft' });
             legend.onAdd = function() {
                 const div = L.DomUtil.create('div', 'map-legend');
                 div.innerHTML = `
-                    <div class="fw-bold mb-1">Tingkat Keparahan Klaster</div>
-                    <div><span class="legend-color" style="background:#dc2626;"></span> Ekstrem (>100 titik)</div>
-                    <div><span class="legend-color" style="background:#ea580c;"></span> Berat (51-100 titik)</div>
-                    <div><span class="legend-color" style="background:#ca8a04;"></span> Sedang (21-50 titik)</div>
-                    <div><span class="legend-color" style="background:#0284c7;"></span> Ringan (10-20 titik)</div>
-                    <hr class="my-1">
-                    <div><span style="display:inline-block;width:12px;height:12px;border:2px solid #ea580c;background:rgba(234,88,12,0.15);margin-right:6px;"></span> Poligon SLS Terdampak</div>
+                    <div class="fw-bold mb-1" style="font-size:0.8rem;">Klasifikasi Titik & Klaster:</div>
+                    <div class="legend-item"><span class="legend-circle" style="background:#ef4444;"></span> 🚨 BTT (Rumah Tinggal / Indikasi Fraud)</div>
+                    <div class="legend-item"><span class="legend-circle" style="background:#10b981;"></span> 🟢 BKU (Usaha / Potensi Pasar)</div>
+                    <div class="legend-item"><span class="legend-circle" style="background:#f59e0b;"></span> 🟡 Campuran (Usaha & Hunian)</div>
+                    <div class="legend-item"><span class="legend-circle" style="background:#8b5cf6;"></span> 🟣 Lainnya / Bangunan Rusak</div>
+                    <div class="legend-item mt-1 pt-1 border-top"><span class="legend-square"></span> 🏘️ Batas SLS Terdampak Fraud</div>
+                    <div class="text-muted small mt-2 pt-1 border-top" style="font-size:0.7rem;">
+                        Zoom in (≥ 15) untuk melihat titik individu berwarna sesuai jenis bangunannya.
+                    </div>
                 `;
                 return div;
             };
-            legend.addTo(map);
+            legend.addTo(mapInstance);
+
+            // Setup Floating Toolbar on Map
+            const mapToolbarControl = L.control({ position: 'topleft' });
+            mapToolbarControl.onAdd = function () {
+                const container = L.DomUtil.create('div', 'd-flex align-items-center');
+                container.style.marginLeft = '48px';
+                container.style.marginTop = '2px';
+                container.style.zIndex = '1000';
+
+                // Button 1: Toggle SLS Fraud
+                const slsBtn = L.DomUtil.create('button', 'btn btn-sm btn-danger shadow-sm fw-bold me-2', container);
+                slsBtn.id = 'toggleSlsLayerBtn';
+                slsBtn.style.fontSize = '0.78rem';
+                slsBtn.style.borderRadius = '6px';
+                slsBtn.innerHTML = '<i class="ti ti-polygon me-1"></i> Batas SLS Fraud';
+                slsBtn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!slsFraudLayer) return;
+
+                    if (mapInstance.hasLayer(slsFraudLayer)) {
+                        mapInstance.removeLayer(slsFraudLayer);
+                        isSlsLayerVisible = false;
+                        slsBtn.className = 'btn btn-sm btn-light shadow-sm fw-bold me-2';
+                    } else {
+                        mapInstance.addLayer(slsFraudLayer);
+                        isSlsLayerVisible = true;
+                        slsBtn.className = 'btn btn-sm btn-danger shadow-sm fw-bold me-2';
+                    }
+                };
+
+                // Button 2: Toggle Cluster vs Raw Points Mode
+                const modeBtn = L.DomUtil.create('button', 'btn btn-sm btn-light shadow-sm fw-bold', container);
+                modeBtn.id = 'toggleClusterModeBtn';
+                modeBtn.style.fontSize = '0.78rem';
+                modeBtn.style.borderRadius = '6px';
+                modeBtn.style.border = '1px solid #cbd5e1';
+                modeBtn.innerHTML = '<i class="ti ti-point me-1 text-danger"></i> Tampilkan Semua Titik Individu';
+                
+                let isDirectPointsMode = false;
+                modeBtn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    isDirectPointsMode = !isDirectPointsMode;
+                    
+                    if (isDirectPointsMode) {
+                        modeBtn.classList.replace('btn-light', 'btn-primary');
+                        modeBtn.innerHTML = '<i class="ti ti-circles me-1"></i> Kembali ke Mode Klaster';
+                        if (clusterGroup) mapInstance.removeLayer(clusterGroup);
+                        if (rawPointsGroup) mapInstance.addLayer(rawPointsGroup);
+                    } else {
+                        modeBtn.classList.replace('btn-primary', 'btn-light');
+                        modeBtn.innerHTML = '<i class="ti ti-point me-1 text-danger"></i> Tampilkan Semua Titik Individu';
+                        if (rawPointsGroup) mapInstance.removeLayer(rawPointsGroup);
+                        if (clusterGroup) mapInstance.addLayer(clusterGroup);
+                    }
+                };
+
+                return container;
+            };
+            mapToolbarControl.addTo(mapInstance);
+
+            // Layer Control
+            layerControlInstance = L.control.layers({
+                "🛰️ Google Satellite Hybrid": googleHybrid,
+                "🗺️ OpenStreetMap": osm,
+                "🌍 Esri Satellite": esriSatellite,
+                "⚪ Carto Clean Light": carto
+            }, null, { position: 'topright' }).addTo(mapInstance);
         }
 
         // Muat Data dari Backend API
@@ -473,7 +667,9 @@
                     globalData = data;
                     renderKPI(data.stats);
                     renderKecamatanOptions(data.kecamatan_options);
-                    renderMapMarkers(data.clusters, data.sls_geojson);
+                    renderClusterMarkers(data.clusters);
+                    renderSlsFraudLayer(data.sls_geojson);
+                    renderSidebarList(data.clusters);
                     renderTables(data.petugas_ranking, data.clusters);
                     updateDataStatus(data.stats);
                 })
@@ -484,7 +680,7 @@
             const badge = $('#data-status-badge');
             if (stats.total_clusters > 0) {
                 badge.removeClass('bg-secondary bg-danger').addClass('bg-success');
-                badge.text(`✅ Data Terbaca: ${stats.total_clusters.toLocaleString()} Klaster (${stats.csv_filename || 'CSV'})`);
+                badge.text(`✅ ${stats.total_clusters.toLocaleString()} Klaster Terdeteksi`);
             } else {
                 badge.removeClass('bg-secondary bg-success').addClass('bg-danger');
                 badge.text(`⚠️ Belum Ada Data (Klik Ganti Data)`);
@@ -502,91 +698,396 @@
 
         function renderKecamatanOptions(options) {
             const select = $('#filter-kecamatan');
+            const sidebarSelect = $('#sidebarKecFilter');
             const current = select.val();
             if (select.children().length <= 1 && options && options.length > 0) {
                 options.forEach(opt => {
                     select.append(`<option value="${opt}">${opt}</option>`);
+                    sidebarSelect.append(`<option value="${opt}">${opt}</option>`);
                 });
                 if (current) select.val(current);
             }
         }
 
-        function renderMapMarkers(clusters, slsGeojson) {
-            clusterMarkersGroup.clearLayers();
-            if (slsGeojsonLayer) {
-                map.removeLayer(slsGeojsonLayer);
+        function renderSlsFraudLayer(slsGeojson) {
+            if (!mapInstance) return;
+            if (slsFraudLayer) {
+                mapInstance.removeLayer(slsFraudLayer);
             }
 
-            // Render SLS Polygons
-            if (slsGeojson && slsGeojson.features && slsGeojson.features.length > 0) {
-                slsGeojsonLayer = L.geoJSON(slsGeojson, {
-                    style: {
-                        color: '#ea580c',
-                        weight: 2,
-                        fillColor: '#ea580c',
-                        fillOpacity: 0.15,
-                        dashArray: '3, 4'
-                    },
-                    onEachFeature: function(feature, layer) {
-                        const p = feature.properties || {};
-                        layer.bindPopup(`
-                            <div style="font-size:0.85rem;">
-                                <strong class="text-danger">📍 SLS Terdampak Anomali</strong><br>
-                                <strong>${p.nmsls || ''}</strong> - ${p.nmdesa || ''}<br>
-                                <span class="text-muted">Kecamatan: ${p.nmkec || ''}</span><br>
-                                <span class="text-muted" style="font-size:0.75rem;">ID SLS: ${p.idsls || ''}</span>
-                            </div>
-                        `);
-                    }
-                }).addTo(map);
+            if (!slsGeojson || !slsGeojson.features || slsGeojson.features.length === 0) {
+                const btn = document.getElementById('toggleSlsLayerBtn');
+                if (btn) btn.innerHTML = '<i class="ti ti-polygon me-1"></i> Batas SLS Fraud (0 SLS)';
+                return;
             }
 
-            // Render Clusters
-            const bounds = [];
-            clusters.forEach(c => {
-                const lat = c.center_lat;
-                const lon = c.center_lon;
-                bounds.push([lat, lon]);
-
-                const marker = L.circleMarker([lat, lon], {
-                    radius: Math.min(Math.max(c.cluster_size / 6, 8), 24),
-                    fillColor: c.marker_color,
-                    color: '#ffffff',
+            slsFraudLayer = L.geoJSON(slsGeojson, {
+                style: {
+                    color: '#e11d48',
                     weight: 2,
+                    dashArray: '5, 5',
+                    fillColor: '#f43f5e',
+                    fillOpacity: 0.16
+                },
+                onEachFeature: function(feature, layer) {
+                    const p = feature.properties || {};
+                    const nmsls = p.nmsls || 'SLS';
+                    const nmdesa = p.nmdesa || '-';
+                    const nmkec = p.nmkec || '-';
+
+                    layer.on('mouseover', function () {
+                        this.setStyle({
+                            weight: 3.5,
+                            dashArray: '',
+                            color: '#be123c',
+                            fillColor: '#dc2626',
+                            fillOpacity: 0.38
+                        });
+                    });
+
+                    layer.on('mouseout', function () {
+                        slsFraudLayer.resetStyle(this);
+                    });
+
+                    layer.bindTooltip(`
+                        <div style="font-size:0.8rem; line-height: 1.4;">
+                            <div class="fw-bold text-danger"><i class="ti ti-polygon"></i> ${nmsls}</div>
+                            <div class="text-white small">${nmdesa}, Kec. ${nmkec}</div>
+                        </div>
+                    `, { sticky: true, className: 'sls-tooltip' });
+
+                    layer.bindPopup(`
+                        <div style="min-width: 250px; font-family: inherit;">
+                            <div class="badge bg-danger text-white mb-1">Batas SLS Terdampak Fraud</div>
+                            <div class="fw-bold text-dark fs-5 mb-0">${nmsls}</div>
+                            <div class="text-muted small mb-2">Desa ${nmdesa}, Kec. ${nmkec}</div>
+                            <div class="small text-muted mb-2">ID SLS: <code>${p.idsls || '-'}</code></div>
+                            <button class="btn btn-sm btn-outline-danger w-100" onclick="mapInstance.fitBounds(slsFraudLayer.getLayer('${layer._leaflet_id}').getBounds(), { padding: [30, 30] })">
+                                🔍 Perbesar ke SLS Ini
+                            </button>
+                        </div>
+                    `);
+
+                    layer.on('click', function () {
+                        mapInstance.fitBounds(this.getBounds(), { padding: [35, 35] });
+                    });
+                }
+            });
+
+            if (isSlsLayerVisible) {
+                mapInstance.addLayer(slsFraudLayer);
+            }
+
+            const visibleSlsCount = slsGeojson.features.length;
+            const btn = document.getElementById('toggleSlsLayerBtn');
+            if (btn) {
+                btn.innerHTML = `<i class="ti ti-polygon me-1"></i> Batas SLS Fraud (${visibleSlsCount} SLS)`;
+            }
+        }
+
+        function renderClusterMarkers(clustersData) {
+            if (!mapInstance) return;
+
+            if (clusterGroup) mapInstance.removeLayer(clusterGroup);
+            if (rawPointsGroup) mapInstance.removeLayer(rawPointsGroup);
+            markersById = {};
+
+            // 1. Initialize MarkerClusterGroup with auto-break at zoom >= 15
+            clusterGroup = L.markerClusterGroup({
+                chunkedLoading: true,
+                showCoverageOnHover: true,
+                zoomToBoundsOnClick: true,
+                spiderfyOnMaxZoom: true,
+                disableClusteringAtZoom: 15, // Zoom >= 15 langsung membubarkan klaster menjadi titik individu!
+                maxClusterRadius: 40,
+                spiderLegPolylineOptions: { weight: 1.5, color: '#ffffff', opacity: 0.75 },
+                iconCreateFunction: function (cluster) {
+                    const count = cluster.getChildCount();
+                    let bgClass = 'cluster-ringan';
+                    if (count > 100) bgClass = 'cluster-ekstrem';
+                    else if (count > 50) bgClass = 'cluster-berat';
+                    else if (count > 20) bgClass = 'cluster-sedang';
+
+                    return L.divIcon({
+                        html: '<div class="custom-cluster-badge ' + bgClass + '"><span>' + count + '</span></div>',
+                        className: 'custom-cluster-icon',
+                        iconSize: L.point(40, 40)
+                    });
+                }
+            });
+
+            // 2. Initialize Raw Points Group (for direct individual view)
+            rawPointsGroup = L.featureGroup();
+
+            clustersData.forEach(c => {
+                const cLat = parseFloat(c.center_lat);
+                const cLon = parseFloat(c.center_lon);
+                const size = parseInt(c.cluster_size) || 1;
+                const points = (Array.isArray(c.points) && c.points.length > 0) ? c.points : [[cLat, cLon, '', 'lainnya', '', '#dc2626', '', '']];
+
+                // Create main cluster center marker (for centering & popup)
+                const mainMarker = L.circleMarker([cLat, cLon], {
+                    radius: 8,
+                    fillColor: c.marker_color || '#dc2626',
+                    color: '#ffffff',
+                    weight: 2.5,
                     opacity: 1,
-                    fillOpacity: 0.85
+                    fillOpacity: 0.95
                 });
 
-                marker.bindPopup(`
-                    <div style="font-size:0.85rem;min-width:240px;">
+                const sampleNamesHtml = (c.sample_names && c.sample_names.length > 0)
+                    ? `<div class="small text-muted mb-2">Sampel Nama/Tempat: <strong class="text-dark">${c.sample_names.join(', ')}</strong></div>`
+                    : '';
+
+                const popupContent = `
+                    <div style="min-width: 270px; font-family: inherit;">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="badge ${c.badge_class}">${c.severity_label}</span>
-                            <span class="badge ${c.fraud_badge}">${c.fraud_label}</span>
+                            <span class="fw-bold">${c.nama_petugas}</span>
+                            <span class="badge ${c.badge_class}" style="font-size:0.75rem;">${size} Titik</span>
                         </div>
-                        <h6 class="fw-bold mb-1">${c.nama_petugas}</h6>
-                        <div class="text-muted small mb-2">${c.email}</div>
-                        <table class="table table-sm table-bordered small mb-2">
-                            <tr><td><strong>Jumlah Titik</strong></td><td><strong>${c.cluster_size} titik</strong></td></tr>
-                            <tr><td><strong>Komposisi</strong></td><td>${c.fraud_summary}</td></tr>
-                            <tr><td><strong>SLS / Desa</strong></td><td>${c.sls_nama || '-'}</td></tr>
-                            <tr><td><strong>Kecamatan</strong></td><td>${c.namakec || '-'}</td></tr>
-                            <tr><td><strong>Radius Sebaran</strong></td><td>~${c.approx_radius_m} meter</td></tr>
-                            <tr><td><strong>Akurasi Rata-rata</strong></td><td>${c.avg_accuracy} m</td></tr>
-                        </table>
-                        <div class="d-grid">
-                            <a href="${c.google_maps_url}" target="_blank" class="btn btn-xs btn-primary text-white fw-bold py-1">
-                                🛰️ Buka di Google Maps Satelit
+                        <div class="text-muted small mb-2" style="font-size:0.75rem;">${c.email}</div>
+                        
+                        <div class="p-2 mb-2 rounded bg-light border">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small text-muted">Klasifikasi:</span>
+                                <span class="badge ${c.fraud_badge || 'bg-secondary'}" style="font-size:0.72rem;">${c.fraud_label || '-'}</span>
+                            </div>
+                            <div class="small">
+                                <span class="text-danger fw-bold">🏠 BTT (Rumah): ${c.btt_count || 0} (${c.pct_btt || 0}%)</span><br>
+                                <span class="text-success fw-bold">🏬 BKU (Pasar): ${c.bku_count || 0} (${c.pct_bku || 0}%)</span>
+                            </div>
+                        </div>
+
+                        ${sampleNamesHtml}
+
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">SLS / Desa:</span>
+                            <span class="fw-semibold text-dark">${c.sls_nama || '-'}</span>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Kecamatan:</span>
+                            <span class="fw-semibold text-dark">${c.namakec}</span>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Radius Sebaran:</span>
+                            <span class="fw-semibold text-danger">~${c.approx_radius_m} meter</span>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Akurasi GPS:</span>
+                            <span class="fw-semibold">${c.avg_accuracy} m</span>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Pusat Koordinat:</span>
+                            <span class="font-monospace small">${cLat.toFixed(5)}, ${cLon.toFixed(5)}</span>
+                        </div>
+
+                        <div class="mt-3 pt-2 border-top d-flex gap-1">
+                            <button class="btn btn-sm btn-primary w-100 py-1" onclick="mapInstance.setView([${cLat}, ${cLon}], 19)" style="font-size: 0.775rem;">
+                                🔍 Zoom In Detail Titik (Level Bangunan)
+                            </button>
+                            <a href="${c.google_maps_url}" target="_blank" class="btn btn-sm btn-outline-secondary py-1" title="Buka di Google Maps">
+                                🛰️ Maps
                             </a>
                         </div>
                     </div>
-                `);
+                `;
 
-                clusterMarkersGroup.addLayer(marker);
+                mainMarker.bindPopup(popupContent);
+                mainMarker.on('click', () => {
+                    highlightListItem(c.id);
+                });
+
+                markersById[c.id] = mainMarker;
+
+                // Add individual survey points with specific building color and labels
+                points.forEach((pt, pIdx) => {
+                    const pLat = parseFloat(pt[0]) || cLat;
+                    const pLon = parseFloat(pt[1]) || cLon;
+                    const pAssign = pt[2] || ('#' + (pIdx + 1));
+                    const bType = pt[3] || 'lainnya';
+                    const bLabel = pt[4] || 'Tipe Bangunan Belum Terdata';
+                    const pointColor = pt[5] || (bType === 'bku' ? '#10b981' : (bType === 'btt' ? '#ef4444' : (bType === 'campuran' ? '#f59e0b' : '#8b5cf6')));
+                    const pNamaAssign = pt[6] || '';
+                    const pNoBang = pt[7] || '';
+
+                    let bTypeBadge = '<span class="badge bg-secondary text-white">Lainnya</span>';
+                    let bStatusBadge = '';
+                    let bShort = 'Lainnya';
+                    if (bType === 'bku') {
+                        bTypeBadge = '<span class="badge bg-success text-white">🏬 BKU (Usaha/Pasar)</span>';
+                        bStatusBadge = '<div class="badge bg-success-lt text-success w-100 py-1 mb-2">🟢 Potensi Wajar (Pasar / Ruko BKU)</div>';
+                        bShort = 'BKU (Pasar)';
+                    } else if (bType === 'btt') {
+                        bTypeBadge = '<span class="badge bg-danger text-white">🏠 BTT (Tempat Tinggal)</span>';
+                        bStatusBadge = '<div class="badge bg-danger-lt text-danger w-100 py-1 mb-2">🚨 Indikasi Kuat Fraud (Numpuk di Rumah)</div>';
+                        bShort = 'BTT (Rumah)';
+                    } else if (bType === 'campuran') {
+                        bTypeBadge = '<span class="badge bg-warning text-dark">🏢 Bangunan Campuran</span>';
+                        bStatusBadge = '<div class="badge bg-warning-lt text-dark w-100 py-1 mb-2">🟡 Campuran Usaha & Hunian</div>';
+                        bShort = 'Campuran';
+                    }
+
+                    const pointMarker = L.circleMarker([pLat, pLon], {
+                        radius: 6.5,
+                        fillColor: pointColor,
+                        color: '#ffffff',
+                        weight: 1.5,
+                        opacity: 1,
+                        fillOpacity: 0.90
+                    });
+
+                    const tooltipText = pNamaAssign ? `${c.nama_petugas} (#${pIdx + 1} - ${pNamaAssign})` : `${c.nama_petugas} (#${pIdx + 1} - ${bShort})`;
+                    pointMarker.bindTooltip(tooltipText, {
+                        direction: 'top',
+                        offset: [0, -6]
+                    });
+
+                    const assignNameHtml = pNamaAssign
+                        ? `<div class="small mb-1 text-dark">Tempat/Responden: <strong class="text-primary">${pNamaAssign}</strong> ${pNoBang ? '<span class="badge bg-secondary-lt">No. ' + pNoBang + '</span>' : ''}</div>`
+                        : '';
+
+                    pointMarker.bindPopup(`
+                        <div style="min-width: 250px; font-family: inherit;">
+                            <div class="fw-bold text-dark mb-1">${c.nama_petugas}</div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge ${c.badge_class}">Titik ke-${pIdx + 1} dari ${size}</span>
+                                ${bTypeBadge}
+                            </div>
+                            ${bStatusBadge}
+                            ${assignNameHtml}
+                            <div class="small text-muted mb-1">Bangunan: <strong>${bLabel}</strong></div>
+                            <div class="small text-muted mb-1">Kecamatan: <strong>${c.namakec}</strong></div>
+                            <div class="small text-muted mb-1">SLS: <strong>${c.sls_nama || '-'}</strong></div>
+                            <div class="small text-muted mb-1">Assignment ID: <code>${pAssign}</code></div>
+                            <div class="small text-muted">Koordinat: <code>${pLat.toFixed(6)}, ${pLon.toFixed(6)}</code></div>
+                        </div>
+                    `);
+
+                    pointMarker.on('click', () => {
+                        highlightListItem(c.id);
+                    });
+
+                    clusterGroup.addLayer(pointMarker);
+
+                    // Add clone to raw points group
+                    const rawMarker = L.circleMarker([pLat, pLon], {
+                        radius: 6,
+                        fillColor: pointColor,
+                        color: '#ffffff',
+                        weight: 1.2,
+                        opacity: 1,
+                        fillOpacity: 0.88
+                    });
+                    rawMarker.bindTooltip(tooltipText);
+                    rawMarker.bindPopup(pointMarker.getPopup().getContent());
+                    rawPointsGroup.addLayer(rawMarker);
+                });
             });
 
-            if (bounds.length > 0 && !window.hasFitBounds) {
-                map.fitBounds(bounds, { padding: [30, 30] });
-                window.hasFitBounds = true;
+            mapInstance.addLayer(clusterGroup);
+
+            // Fit bounds on first load
+            if (clusterGroup.getLayers().length > 0 && !window.hasFitBounds) {
+                try {
+                    mapInstance.fitBounds(clusterGroup.getBounds().pad(0.08));
+                    window.hasFitBounds = true;
+                } catch (bErr) {
+                    console.warn("fitBounds warning:", bErr);
+                }
+            }
+        }
+
+        // Render Sidebar List of Clusters
+        function renderSidebarList(clustersData) {
+            const container = $('#clusterListContainer');
+            container.empty();
+            $('#sidebarClusterCount').text(clustersData.length + ' spot');
+
+            if (!clustersData || clustersData.length === 0) {
+                container.html('<div class="p-4 text-center text-muted small">Tidak ada klaster yang sesuai filter</div>');
+                return;
+            }
+
+            clustersData.forEach(c => {
+                const sampleName = (c.sample_names && c.sample_names.length > 0) ? c.sample_names[0] : '';
+                const item = $(`
+                    <div class="cluster-item" id="cItem_${c.id}" data-kec="${c.namakec}" data-search="${c.nama_petugas} ${c.email} ${sampleName} ${c.sls_nama}" onclick="focusCluster(${c.center_lat}, ${c.center_lon}, '${c.id}')">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge ${c.badge_class}" style="font-size:0.75rem;">${c.cluster_size} Titik</span>
+                            <span class="badge ${c.fraud_badge}" style="font-size:0.7rem;">${c.fraud_label}</span>
+                        </div>
+                        <div class="fw-bold text-dark text-truncate">${c.nama_petugas}</div>
+                        <div class="small text-muted text-truncate mb-1">${c.email}</div>
+                        ${sampleName ? `<div class="small text-primary text-truncate mb-1">📍 ${sampleName}</div>` : ''}
+                        <div class="d-flex justify-content-between align-items-center small text-muted">
+                            <span><i class="ti ti-map-pin"></i> ${c.namakec}</span>
+                            <span class="text-danger">~${c.approx_radius_m}m</span>
+                        </div>
+                    </div>
+                `);
+                container.append(item);
+            });
+
+            // Rebind sidebar search & filter
+            initSidebarFilter();
+        }
+
+        function initSidebarFilter() {
+            const kecSelect = document.getElementById('sidebarKecFilter');
+            const searchInput = document.getElementById('sidebarSearchInput');
+            const countBadge = document.getElementById('sidebarClusterCount');
+            const items = document.querySelectorAll('.cluster-item');
+
+            function filterItems() {
+                const selectedKec = (kecSelect ? kecSelect.value : '').toLowerCase().trim();
+                const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+                let visibleCount = 0;
+
+                items.forEach(el => {
+                    const itemKec = (el.getAttribute('data-kec') || '').toLowerCase();
+                    const itemSearch = (el.getAttribute('data-search') || '').toLowerCase();
+
+                    const matchKec = !selectedKec || itemKec.includes(selectedKec);
+                    const matchQuery = !query || itemSearch.includes(query);
+
+                    if (matchKec && matchQuery) {
+                        el.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        el.style.display = 'none';
+                    }
+                });
+
+                if (countBadge) {
+                    countBadge.innerText = visibleCount + ' spot';
+                }
+            }
+
+            if (kecSelect) kecSelect.onchange = filterItems;
+            if (searchInput) searchInput.oninput = filterItems;
+        }
+
+        function focusCluster(lat, lon, id) {
+            if (!mapInstance) return;
+
+            mapInstance.flyTo([lat, lon], 18, {
+                animate: true,
+                duration: 1.0
+            });
+
+            if (markersById[id]) {
+                markersById[id].openPopup();
+            }
+
+            highlightListItem(id);
+        }
+
+        function highlightListItem(id) {
+            document.querySelectorAll('.cluster-item').forEach(el => el.classList.remove('active'));
+            const targetEl = document.getElementById('cItem_' + id);
+            if (targetEl) {
+                targetEl.classList.add('active');
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }
 
@@ -608,7 +1109,7 @@
                     <td class="fw-bold">${p.max_cluster_size}</td>
                     <td><strong class="text-primary fs-6">${p.total_anomali_points}</strong></td>
                     <td>
-                        <button class="btn btn-xs btn-outline-primary py-1 px-2 small" onclick="focusCluster(${p.top_cluster_lat}, ${p.top_cluster_lon})">
+                        <button class="btn btn-xs btn-outline-primary py-1 px-2 small" onclick="locatePetugasOnMap(${p.top_cluster_lat}, ${p.top_cluster_lon}, '${p.clusters[0] || ''}')">
                             📍 Lihat Peta
                         </button>
                     </td>
@@ -649,10 +1150,11 @@
             });
         }
 
-        function focusCluster(lat, lon) {
-            if (!lat || !lon) return;
+        function locatePetugasOnMap(lat, lon, topClusterId) {
             $('#map-tab').tab('show');
-            map.setView([lat, lon], 17);
+            setTimeout(() => {
+                focusCluster(lat, lon, topClusterId);
+            }, 250);
         }
 
         function applyFilters() {
@@ -725,13 +1227,13 @@
         }
 
         $(document).ready(function() {
-            initMap();
+            initLeafletMap();
             loadDashboardData();
 
             // Resize map when tab is switched
             $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-                if (e.target.id === 'map-tab' && map) {
-                    map.invalidateSize();
+                if (e.target.id === 'map-tab' && mapInstance) {
+                    setTimeout(() => { mapInstance.invalidateSize(); }, 150);
                 }
             });
         });
