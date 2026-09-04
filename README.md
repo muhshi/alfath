@@ -333,7 +333,10 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     1. *Auto-Load Folder `data/`*: Otomatis membaca data saat file diletakkan berdampingan dengan file `.exe`.
     2. *GUI Drag-and-Drop*: Pengguna dapat menarik & melepas file CSV atau GeoJSON kapan saja langsung di antarmuka web.
   - **Antarmuka Interaktif Lengkap (`templates/index.html`)**: Memadukan peta satelit Esri/Carto/OSM, marker cluster keparahan, poligon SLS terdampak, kartu metrik KPI, filter multi-dimensi, DataTables interaktif, dan ekspor CSV UTF-8.
-  - **Skrip Kompilasi Otomatis & Panduan (`build_exe.bat` & `PANDUAN_PENGGUNA.txt`)**: Menyediakan skrip 1-klik untuk re-build dengan PyInstaller dan petunjuk ringkas penggunaan bagi rekan BPS di daerah lain.
+  - **Pencegahan Overlapping Titik Bertumpuk via Micro-Spread Spiral (`dashboard-anomali-geotag.blade.php` & Standalone)**:
+    - Menangani kasus anomali ekstrem di mana puluhan titik survei memiliki koordinat yang 100% identik (selisih 0 meter) sehingga saling menutupi di layar monitor.
+    - Menerapkan algoritma *Golden Angle Spiral Jitter* yang memekarkan titik-titik kembar secara radial dalam radius 1–5 meter di sekeliling pusat bangunan. Semua titik (BTT merah, BKU hijau, campuran) kini terlihat utuh, dapat di-hover, dan dapat diklik secara individual dengan koordinat asli tetap terlindungi.
+
 
 
 
