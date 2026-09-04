@@ -326,5 +326,14 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Sinkronisasi filter otomatis: saat pengguna memilih filter Kecamatan di dashboard, poligon batas SLS otomatis terfilter hanya menampilkan SLS di kecamatan tersebut.
   - **Bilah Kontrol Layer & Tombol Toggle Cepat**: Menambahkan opsi overlay *"🏘️ Batas SLS Fraud"* pada kontrol layer Leaflet (kanan atas) serta tombol cepat toggle `[🏘️ Batas SLS Fraud]` pada bilah alat peta (kiri atas) lengkap dengan indikator badge jumlah SLS.
   - **Informasi Agregasi KPI**: Menampilkan jumlah SLS terdampak fraud (137 SLS) pada kartu metrik KPI "Indikasi Kuat Fraud" dan legenda peta.
+- **Pembangunan Aplikasi Mandiri Portabel (.EXE) Anomali Geotag SE2026 (`tools/anomali-geotag-standalone/`)**:
+  - **Aplikasi Desktop Tanpa Instalasi (Zero-Config)**: Membangun aplikasi mandiri berformat executable Windows (`AnomaliGeotagSE2026.exe`, ~24 MB) yang siap dibagikan ke BPS kabupaten/kota lain tanpa memerlukan instalasi web server (Apache/Nginx), PHP, Composer, ataupun database MySQL.
+  - **Engine Data Processor Cerdas (`engine.py`)**: Parsing CSV fleksibel yang mendeteksi otomatis berbagai variasi header query SQL Lab SE2026, klasifikasi fraud (Fraud BTT vs Campuran vs Wajar BKU), serta spatial matching poligon SLS kabupaten via bounding box & Shapely dalam hitungan detik.
+  - **Dua Mekanisme Penempatan File (CSV & GeoJSON)**:
+    1. *Auto-Load Folder `data/`*: Otomatis membaca data saat file diletakkan berdampingan dengan file `.exe`.
+    2. *GUI Drag-and-Drop*: Pengguna dapat menarik & melepas file CSV atau GeoJSON kapan saja langsung di antarmuka web.
+  - **Antarmuka Interaktif Lengkap (`templates/index.html`)**: Memadukan peta satelit Esri/Carto/OSM, marker cluster keparahan, poligon SLS terdampak, kartu metrik KPI, filter multi-dimensi, DataTables interaktif, dan ekspor CSV UTF-8.
+  - **Skrip Kompilasi Otomatis & Panduan (`build_exe.bat` & `PANDUAN_PENGGUNA.txt`)**: Menyediakan skrip 1-klik untuk re-build dengan PyInstaller dan petunjuk ringkas penggunaan bagi rekan BPS di daerah lain.
+
 
 

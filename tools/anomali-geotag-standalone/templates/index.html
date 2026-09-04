@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deteksi Anomali Geotag & Klaster Titik SE2026</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Leaflet & MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+    
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        .navbar-custom {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-bottom: 1px solid #334155;
+        }
+
+        .stat-card {
+            border-radius: 12px;
+            padding: 1.1rem 1.25rem;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+        }
+        .stat-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+        }
+        .stat-danger::before { background-color: #dc2626; }
+        .stat-orange::before { background-color: #ea580c; }
+        .stat-warning::before { background-color: #ca8a04; }
+        .stat-info::before { background-color: #0284c7; }
+        .stat-success::before { background-color: #16a34a; }
+
+        .stat-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+        }
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            line-height: 1.2;
+            color: #0f172a;
+        }
+
+        #map-container {
+            height: 650px;
+            width: 100%;
+            border-radius: 12px;
+            z-index: 1;
+            background-color: #1e293b;
+        }
+
+        /* Custom Badges */
+        .badge-ekstrem { background-color: #dc2626; color: #fff; }
+        .badge-berat { background-color: #ea580c; color: #fff; }
+        .badge-sedang { background-color: #ca8a04; color: #fff; }
+        .badge-ringan { background-color: #0284c7; color: #fff; }
+
+        /* Dropzone Box */
+        .dropzone-box {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 1.75rem;
+            text-align: center;
+            background-color: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dropzone-box:hover, .dropzone-box.dragover {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+        }
+
+        .map-legend {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+        .legend-color {
+            width: 13px;
+            height: 13px;
+            display: inline-block;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        /* Table Styling */
+        .table-custom th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-2 px-3 sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+                <span class="me-2 fs-4">🌐</span>
+                <div>
+                    <div class="fs-6 fw-bold text-white mb-0">Deteksi Anomali Geotag SE2026</div>
+                    <small class="text-secondary" style="font-size: 0.72rem;">Sistem Investigasi & Rekayasa Geotag BPS Kabupaten/Kota</small>
+                </div>
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <span id="data-status-badge" class="badge bg-secondary px-3 py-2">Memeriksa Data...</span>
+                <button class="btn btn-sm btn-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    📁 Ganti / Input Data
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-success dropdown-toggle fw-semibold" type="button" data-bs-toggle="dropdown">
+                        📥 Download CSV
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li><a class="dropdown-item" href="/api/export?type=clusters">Laporan Detail Klaster (CSV)</a></li>
+                        <li><a class="dropdown-item" href="/api/export?type=petugas">Laporan Ranking Petugas (CSV)</a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="shutdownApp()" title="Tutup Aplikasi">
+                    ✕ Tutup
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-3 px-4">
+
+        <!-- KPI Cards -->
+        <div class="row g-3 mb-3">
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="stat-card stat-danger">
+                    <div class="stat-title">🚨 Titik Anomali</div>
+                    <div class="stat-value text-danger" id="stat-points">0</div>
+                    <small class="text-muted" style="font-size: 0.75rem;">Titik koordinat bertumpuk</small>
+                </div>
+            </div>
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="stat-card stat-orange">
+                    <div class="stat-title">📍 Klaster Terdeteksi</div>
+                    <div class="stat-value text-warning" id="stat-clusters">0</div>
+                    <small class="text-muted" style="font-size: 0.75rem;"><span id="stat-ekstrem">0</span> Ekstrem (>100 titik)</small>
+                </div>
+            </div>
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="stat-card stat-danger">
+                    <div class="stat-title">🏠 Fraud Rumah (BTT)</div>
+                    <div class="stat-value text-danger" id="stat-fraud-btt">0</div>
+                    <small class="text-muted" style="font-size: 0.75rem;">Klaster 100% Bukan Usaha</small>
+                </div>
+            </div>
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="stat-card stat-info">
+                    <div class="stat-title">👤 Petugas Terindikasi</div>
+                    <div class="stat-value text-primary" id="stat-petugas">0</div>
+                    <small class="text-muted" style="font-size: 0.75rem;">Pencacah / PPL tercatat</small>
+                </div>
+            </div>
+            <div class="col-xl col-md-4 col-sm-6">
+                <div class="stat-card stat-success">
+                    <div class="stat-title">🗺️ SLS Terdampak</div>
+                    <div class="stat-value text-success" id="stat-sls">0</div>
+                    <small class="text-muted" style="font-size: 0.75rem;">Wilayah konsentrasi anomali</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="card border-0 shadow-sm rounded-3 mb-3">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-secondary mb-1">Kecamatan</label>
+                        <select id="filter-kecamatan" class="form-select form-select-sm" onchange="applyFilters()">
+                            <option value="">Semua Kecamatan</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-secondary mb-1">Tingkat Keparahan</label>
+                        <select id="filter-severity" class="form-select form-select-sm" onchange="applyFilters()">
+                            <option value="">Semua Tingkat</option>
+                            <option value="ekstrem">🚨 Ekstrem (>100)</option>
+                            <option value="berat">⚠️ Berat (51-100)</option>
+                            <option value="sedang">🟡 Sedang (21-50)</option>
+                            <option value="ringan">🔵 Ringan (10-20)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-secondary mb-1">Klasifikasi Kecurangan</label>
+                        <select id="filter-fraud" class="form-select form-select-sm" onchange="applyFilters()">
+                            <option value="">Semua Klasifikasi</option>
+                            <option value="fraud_btt">🚨 Rekayasa Geotag BTT (Rumah)</option>
+                            <option value="campuran">⚠️ Campuran (BTT & BKU)</option>
+                            <option value="wajar_bku">✅ Klaster Wajar BKU (Pasar)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-secondary mb-1">Pencarian</label>
+                        <input type="text" id="filter-search" class="form-control form-control-sm" placeholder="Nama petugas / email / SLS..." onkeyup="applyFilters()">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button class="btn btn-sm btn-outline-secondary w-100 mt-4" onclick="resetFilters()">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <ul class="nav nav-pills mb-3" id="mainTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active fw-semibold" id="map-tab" data-bs-toggle="tab" data-bs-target="#tab-map">
+                    🗺️ Peta Geospasial Interaktif
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-semibold" id="petugas-tab" data-bs-toggle="tab" data-bs-target="#tab-petugas">
+                    👤 Ranking Petugas Terindikasi
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-semibold" id="clusters-tab" data-bs-toggle="tab" data-bs-target="#tab-clusters">
+                    📋 Detail Semua Klaster
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Contents -->
+        <div class="tab-content" id="mainTabContent">
+            <!-- TAB 1: PETA -->
+            <div class="tab-pane fade show active" id="tab-map">
+                <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                    <div class="card-body p-0 position-relative">
+                        <div id="map-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: RANKING PETUGAS -->
+            <div class="tab-pane fade" id="tab-petugas">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold mb-3">Ranking Petugas Paling Banyak Menghasilkan Titik Bertumpuk</h6>
+                        <div class="table-responsive">
+                            <table id="table-petugas" class="table table-hover table-custom align-middle w-100">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Nama Petugas</th>
+                                        <th>Email</th>
+                                        <th>Kecamatan</th>
+                                        <th>Tingkat Risiko</th>
+                                        <th>Total Klaster</th>
+                                        <th>Titik BTT (Rumah)</th>
+                                        <th>Titik BKU (Pasar)</th>
+                                        <th>Titik Terbanyak 1 Spot</th>
+                                        <th>Total Titik Anomali</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: DETAIL KLASTER -->
+            <div class="tab-pane fade" id="tab-clusters">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold mb-3">Daftar Lengkap Klaster Geotag Bertumpuk</h6>
+                        <div class="table-responsive">
+                            <table id="table-clusters" class="table table-hover table-custom align-middle w-100">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Petugas</th>
+                                        <th>Kecamatan</th>
+                                        <th>SLS</th>
+                                        <th>Klasifikasi</th>
+                                        <th>Tingkat</th>
+                                        <th>Jumlah Titik</th>
+                                        <th>Radius Sebaran</th>
+                                        <th>Akurasi</th>
+                                        <th>Google Maps</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL UPLOAD DATA -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h6 class="modal-title fw-bold">📂 Ganti / Masukkan Data Wilayah Anda</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="small text-muted mb-3">
+                        Masukkan file CSV hasil query SQL Lab SE2026 dan file GeoJSON batas SLS kabupaten/kota Anda. Aplikasi akan langsung memproses dan menampilkan hasilnya seketika.
+                    </p>
+
+                    <form id="upload-form" onsubmit="handleUpload(event)">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="fw-bold small mb-2 text-primary">1. File CSV SQL Lab SE2026</label>
+                                <div class="dropzone-box" onclick="document.getElementById('input-csv').click()">
+                                    <div class="fs-2 mb-2">📊</div>
+                                    <div class="fw-semibold small" id="csv-label">Pilih atau Drag File CSV</div>
+                                    <small class="text-muted" style="font-size: 0.7rem;">sqllab_untitled_query_...csv</small>
+                                    <input type="file" id="input-csv" name="csv_file" accept=".csv" class="d-none" onchange="updateFileLabel('input-csv', 'csv-label')">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-bold small mb-2 text-success">2. File GeoJSON SLS Kabupaten</label>
+                                <div class="dropzone-box" onclick="document.getElementById('input-geojson').click()">
+                                    <div class="fs-2 mb-2">🗺️</div>
+                                    <div class="fw-semibold small" id="geojson-label">Pilih atau Drag File GeoJSON</div>
+                                    <small class="text-muted" style="font-size: 0.7rem;">peta_sls_...geojson</small>
+                                    <input type="file" id="input-geojson" name="geojson_file" accept=".geojson,.json" class="d-none" onchange="updateFileLabel('input-geojson', 'geojson-label')">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="upload-progress" class="alert alert-info d-none mb-3 py-2 small">
+                            ⏳ Sedang memproses dan mencocokkan data geospasial... Mohon tunggu sebentar.
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold" id="btn-submit-upload">
+                                🚀 Mulai Proses Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+    <script>
+        let map;
+        let clusterMarkersGroup;
+        let slsGeojsonLayer;
+        let globalData = null;
+        let tablePetugas;
+        let tableClusters;
+
+        // Inisialisasi Peta
+        function initMap() {
+            // Default center Demak / Indonesia
+            map = L.map('map-container').setView([-6.8944, 110.6385], 11);
+
+            const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            });
+
+            const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; Esri World Imagery'
+            });
+
+            const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CARTO'
+            });
+
+            // Default Esri Satelit
+            satellite.addTo(map);
+
+            L.control.layers({
+                "🛰️ Citra Satelit (Esri)": satellite,
+                "🗺️ OpenStreetMap": osm,
+                "🏙️ Peta Bersih (Carto)": carto
+            }).addTo(map);
+
+            clusterMarkersGroup = L.markerClusterGroup({
+                maxClusterRadius: 35,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+            }).addTo(map);
+
+            // Legend
+            const legend = L.control({ position: 'bottomright' });
+            legend.onAdd = function() {
+                const div = L.DomUtil.create('div', 'map-legend');
+                div.innerHTML = `
+                    <div class="fw-bold mb-1">Tingkat Keparahan Klaster</div>
+                    <div><span class="legend-color" style="background:#dc2626;"></span> Ekstrem (>100 titik)</div>
+                    <div><span class="legend-color" style="background:#ea580c;"></span> Berat (51-100 titik)</div>
+                    <div><span class="legend-color" style="background:#ca8a04;"></span> Sedang (21-50 titik)</div>
+                    <div><span class="legend-color" style="background:#0284c7;"></span> Ringan (10-20 titik)</div>
+                    <hr class="my-1">
+                    <div><span style="display:inline-block;width:12px;height:12px;border:2px solid #ea580c;background:rgba(234,88,12,0.15);margin-right:6px;"></span> Poligon SLS Terdampak</div>
+                `;
+                return div;
+            };
+            legend.addTo(map);
+        }
+
+        // Muat Data dari Backend API
+        function loadDashboardData() {
+            const kec = $('#filter-kecamatan').val();
+            const sev = $('#filter-severity').val();
+            const frd = $('#filter-fraud').val();
+            const q = $('#filter-search').val();
+
+            const params = new URLSearchParams({
+                kecamatan: kec || '',
+                severity: sev || '',
+                fraud_category: frd || '',
+                search: q || ''
+            });
+
+            fetch('/api/data?' + params.toString())
+                .then(res => res.json())
+                .then(data => {
+                    globalData = data;
+                    renderKPI(data.stats);
+                    renderKecamatanOptions(data.kecamatan_options);
+                    renderMapMarkers(data.clusters, data.sls_geojson);
+                    renderTables(data.petugas_ranking, data.clusters);
+                    updateDataStatus(data.stats);
+                })
+                .catch(err => console.error("Error loading data:", err));
+        }
+
+        function updateDataStatus(stats) {
+            const badge = $('#data-status-badge');
+            if (stats.total_clusters > 0) {
+                badge.removeClass('bg-secondary bg-danger').addClass('bg-success');
+                badge.text(`✅ Data Terbaca: ${stats.total_clusters.toLocaleString()} Klaster (${stats.csv_filename || 'CSV'})`);
+            } else {
+                badge.removeClass('bg-secondary bg-success').addClass('bg-danger');
+                badge.text(`⚠️ Belum Ada Data (Klik Ganti Data)`);
+            }
+        }
+
+        function renderKPI(stats) {
+            $('#stat-points').text((stats.total_points || 0).toLocaleString());
+            $('#stat-clusters').text((stats.total_clusters || 0).toLocaleString());
+            $('#stat-ekstrem').text((stats.total_ekstrem || 0).toLocaleString());
+            $('#stat-fraud-btt').text((stats.total_fraud_btt || 0).toLocaleString());
+            $('#stat-petugas').text((stats.total_petugas || 0).toLocaleString());
+            $('#stat-sls').text((stats.total_sls_terdampak || 0).toLocaleString());
+        }
+
+        function renderKecamatanOptions(options) {
+            const select = $('#filter-kecamatan');
+            const current = select.val();
+            if (select.children().length <= 1 && options && options.length > 0) {
+                options.forEach(opt => {
+                    select.append(`<option value="${opt}">${opt}</option>`);
+                });
+                if (current) select.val(current);
+            }
+        }
+
+        function renderMapMarkers(clusters, slsGeojson) {
+            clusterMarkersGroup.clearLayers();
+            if (slsGeojsonLayer) {
+                map.removeLayer(slsGeojsonLayer);
+            }
+
+            // Render SLS Polygons
+            if (slsGeojson && slsGeojson.features && slsGeojson.features.length > 0) {
+                slsGeojsonLayer = L.geoJSON(slsGeojson, {
+                    style: {
+                        color: '#ea580c',
+                        weight: 2,
+                        fillColor: '#ea580c',
+                        fillOpacity: 0.15,
+                        dashArray: '3, 4'
+                    },
+                    onEachFeature: function(feature, layer) {
+                        const p = feature.properties || {};
+                        layer.bindPopup(`
+                            <div style="font-size:0.85rem;">
+                                <strong class="text-danger">📍 SLS Terdampak Anomali</strong><br>
+                                <strong>${p.nmsls || ''}</strong> - ${p.nmdesa || ''}<br>
+                                <span class="text-muted">Kecamatan: ${p.nmkec || ''}</span><br>
+                                <span class="text-muted" style="font-size:0.75rem;">ID SLS: ${p.idsls || ''}</span>
+                            </div>
+                        `);
+                    }
+                }).addTo(map);
+            }
+
+            // Render Clusters
+            const bounds = [];
+            clusters.forEach(c => {
+                const lat = c.center_lat;
+                const lon = c.center_lon;
+                bounds.push([lat, lon]);
+
+                const marker = L.circleMarker([lat, lon], {
+                    radius: Math.min(Math.max(c.cluster_size / 6, 8), 24),
+                    fillColor: c.marker_color,
+                    color: '#ffffff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.85
+                });
+
+                marker.bindPopup(`
+                    <div style="font-size:0.85rem;min-width:240px;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge ${c.badge_class}">${c.severity_label}</span>
+                            <span class="badge ${c.fraud_badge}">${c.fraud_label}</span>
+                        </div>
+                        <h6 class="fw-bold mb-1">${c.nama_petugas}</h6>
+                        <div class="text-muted small mb-2">${c.email}</div>
+                        <table class="table table-sm table-bordered small mb-2">
+                            <tr><td><strong>Jumlah Titik</strong></td><td><strong>${c.cluster_size} titik</strong></td></tr>
+                            <tr><td><strong>Komposisi</strong></td><td>${c.fraud_summary}</td></tr>
+                            <tr><td><strong>SLS / Desa</strong></td><td>${c.sls_nama || '-'}</td></tr>
+                            <tr><td><strong>Kecamatan</strong></td><td>${c.namakec || '-'}</td></tr>
+                            <tr><td><strong>Radius Sebaran</strong></td><td>~${c.approx_radius_m} meter</td></tr>
+                            <tr><td><strong>Akurasi Rata-rata</strong></td><td>${c.avg_accuracy} m</td></tr>
+                        </table>
+                        <div class="d-grid">
+                            <a href="${c.google_maps_url}" target="_blank" class="btn btn-xs btn-primary text-white fw-bold py-1">
+                                🛰️ Buka di Google Maps Satelit
+                            </a>
+                        </div>
+                    </div>
+                `);
+
+                clusterMarkersGroup.addLayer(marker);
+            });
+
+            if (bounds.length > 0 && !window.hasFitBounds) {
+                map.fitBounds(bounds, { padding: [30, 30] });
+                window.hasFitBounds = true;
+            }
+        }
+
+        function renderTables(petugasList, clustersList) {
+            // Table Petugas
+            if ($.fn.DataTable.isDataTable('#table-petugas')) {
+                tablePetugas.destroy();
+            }
+            const petugasRows = petugasList.map(p => `
+                <tr>
+                    <td><span class="badge bg-secondary">${p.rank}</span></td>
+                    <td><strong>${p.nama}</strong></td>
+                    <td class="small text-muted">${p.email}</td>
+                    <td>${p.namakec || '-'}</td>
+                    <td><span class="badge ${p.severity_badge}">${p.severity_label}</span></td>
+                    <td>${p.total_clusters}</td>
+                    <td class="text-danger fw-bold">${p.total_btt_points}</td>
+                    <td class="text-success">${p.total_bku_points}</td>
+                    <td class="fw-bold">${p.max_cluster_size}</td>
+                    <td><strong class="text-primary fs-6">${p.total_anomali_points}</strong></td>
+                    <td>
+                        <button class="btn btn-xs btn-outline-primary py-1 px-2 small" onclick="focusCluster(${p.top_cluster_lat}, ${p.top_cluster_lon})">
+                            📍 Lihat Peta
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            $('#table-petugas tbody').html(petugasRows);
+            tablePetugas = $('#table-petugas').DataTable({
+                pageLength: 10,
+                order: [[0, 'asc']]
+            });
+
+            // Table Clusters
+            if ($.fn.DataTable.isDataTable('#table-clusters')) {
+                tableClusters.destroy();
+            }
+            const clusterRows = clustersList.map(c => `
+                <tr>
+                    <td><code>${c.id}</code></td>
+                    <td><strong>${c.nama_petugas}</strong></td>
+                    <td>${c.namakec || '-'}</td>
+                    <td><small>${c.sls_nama || '-'}</small></td>
+                    <td><span class="badge ${c.fraud_badge}">${c.fraud_label}</span></td>
+                    <td><span class="badge ${c.badge_class}">${c.severity_label}</span></td>
+                    <td><strong>${c.cluster_size}</strong></td>
+                    <td>${c.approx_radius_m} m</td>
+                    <td>${c.avg_accuracy} m</td>
+                    <td>
+                        <a href="${c.google_maps_url}" target="_blank" class="btn btn-xs btn-outline-secondary py-0 px-2">
+                            🛰️ Maps
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+            $('#table-clusters tbody').html(clusterRows);
+            tableClusters = $('#table-clusters').DataTable({
+                pageLength: 10,
+                order: [[6, 'desc']]
+            });
+        }
+
+        function focusCluster(lat, lon) {
+            if (!lat || !lon) return;
+            $('#map-tab').tab('show');
+            map.setView([lat, lon], 17);
+        }
+
+        function applyFilters() {
+            loadDashboardData();
+        }
+
+        function resetFilters() {
+            $('#filter-kecamatan').val('');
+            $('#filter-severity').val('');
+            $('#filter-fraud').val('');
+            $('#filter-search').val('');
+            loadDashboardData();
+        }
+
+        function updateFileLabel(inputId, labelId) {
+            const file = document.getElementById(inputId).files[0];
+            if (file) {
+                document.getElementById(labelId).innerText = "✅ " + file.name;
+            }
+        }
+
+        function handleUpload(e) {
+            e.preventDefault();
+            const form = document.getElementById('upload-form');
+            const formData = new FormData(form);
+
+            $('#upload-progress').removeClass('d-none');
+            $('#btn-submit-upload').prop('disabled', true);
+
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(res => {
+                $('#upload-progress').addClass('d-none');
+                $('#btn-submit-upload').prop('disabled', false);
+
+                if (res.status === 'success') {
+                    bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+                    window.hasFitBounds = false;
+                    loadDashboardData();
+                    alert(res.message);
+                } else {
+                    alert("Gagal: " + res.message);
+                }
+            })
+            .catch(err => {
+                $('#upload-progress').addClass('d-none');
+                $('#btn-submit-upload').prop('disabled', false);
+                alert("Terjadi kesalahan koneksi saat upload.");
+                console.error(err);
+            });
+        }
+
+        function shutdownApp() {
+            if (confirm("Apakah Anda yakin ingin menutup aplikasi?")) {
+                fetch('/api/shutdown', { method: 'POST' })
+                    .then(() => {
+                        document.body.innerHTML = `
+                            <div class="d-flex align-items-center justify-content-center vh-100 bg-dark text-white text-center">
+                                <div>
+                                    <h2 class="mb-3">Aplikasi Telah Ditutup</h2>
+                                    <p class="text-secondary">Anda dapat menutup tab browser ini sekarang.</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+            }
+        }
+
+        $(document).ready(function() {
+            initMap();
+            loadDashboardData();
+
+            // Resize map when tab is switched
+            $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                if (e.target.id === 'map-tab' && map) {
+                    map.invalidateSize();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,23 +1,17 @@
-# Todo List
+# Task List: Standalone (.EXE) Dashboard Anomali Geotag SE2026
 
-## Dashboard Deteksi Anomali Geotag Petugas SE2026
-- [x] **Task 1**: Buat Service `Se2026ClusterAnomalyService.php` untuk parsing 13 CSV, agregasi 736 klaster & 253 petugas, join master petugas & wilayah, klasifikasi severity, dan file caching
-- [x] **Task 2**: Buat Controller `GeotagAnomalyController.php` (< 100 baris) dengan endpoint dashboard, export laporan, dan detail titik klaster
-- [x] **Task 3**: Daftarkan rute `/dashboard-anomali-geotag` di `routes/web.php` dan tambahkan menu navigasi di `config/tablar.php`
-- [x] **Task 4**: Buat Blade View `dashboard-anomali-geotag.blade.php` lengkap dengan KPI cards, filter interaktif, peta Leaflet (center klaster, popup petugas & radius), tab ranking petugas, tab daftar klaster, dan rekap per kecamatan
-- [x] **Task 5**: Pengujian rute, akurasi data geospasial, filter severity/kecamatan, dan benchmark kecepatan loading
-- [x] **Task 6**: Update `README.md` Changelog, Git Commit & Push sesuai rule proyek
+## Phase 1: Standalone Core Engine & Data Processor
+- [x] Task 1.1: Buat engine data processor mandiri untuk parsing CSV SQL Lab tanpa dependensi database Laravel (`tools/anomali-geotag-standalone/engine.py`)
+- [x] Task 1.2: Implementasikan spatial bounding-box & raycasting filter untuk GeoJSON SLS (`tools/anomali-geotag-standalone/engine.py`)
+- [x] Task 1.3: Hitung metrik agregasi, severity scoring, klasifikasi fraud (BTT vs BKU), dan ranking petugas
 
-## Dashboard Tabel Pengolahan SE2026
-- [x] **Task 1**: Buat Controller `PengolahanController.php` dengan query gabungan (Monitoring SE2026 + Usaha Perusahaan + Usaha Keluarga + Pemutakhiran Keluarga) yang mendukung Search, Filter, & Sorting
-- [x] **Task 2**: Tambahkan rute `Route::get('/dashboard-pengolahan', ...)` di `routes/web.php`
-- [x] **Task 3**: Buat Blade View `dashboard-pengolahan.blade.php` lengkap dengan kartu KPI, form search & filter, header column sorting (▲/▼), tabel responsive, dan pagination
-- [x] **Task 4**: Pengujian rute `/dashboard-pengolahan`, fitur search/filter/sort, dan verifikasi akurasi data agregasi
-- [x] **Task 5**: Update `README.md` Changelog, Git Commit & Push sesuai workflow project.
+## Phase 2: User Interface & Drag-and-Drop Loader
+- [x] Task 2.1: Buat antarmuka mandiri Flask & HTML dengan dropzone input CSV & GeoJSON (`app.py`, `templates/index.html`)
+- [x] Task 2.2: Hubungkan peta Leaflet interaktif (Layer Satelit Esri/Carto/OSM, Poligon SLS, Cluster Markers, Radius Circle, Google Maps deep-link)
+- [x] Task 2.3: Integrasikan KPI stat cards, filter interaktif (Kecamatan, Severity, Fraud Category, Search), dan DataTables
+- [x] Task 2.4: Tambahkan fitur ekspor CSV (Klaster & Petugas) dan auto-load folder `data/`
 
-## Restrukturisasi FASIH & Perbaikan Upload Excel
-- [x] Fix Filament v5 type declarations across resources
-- [x] Update `ProcessUsahaExcelCommand.php` to use `import:usaha`
-- [x] Clean up `FasihScraper.php` UI (remove log viewer & scraper actions, update menu name to "Import Excel Usaha")
-- [x] Fix Excel file upload path resolution and Artisan command execution in `FasihScraper.php`
-- [x] Verify Excel upload feature and test suite (`php artisan test`)
+## Phase 3: Packaging & Executable (.EXE) Build
+- [x] Task 3.1: Konfigurasi packaging executable (.exe) portabel Windows via PyInstaller
+- [x] Task 3.2: Uji coba auto-load data dari folder `data/` vs upload melalui GUI (Terverifikasi lewat unit test)
+- [x] Task 3.3: Susun paket distribusi siap kirim (`dist/Aplikasi_Anomali_Geotag_SE2026/`) lengkap dengan EXE, folder data, dan panduan penggunaan

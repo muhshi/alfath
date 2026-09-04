@@ -1,0 +1,56 @@
+========================================================================
+PANDUAN PENGGUNAAN APLIKASI DETEKSI ANOMALI GEOTAG SE2026 (STANDALONE)
+========================================================================
+
+Aplikasi ini adalah alat bantu investigasi dan deteksi rekayasa geotag
+petugas (PPL/PML) Sensus Ekonomi 2026 (SE2026) BPS Kabupaten/Kota.
+
+Aplikasi ini PORTABLE (tidak perlu install web server, PHP, atau database).
+Cukup double-click untuk langsung digunakan.
+
+------------------------------------------------------------------------
+CARA 1: PENGGUNAAN OTOMATIS DENGAN FOLDER "data" (Paling Cepat)
+------------------------------------------------------------------------
+1. Buka folder "data/" di samping file AnomaliGeotagSE2026.exe
+2. Masukkan file CSV hasil query SQL Lab SE2026 Anda:
+   - Beri nama apa saja (misal: input_anomali.csv)
+3. Masukkan file GeoJSON batas SLS kabupaten/kota Anda:
+   - Beri nama apa saja (misal: peta_sls.geojson)
+4. Klik ganda (double-click) file "AnomaliGeotagSE2026.exe".
+5. Browser Anda (Chrome / Edge) akan otomatis terbuka menampilkan
+   peta satelit, klaster titik anomali, dan ranking petugas.
+
+------------------------------------------------------------------------
+CARA 2: UPLOAD / DRAG & DROP LEWAT TAMPILAN APLIKASI
+------------------------------------------------------------------------
+1. Buka aplikasi dengan klik ganda "AnomaliGeotagSE2026.exe".
+2. Pada bagian atas antarmuka, klik tombol "📁 Ganti / Input Data".
+3. Tarik & lepas (drag-and-drop) file CSV SQL Lab ke kotak pertama.
+4. Tarik & lepas file GeoJSON SLS kabupaten Anda ke kotak kedua.
+5. Klik "🚀 Mulai Proses Data".
+6. Dashboard akan langsung terupdate seketika dengan data wilayah Anda!
+
+------------------------------------------------------------------------
+FITUR UTAMA:
+------------------------------------------------------------------------
+- Peta Interaktif (Citra Satelit Esri & Jalan):
+  Melihat titik tumpukan koordinat dan poligon batas SLS terdampak.
+- Klasifikasi Fraud Cerdas:
+  * 🚨 Fraud BTT: Petugas menembak geotag rumah tangga dari 1 titik statis.
+  * ⚠️ Campuran: Tumpukan titik campuran rumah dan usaha.
+  * ✅ Wajar BKU: Tumpukan titik tempat usaha di sentra/pasar tradisional.
+- Ranking Petugas & Detail Klaster:
+  Tabel interaktif untuk mencari petugas terindikasi dan melacak titik
+  terbanyak yang dihasilkan.
+- Tombol Langsung ke Google Maps Satelit:
+  Melihat kondisi fisik lapangan (apakah rumah tinggal/warkop/pasar).
+- Download Laporan CSV:
+  Ekspor rekap hasil analisis untuk diteruskan ke Pengawas/PML/Koseka.
+
+------------------------------------------------------------------------
+CATATAN TEKNIS:
+- Jika muncul peringatan Windows Defender SmartScreen ("Windows protected your PC"),
+  klik "More info" / "Info selengkapnya", lalu klik "Run anyway" / "Tetap jalankan".
+- Untuk menutup aplikasi, klik tombol "✕ Tutup" di pojok kanan atas browser atau
+  tutup jendela terminal hitam.
+========================================================================

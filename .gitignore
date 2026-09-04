@@ -26,3 +26,9 @@ Homestead.yaml
 Thumbs.db
 ~$*
 *.xlsx
+tools/**/build/
+tools/**/dist/
+tools/**/*.spec
+__pycache__/
+*.pyc
+
