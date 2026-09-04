@@ -1214,20 +1214,25 @@
                         ? `<div class="small mb-1 text-dark">Tempat/Responden: <strong class="text-primary">${pNamaAssign}</strong> ${pNoBang ? '<span class="badge bg-secondary-lt">No. ' + pNoBang + '</span>' : ''}</div>`
                         : '';
 
+                    const spreadNoticeHtml = coordCounts[k] > 1
+                        ? `<div class="badge bg-warning-lt text-dark w-100 py-1 mb-2 text-wrap" style="font-size:0.7rem;">⚠️ Koordinat Kembar: Ada ${coordCounts[k]} titik bertumpuk di lokasi yang sama persis (posisi dimekarkan 1-5m agar semua titik terlihat).</div>`
+                        : '';
+
                     pointMarker.bindPopup(`
-                        <div style="min-width: 250px; font-family: inherit;">
+                        <div style="min-width: 260px; font-family: inherit;">
                             <div class="fw-bold text-dark mb-1">${c.nama_petugas}</div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="badge ${c.badge_class}">Titik ke-${pIdx + 1} dari ${size}</span>
                                 ${bTypeBadge}
                             </div>
                             ${bStatusBadge}
+                            ${spreadNoticeHtml}
                             ${assignNameHtml}
                             <div class="small text-muted mb-1">Bangunan: <strong>${bLabel}</strong></div>
                             <div class="small text-muted mb-1">Kecamatan: <strong>${c.namakec}</strong></div>
                             <div class="small text-muted mb-1">Pengawas (PML): <strong>${c.pml_nama}</strong></div>
                             <div class="small text-muted mb-1">Assignment ID: <code>${pAssign}</code></div>
-                            <div class="small text-muted">Koordinat: <code>${pLat.toFixed(6)}, ${pLon.toFixed(6)}</code></div>
+                            <div class="small text-muted">Koordinat Asli: <code>${origLat.toFixed(6)}, ${origLon.toFixed(6)}</code></div>
                         </div>
                     `);
 
