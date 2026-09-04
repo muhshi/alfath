@@ -78,6 +78,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - **Ekspor CSV Lengkap dengan Nama Wilayah & Detail Bangunan**:
     - Ekspor klaster diperkaya kolom wilayah (`Kecamatan`, `Kode Desa`, `Nama Desa`, `Kode SLS`, `Nama SLS`, `Kode Sub-SLS`, `Landmark Usaha`).
     - Penambahan jenis ekspor baru (`type=titik`) untuk mengunduh rincian seluruh fisik bangunan/titik yang terdeteksi anomali pada klaster, lengkap dengan opsi unduh per klaster langsung dari modal.
+  - **Perbaikan Dependensi Bootstrap**: Menyertakan `bootstrap.bundle.min.js` dan fallback trigger modal/tab untuk mencegah error `ReferenceError: bootstrap is not defined` saat membuka modal rincian titik bangunan.
 
 ### 2026-07-29
 

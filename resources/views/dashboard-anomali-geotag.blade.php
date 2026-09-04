@@ -857,6 +857,9 @@
     <!-- jQuery CDN (Required by DataTables & reliable DOM operations) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     
+    <!-- Bootstrap Bundle JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- Leaflet & MarkerCluster JS CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
@@ -1884,16 +1887,31 @@
                 };
             }
 
-            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modalInstance.show();
+            if (window.bootstrap && window.bootstrap.Modal) {
+                const modalInstance = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+                modalInstance.show();
+            } else if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+                $(modalEl).modal('show');
+            } else {
+                modalEl.classList.add('show');
+                modalEl.style.display = 'block';
+                modalEl.setAttribute('aria-modal', 'true');
+                modalEl.removeAttribute('aria-hidden');
+            }
         }
 
         function locatePetugasOnMap(lat, lon, topClusterId) {
             // Switch to Tab 1 (Map)
             const mapTabTrigger = document.querySelector('#map-tab');
             if (mapTabTrigger) {
-                const tab = new bootstrap.Tab(mapTabTrigger);
-                tab.show();
+                if (window.bootstrap && window.bootstrap.Tab) {
+                    const tab = window.bootstrap.Tab.getOrCreateInstance(mapTabTrigger);
+                    tab.show();
+                } else if (typeof $ !== 'undefined' && $.fn && $.fn.tab) {
+                    $(mapTabTrigger).tab('show');
+                } else {
+                    mapTabTrigger.click();
+                }
             }
 
             // Wait brief moment for tab animation then flyTo
