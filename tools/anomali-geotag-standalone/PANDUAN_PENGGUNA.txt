@@ -33,19 +33,25 @@ CARA 2: UPLOAD / DRAG & DROP LEWAT TAMPILAN APLIKASI
 ------------------------------------------------------------------------
 FITUR UTAMA:
 ------------------------------------------------------------------------
-- Peta Interaktif (Citra Satelit Esri & Jalan):
-  Melihat titik tumpukan koordinat dan poligon batas SLS terdampak.
+- Peta Interaktif (Citra Satelit Google Hybrid, OSM, Esri, Carto):
+  Melihat titik tumpukan koordinat, formasi spiral titik kembar, dan poligon batas SLS terdampak.
 - Klasifikasi Fraud Cerdas:
   * 🚨 Fraud BTT: Petugas menembak geotag rumah tangga dari 1 titik statis.
   * ⚠️ Campuran: Tumpukan titik campuran rumah dan usaha.
   * ✅ Wajar BKU: Tumpukan titik tempat usaha di sentra/pasar tradisional.
+- Mode Panel Sidebar Ganda:
+  * Mode Per Petugas: Tampilan accordion hierarkis per pencacah dengan rincian sub-klaster dan landmark.
+  * Mode Semua Klaster: Tampilan datar seluruh titik klaster.
+- Modal Rincian Titik Bangunan:
+  Melihat daftar fisik seluruh bangunan di dalam setiap klaster beserta nomor bangunan, nama usaha, akurasi, dan tautan Google Maps.
+- Persebaran per Wilayah / Kecamatan:
+  Tabel rekapitulasi agregasi beban pengawasan lapangan per kecamatan dengan progres persentase.
 - Ranking Petugas & Detail Klaster:
-  Tabel interaktif untuk mencari petugas terindikasi dan melacak titik
-  terbanyak yang dihasilkan.
-- Tombol Langsung ke Google Maps Satelit:
-  Melihat kondisi fisik lapangan (apakah rumah tinggal/warkop/pasar).
-- Download Laporan CSV:
-  Ekspor rekap hasil analisis untuk diteruskan ke Pengawas/PML/Koseka.
+  Tabel interaktif untuk mencari petugas terindikasi dan melacak titik terbanyak yang dihasilkan.
+- Download Laporan CSV Lengkap:
+  1. Ekspor Klaster (Dengan Wilayah & Landmark)
+  2. Ekspor Semua Titik Bangunan (Rincian fisik seluruh bangunan bertumpuk)
+  3. Ekspor Ranking Petugas Terindikasi
 
 ------------------------------------------------------------------------
 CATATAN TEKNIS:

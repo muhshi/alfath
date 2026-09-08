@@ -62,6 +62,9 @@ def auto_load_data_folder():
         target_geojson = next((f for f in geojson_files if 'peta_sls' in os.path.basename(f).lower()), geojson_files[0])
         engine.load_geojson(target_geojson, filename=os.path.basename(target_geojson))
 
+# Load data otomatis saat inisialisasi
+auto_load_data_folder()
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -126,8 +129,10 @@ def api_upload():
 @app.route('/api/export')
 def api_export():
     export_type = request.args.get('type', 'clusters')
-    csv_buffer = engine.export_csv_stream(export_type)
-    filename = f"anomali_geotag_se2026_{export_type}_{int(time.time())}.csv"
+    cluster_id = request.args.get('cluster_id')
+    csv_buffer = engine.export_csv_stream(export_type, cluster_id=cluster_id)
+    suffix = f"_{cluster_id}" if cluster_id else ""
+    filename = f"anomali_geotag_se2026_{export_type}{suffix}_{int(time.time())}.csv"
 
     return Response(
         csv_buffer.getvalue(),

@@ -67,6 +67,20 @@ Script `deploy.sh` secara otomatis mengeksekusi:
 
 ## 📜 Changelog
 
+### 2026-09-08
+
+- **Pembaruan Aplikasi Standalone Deteksi Anomali Geotag SE2026 (`tools/anomali-geotag-standalone`)**:
+  - **Penyelarasan Fitur & Desain Antarmuka Versi Web**:
+    - Menerapkan header modern BPS lengkap dengan status badge *SE2026 Geotag Audit*, penanda waktu pembaruan (*timestamp*), serta menu dropdown ekspor laporan multi-tipe (Klaster, Semua Titik Bangunan ✨, dan Ranking Petugas).
+    - **Banner Edukasi & Pemahaman Bangunan (BKU vs BTT)**: Menambahkan kotak penjelasan edukatif tentang indikasi fraud pada Bangunan Tempat Tinggal (BTT) vs potensi wajar pada sentra pasar/Bangunan Khusus Usaha (BKU).
+    - **4 Kartu Ringkasan KPI Utama**: Total Geotag Teranomali, Indikasi Kuat Fraud (BTT), Potensi Wajar (BKU / Pasar), dan Campuran / Verifikasi.
+    - **Sidebar Navigasi Ganda**: Mode *Per Petugas* (accordion hierarkis dengan sub-klaster, tag landmark usaha, dan tombol inspeksi titik) serta Mode *Semua Klaster* (daftar datar).
+    - **Modal Inspeksi Titik Bangunan (`clusterPointsModal`)**: Pop-up inspeksi seluruh bangunan fisik yang menumpuk di dalam klaster dengan filter pencarian real-time dan ekspor CSV khusus klaster tersebut.
+    - **Fitur Spotlight & Spiral Dispersion pada Peta**: Efek pemfokusan klaster aktif dengan pemekaran koordinat kembar 1–6m agar seluruh titik bertumpuk dapat terlihat jelas.
+    - **Tab Persebaran per Kecamatan**: Tabel rekapitulasi agregasi beban klaster, petugas, titik BTT vs BKU, dan bar progres proporsi (%) per kecamatan.
+    - **Mesin Analisis Python (`engine.py`)**: Deteksi otomatis kolom `id_sub_sls`, nama desa, SLS, dan integrasi klasifikasi fraud cerdas yang konsisten dengan sistem web.
+    - **Mempertahankan Fitur Upload**: Menjaga modal drag-and-drop file CSV dan GeoJSON di aplikasi standalone untuk kemudahan penggunaan di kabupaten/kota lain.
+
 ### 2026-09-04
 
 - **Pembaruan UX Klaster Geotag Anomali SE2026 & Deteksi Wilayah Terpadu**:

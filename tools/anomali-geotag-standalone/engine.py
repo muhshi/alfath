@@ -1,7 +1,7 @@
 """
 SE2026 Geotag Anomaly Detection Standalone Engine
 Mengolah data CSV titik koordinat dan GeoJSON SLS tanpa dependensi database.
-Universal untuk seluruh BPS Kabupaten/Kota se-Indonesia.
+Universal untuk seluruh BPS Kabupaten/Kota se-Indonesia dengan fitur setara versi Web.
 """
 
 import os
@@ -10,6 +10,7 @@ import csv
 import math
 import json
 import re
+import datetime
 from collections import defaultdict
 from typing import Dict, List, Any, Optional, Tuple
 
@@ -20,13 +21,32 @@ try:
 except ImportError:
     HAS_SHAPELY = False
 
+# Master 14 Kecamatan Map (Demak BPS Codes as default reference)
+KEC_NAME_MAP = {
+    '3321010': 'Mranggen',
+    '3321020': 'Karangawen',
+    '3321030': 'Guntur',
+    '3321040': 'Sayung',
+    '3321050': 'Karangtengah',
+    '3321060': 'Bonang',
+    '3321070': 'Demak',
+    '3321080': 'Wonosalam',
+    '3321090': 'Dempet',
+    '3321091': 'Kebonagung',
+    '3321100': 'Gajah',
+    '3321110': 'Karanganyar',
+    '3321120': 'Mijen',
+    '3321130': 'Wedung',
+}
+
 
 class GeotagAnomalyEngine:
     def __init__(self):
         self.raw_points_count = 0
         self.clusters: Dict[str, Dict[str, Any]] = {}
         self.petugas_ranking: List[Dict[str, Any]] = []
-        self.kecamatan_stats: Dict[str, Dict[str, Any]] = {}
+        self.petugas_with_clusters: List[Dict[str, Any]] = []
+        self.kecamatan_summary: List[Dict[str, Any]] = []
         self.sls_geojson: Dict[str, Any] = {"type": "FeatureCollection", "features": []}
         self.sls_indexed: List[Dict[str, Any]] = []
         self.stats = {
@@ -38,9 +58,16 @@ class GeotagAnomalyEngine:
             "total_sedang": 0,
             "total_ringan": 0,
             "total_fraud_btt": 0,
-            "total_sls_terdampak": 0,
+            "total_fraud_points": 0,
+            "total_fraud_clusters": 0,
+            "total_fraud_sls": 0,
+            "total_wajar_points": 0,
+            "total_wajar_clusters": 0,
+            "total_campuran_points": 0,
+            "total_campuran_clusters": 0,
             "csv_filename": "",
             "geojson_filename": "",
+            "generated_at": datetime.datetime.now().strftime("%d %b %Y | %H:%M WIB"),
         }
 
     @staticmethod
@@ -57,9 +84,11 @@ class GeotagAnomalyEngine:
         """Parse file CSV SQL Lab SE2026 dan bangun dataset klaster anomali."""
         self.clusters.clear()
         self.petugas_ranking.clear()
-        self.kecamatan_stats.clear()
+        self.petugas_with_clusters.clear()
+        self.kecamatan_summary.clear()
         self.raw_points_count = 0
         self.stats["csv_filename"] = filename
+        self.stats["generated_at"] = datetime.datetime.now().strftime("%d %b %Y | %H:%M WIB")
 
         if isinstance(file_path_or_buffer, str):
             f = open(file_path_or_buffer, mode='r', encoding='utf-8-sig', errors='replace')
@@ -100,6 +129,15 @@ class GeotagAnomalyEngine:
         idx_assign = find_col(['assignment_id', 'id_assignment', 'id'])
         idx_p_lat = find_col(['point_lat', 'latitude', 'lat'])
         idx_p_lon = find_col(['point_lon', 'longitude', 'lon'])
+        idx_p_acc = find_col(['point_accuracy', 'p_acc', 'akurasi', 'accuracy_point'])
+        idx_sub_sls = find_col(['id_sub_sls', 'sub_sls', 'kode_sub_sls', 'kodesubsls', 'id_subsls'])
+        idx_pml = find_col(['pml_nama', 'nama_pml', 'pengawas', 'pml_email', 'email_pengawas'])
+        idx_nmkec = find_col(['namakec', 'nama_kec', 'kecamatan', 'nmkec'])
+        idx_kdkec = find_col(['kodekec', 'kode_kec', 'kdkec', 'kd_kec_bps'])
+        idx_nmdesa = find_col(['namadesa', 'nama_desa', 'desa', 'kelurahan', 'nmdesa'])
+        idx_kddesa = find_col(['kodedesa', 'kode_desa', 'kddesa'])
+        idx_nmsls = find_col(['namasls', 'nama_sls', 'sls', 'nmsls'])
+        idx_kdsls = find_col(['kodesls', 'kode_sls', 'kdsls', 'idsls'])
 
         if idx_email is None or idx_c_lat is None or idx_c_lon is None:
             if should_close: f.close()
@@ -127,6 +165,21 @@ class GeotagAnomalyEngine:
                 continue
 
             cluster_key = f"{email}|{c_lat:.6f}|{c_lon:.6f}"
+
+            raw_sub_sls = row[idx_sub_sls].strip() if idx_sub_sls is not None and len(row) > idx_sub_sls else ""
+            pml_name = row[idx_pml].strip() if idx_pml is not None and len(row) > idx_pml else "-"
+            csv_kec = row[idx_nmkec].strip().title() if idx_nmkec is not None and len(row) > idx_nmkec else ""
+            csv_kdkec = row[idx_kdkec].strip() if idx_kdkec is not None and len(row) > idx_kdkec else ""
+            csv_desa = row[idx_nmdesa].strip().title() if idx_nmdesa is not None and len(row) > idx_nmdesa else ""
+            csv_kddesa = row[idx_kddesa].strip() if idx_kddesa is not None and len(row) > idx_kddesa else ""
+            csv_sls = row[idx_nmsls].strip() if idx_nmsls is not None and len(row) > idx_nmsls else ""
+            csv_kdsls = row[idx_kdsls].strip() if idx_kdsls is not None and len(row) > idx_kdsls else ""
+
+            if raw_sub_sls and len(raw_sub_sls) >= 7:
+                sub_kd = raw_sub_sls[:7]
+                if sub_kd in KEC_NAME_MAP and not csv_kec:
+                    csv_kdkec = sub_kd
+                    csv_kec = KEC_NAME_MAP[sub_kd]
 
             if cluster_key not in self.clusters:
                 size = int(row[idx_size]) if idx_size is not None and row[idx_size].isdigit() else 1
@@ -171,15 +224,21 @@ class GeotagAnomalyEngine:
                     'key': cluster_key,
                     'email': email,
                     'nama_petugas': nama_petugas,
-                    'kodekec': '',
-                    'namakec': 'Wilayah Terdeteksi',
-                    'sls_id': '',
-                    'sls_nama': '',
+                    'kodekec': csv_kdkec,
+                    'namakec': csv_kec or 'Wilayah Terdeteksi',
+                    'kodedesa': csv_kddesa,
+                    'namadesa': csv_desa or '-',
+                    'kodesls': csv_kdsls,
+                    'namasls': csv_sls or '-',
+                    'id_sub_sls': raw_sub_sls,
+                    'sub_sls_short': raw_sub_sls[-4:] if len(raw_sub_sls) >= 4 else raw_sub_sls,
+                    'pml_nama': pml_name or '-',
                     'cluster_size': size,
                     'bku_count': 0,
                     'btt_count': 0,
                     'campuran_count': 0,
                     'lainnya_count': 0,
+                    'pasar_kw_count': 0,
                     'center_lat': c_lat,
                     'center_lon': c_lon,
                     'approx_radius_m': approx_radius_m,
@@ -193,52 +252,64 @@ class GeotagAnomalyEngine:
                     'points': [],
                 }
 
-            # Update point info inside cluster
             cls_obj = self.clusters[cluster_key]
-            label = row[idx_label].strip() if idx_label is not None else ""
-            nama_assign = row[idx_nama_assign].strip() if idx_nama_assign is not None else ""
-            p_lat = float(row[idx_p_lat]) if idx_p_lat is not None and row[idx_p_lat] else c_lat
-            p_lon = float(row[idx_p_lon]) if idx_p_lon is not None and row[idx_p_lon] else c_lon
+            if raw_sub_sls and not cls_obj.get('id_sub_sls'):
+                cls_obj['id_sub_sls'] = raw_sub_sls
+                cls_obj['sub_sls_short'] = raw_sub_sls[-4:] if len(raw_sub_sls) >= 4 else raw_sub_sls
 
-            if nama_assign and len(cls_obj['sample_names']) < 3 and nama_assign not in cls_obj['sample_names']:
-                cls_obj['sample_names'].append(nama_assign)
-
-            # Categorize building type
-            lbl_lower = label.lower()
-            if '1. bangunan khusus usaha' in lbl_lower or 'khusus usaha' in lbl_lower:
-                cls_obj['bku_count'] += 1
-                b_type = 'BKU'
-            elif '2. bangunan campuran' in lbl_lower or 'campuran' in lbl_lower:
-                cls_obj['campuran_count'] += 1
-                b_type = 'Campuran'
-            elif any(x in lbl_lower for x in ['3. bangunan tempat tinggal', '4. bangunan tempat tinggal', '5. bangunan lainnya yang tercakup', 'tempat tinggal']):
-                cls_obj['btt_count'] += 1
-                b_type = 'BTT'
-            else:
-                cls_obj['lainnya_count'] += 1
-                b_type = 'Lainnya'
-
+            label = row[idx_label].strip() if idx_label is not None and len(row) > idx_label else ""
+            nama_assign = row[idx_nama_assign].strip() if idx_nama_assign is not None and len(row) > idx_nama_assign else ""
+            p_lat = float(row[idx_p_lat]) if idx_p_lat is not None and len(row) > idx_p_lat and row[idx_p_lat] else c_lat
+            p_lon = float(row[idx_p_lon]) if idx_p_lon is not None and len(row) > idx_p_lon and row[idx_p_lon] else c_lon
+            p_acc = float(row[idx_p_acc]) if idx_p_acc is not None and len(row) > idx_p_acc and row[idx_p_acc] else cls_obj['avg_accuracy']
             assign_id = row[idx_assign].strip() if idx_assign is not None and len(row) > idx_assign else ""
             no_bang = row[idx_no_bang].strip() if idx_no_bang is not None and len(row) > idx_no_bang else ""
 
-            if b_type == 'BKU':
-                point_color = '#10b981'
-            elif b_type == 'BTT':
-                point_color = '#ef4444'
-            elif b_type == 'Campuran':
-                point_color = '#f59e0b'
-            else:
-                point_color = '#8b5cf6'
+            if nama_assign and len(cls_obj['sample_names']) < 4 and nama_assign not in cls_obj['sample_names']:
+                cls_obj['sample_names'].append(nama_assign)
 
+            # Categorize building type & detect pasar keywords
+            lbl_lower = label.lower()
+            is_bku = ('1. bangunan khusus usaha' in lbl_lower) or ('khusus usaha' in lbl_lower)
+            is_campuran = ('2. bangunan campuran' in lbl_lower) or ('campuran' in lbl_lower)
+            is_btt = any(x in lbl_lower for x in ['3. bangunan tempat tinggal', '4. bangunan tempat tinggal', '5. bangunan lainnya yang tercakup', 'tempat tinggal'])
+            is_pasar_kw = bool(nama_assign and re.search(r'\b(pasar|los|kios|lapak|toko|warung|ruko|pedagang|ikan|sayur|buah)\b', nama_assign, re.I))
+
+            if is_pasar_kw:
+                cls_obj['pasar_kw_count'] += 1
+
+            if is_bku or is_pasar_kw:
+                cls_obj['bku_count'] += 1
+                b_type = 'bku'
+                point_color = '#10b981'  # Green for BKU/Pasar
+            elif is_btt:
+                cls_obj['btt_count'] += 1
+                b_type = 'btt'
+                point_color = '#ef4444'  # Red for BTT (Fraud)
+            elif is_campuran:
+                cls_obj['campuran_count'] += 1
+                b_type = 'campuran'
+                point_color = '#f59e0b'  # Amber for Campuran
+            else:
+                cls_obj['lainnya_count'] += 1
+                b_type = 'lainnya'
+                point_color = '#8b5cf6'  # Purple for Others
+
+            # Points structure matches the Web Blade structure
             cls_obj['points'].append([
-                p_lat,
-                p_lon,
-                assign_id,
-                b_type.lower(),
-                label,
+                round(p_lat, 7),
+                round(p_lon, 7),
+                assign_id[:8] if assign_id else f"#{len(cls_obj['points']) + 1}",
+                b_type,
+                label or 'Tipe Bangunan Belum Terdata',
                 point_color,
                 nama_assign,
-                no_bang
+                no_bang,
+                assign_id,
+                raw_sub_sls,
+                cls_obj['namadesa'],
+                cls_obj['namasls'],
+                round(p_acc, 1)
             ])
 
         if should_close:
@@ -259,11 +330,12 @@ class GeotagAnomalyEngine:
         }
 
     def _finalize_clusters(self):
-        """Menyelesaikan klasifikasi fraud (BTT vs BKU) dan ranking petugas."""
+        """Menyelesaikan klasifikasi fraud (BTT vs BKU), judul klaster, ordinal, dan ranking petugas."""
         petugas_map = defaultdict(lambda: {
             'email': '',
             'nama': '',
             'namakec': '',
+            'pml_nama': '-',
             'total_clusters': 0,
             'total_anomali_points': 0,
             'total_btt_points': 0,
@@ -272,6 +344,7 @@ class GeotagAnomalyEngine:
             'clusters': [],
             'top_cluster_lat': 0.0,
             'top_cluster_lon': 0.0,
+            'top_cluster_id': '',
             'severity_counts': defaultdict(int)
         })
 
@@ -280,39 +353,65 @@ class GeotagAnomalyEngine:
         stat_sedang = 0
         stat_ringan = 0
         stat_fraud_btt = 0
+        stat_fraud_points = 0
+        stat_wajar_clusters = 0
+        stat_wajar_points = 0
+        stat_campuran_clusters = 0
+        stat_campuran_points = 0
 
-        for c in self.clusters.values():
+        # Sort clusters by size desc
+        sorted_clusters = sorted(self.clusters.values(), key=lambda x: x['cluster_size'], reverse=True)
+        officer_cluster_counts = defaultdict(int)
+
+        for c in sorted_clusters:
+            total = len(c['points']) if c['points'] else c['cluster_size']
+            c['cluster_size'] = total
             btt = c['btt_count']
             bku = c['bku_count']
-            cmp = c['campuran_count']
-            oth = c['lainnya_count']
+            campuran = c['campuran_count']
+            lainnya = c['lainnya_count']
+            pasar_kw = c.get('pasar_kw_count', 0)
 
-            tot_b = btt + bku
-            c['pct_btt'] = round((btt / tot_b * 100)) if tot_b > 0 else (100 if btt > 0 else 0)
-            c['pct_bku'] = round((bku / tot_b * 100)) if tot_b > 0 else (100 if bku > 0 else 0)
+            pct_bku = round((bku / max(1, total)) * 100)
+            pct_btt = round((btt / max(1, total)) * 100)
+            pct_campuran = round((campuran / max(1, total)) * 100)
+            pct_lainnya = round((lainnya / max(1, total)) * 100)
 
-            # Fraud categorization
-            if btt > 0 and bku == 0:
-                c['fraud_category'] = 'fraud_btt'
-                c['fraud_label'] = '🚨 Rekayasa Geotag BTT'
-                c['fraud_badge'] = 'bg-danger text-white'
-                c['fraud_summary'] = f'100% Non-BKU ({btt} BTT Rumah)'
-                stat_fraud_btt += 1
-            elif btt > 0 and bku > 0:
-                c['fraud_category'] = 'campuran'
-                c['fraud_label'] = '⚠️ Campuran (BTT & BKU)'
-                c['fraud_badge'] = 'bg-warning text-dark'
-                c['fraud_summary'] = f'{btt} BTT Rumah + {bku} BKU Usaha'
-            elif bku > 0 and btt == 0:
+            c['pct_bku'] = pct_bku
+            c['pct_btt'] = pct_btt
+            c['pct_campuran'] = pct_campuran
+            c['pct_lainnya'] = pct_lainnya
+
+            # Fraud classification matching Se2026ClusterAnomalyService
+            if bku >= (total * 0.40) or pasar_kw >= (total * 0.40):
                 c['fraud_category'] = 'wajar_bku'
-                c['fraud_label'] = '✅ Klaster Wajar BKU'
+                c['fraud_label'] = '🟢 Potensi Wajar (Pasar / Ruko BKU)'
                 c['fraud_badge'] = 'bg-success text-white'
-                c['fraud_summary'] = f'{bku} BKU Usaha (Pasar/Sentra)'
+                c['fraud_summary'] = f"{pct_bku}% BKU (Pasar/Usaha)" if bku >= pasar_kw else "Sentra Pasar/Kios"
+                stat_wajar_clusters += 1
+                stat_wajar_points += total
+            elif btt >= (total * 0.35) and pasar_kw < (total * 0.20):
+                c['fraud_category'] = 'fraud_btt'
+                c['fraud_label'] = '🚨 Indikasi Kuat Fraud (BTT/Tempat Tinggal)'
+                c['fraud_badge'] = 'bg-danger text-white'
+                c['fraud_summary'] = f"{pct_btt}% BTT (Tempat Tinggal)"
+                stat_fraud_btt += 1
+                stat_fraud_points += total
             else:
-                c['fraud_category'] = 'lainnya'
-                c['fraud_label'] = 'ℹ️ Non-Usaha/Lainnya'
-                c['fraud_badge'] = 'bg-secondary text-white'
-                c['fraud_summary'] = f'{oth} Bangunan Lainnya'
+                c['fraud_category'] = 'campuran'
+                c['fraud_label'] = '🟡 Campuran (BTT & BKU)'
+                c['fraud_badge'] = 'bg-warning text-dark'
+                c['fraud_summary'] = f"Campuran ({pct_bku}% BKU, {pct_btt}% BTT)"
+                stat_campuran_clusters += 1
+                stat_campuran_points += total
+
+            # Officer ordinal and title
+            email = c['email']
+            officer_cluster_counts[email] += 1
+            c['officer_cluster_num'] = officer_cluster_counts[email]
+            c['cluster_title'] = f"Klaster #{c['officer_cluster_num']} ({c['cluster_size']} Titik)"
+            c['cluster_ordinal_text'] = f"Klaster #{c['officer_cluster_num']}"
+            c['landmark'] = c['sample_names'][0] if c.get('sample_names') else ''
 
             sev = c['severity']
             if sev == 'ekstrem': stat_ekstrem += 1
@@ -325,6 +424,8 @@ class GeotagAnomalyEngine:
             p['email'] = c['email']
             p['nama'] = c['nama_petugas']
             p['namakec'] = c['namakec']
+            if c.get('pml_nama') and c['pml_nama'] != '-':
+                p['pml_nama'] = c['pml_nama']
             p['total_clusters'] += 1
             p['total_anomali_points'] += c['cluster_size']
             p['total_btt_points'] += btt
@@ -336,18 +437,20 @@ class GeotagAnomalyEngine:
                 p['max_cluster_size'] = c['cluster_size']
                 p['top_cluster_lat'] = c['center_lat']
                 p['top_cluster_lon'] = c['center_lon']
+                p['top_cluster_id'] = c['id']
 
         # Sort and rank petugas
         ranked = sorted(petugas_map.values(), key=lambda x: x['total_anomali_points'], reverse=True)
         for i, p in enumerate(ranked, 1):
             p['rank'] = i
-            if p['severity_counts']['ekstrem'] > 0:
+            max_size = p['max_cluster_size']
+            if max_size > 100:
                 p['severity_label'] = '🚨 Kritis'
                 p['severity_badge'] = 'bg-danger text-white'
-            elif p['severity_counts']['berat'] > 0:
+            elif max_size > 50:
                 p['severity_label'] = '⚠️ Tinggi'
                 p['severity_badge'] = 'bg-orange text-white'
-            elif p['severity_counts']['sedang'] > 0:
+            elif max_size > 20:
                 p['severity_label'] = '🟡 Sedang'
                 p['severity_badge'] = 'bg-warning text-dark'
             else:
@@ -355,6 +458,82 @@ class GeotagAnomalyEngine:
                 p['severity_badge'] = 'bg-info text-white'
 
         self.petugas_ranking = ranked
+
+        # Build hierarchical officer accordion (petugas_with_clusters)
+        petugas_grouped = {}
+        for c in sorted_clusters:
+            email = c['email']
+            if email not in petugas_grouped:
+                petugas_grouped[email] = {
+                    'email': email,
+                    'nama': c['nama_petugas'],
+                    'namakec': c['namakec'],
+                    'pml_nama': c.get('pml_nama', '-'),
+                    'total_clusters': 0,
+                    'total_points': 0,
+                    'total_btt': 0,
+                    'total_bku': 0,
+                    'max_cluster_size': 0,
+                    'clusters': [],
+                }
+            pg = petugas_grouped[email]
+            pg['total_clusters'] += 1
+            pg['total_points'] += c['cluster_size']
+            pg['total_btt'] += c['btt_count']
+            pg['total_bku'] += c['bku_count']
+            if c['cluster_size'] > pg['max_cluster_size']:
+                pg['max_cluster_size'] = c['cluster_size']
+            pg['clusters'].append(c)
+
+        self.petugas_with_clusters = sorted(petugas_grouped.values(), key=lambda x: x['total_points'], reverse=True)
+
+        # Build kecamatan_summary
+        kec_map = defaultdict(lambda: {
+            'code': '',
+            'name': '',
+            'total_clusters': 0,
+            'petugas_emails': set(),
+            'total_points': 0,
+            'total_bku_points': 0,
+            'total_btt_points': 0,
+            'total_fraud_clusters': 0,
+            'total_wajar_clusters': 0,
+            'max_cluster_size': 0
+        })
+
+        for c in self.clusters.values():
+            kname = c['namakec'] or 'Lainnya / Tidak Terpetakan'
+            kd = c.get('kodekec') or 'other'
+            kitem = kec_map[kname]
+            kitem['name'] = kname
+            kitem['code'] = kd
+            kitem['total_clusters'] += 1
+            kitem['petugas_emails'].add(c['email'])
+            kitem['total_points'] += c['cluster_size']
+            kitem['total_bku_points'] += c['bku_count']
+            kitem['total_btt_points'] += c['btt_count']
+            if c['fraud_category'] == 'fraud_btt':
+                kitem['total_fraud_clusters'] += 1
+            elif c['fraud_category'] == 'wajar_bku':
+                kitem['total_wajar_clusters'] += 1
+            if c['cluster_size'] > kitem['max_cluster_size']:
+                kitem['max_cluster_size'] = c['cluster_size']
+
+        summary_list = []
+        for kname, kitem in kec_map.items():
+            summary_list.append({
+                'code': kitem['code'],
+                'name': kitem['name'],
+                'total_clusters': kitem['total_clusters'],
+                'total_petugas': len(kitem['petugas_emails']),
+                'total_points': kitem['total_points'],
+                'total_bku_points': kitem['total_bku_points'],
+                'total_btt_points': kitem['total_btt_points'],
+                'total_fraud_clusters': kitem['total_fraud_clusters'],
+                'total_wajar_clusters': kitem['total_wajar_clusters'],
+                'max_cluster_size': kitem['max_cluster_size'],
+            })
+        self.kecamatan_summary = sorted(summary_list, key=lambda x: x['total_points'], reverse=True)
 
         # Update stats
         self.stats.update({
@@ -366,6 +545,12 @@ class GeotagAnomalyEngine:
             "total_sedang": stat_sedang,
             "total_ringan": stat_ringan,
             "total_fraud_btt": stat_fraud_btt,
+            "total_fraud_points": stat_fraud_points,
+            "total_fraud_clusters": stat_fraud_btt,
+            "total_wajar_points": stat_wajar_points,
+            "total_wajar_clusters": stat_wajar_clusters,
+            "total_campuran_points": stat_campuran_points,
+            "total_campuran_clusters": stat_campuran_clusters,
         })
 
     def load_geojson(self, file_path_or_buffer, filename: str = "peta_sls.geojson") -> Dict[str, Any]:
@@ -474,11 +659,22 @@ class GeotagAnomalyEngine:
                     nmsls = props.get('nmsls') or props.get('nama_sls') or ''
                     nmdesa = props.get('nmdesa') or props.get('nama_desa') or ''
                     nmkec = props.get('nmkec') or props.get('nama_kec') or ''
+                    kdkec = props.get('kd_kec_bps') or props.get('kdkec') or ''
 
                     c['sls_id'] = idsls
+                    c['kodesls'] = idsls
+                    c['namasls'] = nmsls
+                    c['namadesa'] = nmdesa
                     c['sls_nama'] = f"{nmsls} - {nmdesa}".strip(' -')
                     if nmkec:
                         c['namakec'] = nmkec.title()
+                    if kdkec:
+                        c['kodekec'] = kdkec
+
+                    # Update point references if desa/sls empty
+                    for pt in c['points']:
+                        if not pt[10] or pt[10] == '-': pt[10] = nmdesa
+                        if not pt[11] or pt[11] == '-': pt[11] = nmsls
 
                     if idsls and idsls not in sls_matched_ids:
                         sls_matched_ids.add(idsls)
@@ -489,7 +685,10 @@ class GeotagAnomalyEngine:
                                 "nmsls": nmsls,
                                 "nmdesa": nmdesa,
                                 "nmkec": nmkec,
-                                "fraud_count": 1,
+                                "kd_kec_bps": kdkec,
+                                "fraud_clusters_count": props.get('fraud_clusters_count', 1),
+                                "fraud_points_count": props.get('fraud_points_count', c['cluster_size']),
+                                "petugas_list": props.get('petugas_list', [c['nama_petugas']]),
                             },
                             "geometry": sls['geometry']
                         })
@@ -500,49 +699,113 @@ class GeotagAnomalyEngine:
             "features": matched_features
         }
         self.stats["total_sls_terdampak"] = len(sls_matched_ids)
+        self.stats["total_fraud_sls"] = len(sls_matched_ids)
 
-        for p in self.petugas_ranking:
-            kec_counts = defaultdict(int)
-            for cid in p['clusters']:
-                for c in self.clusters.values():
-                    if c['id'] == cid and c.get('namakec'):
-                        kec_counts[c['namakec']] += 1
-            if kec_counts:
-                top_kec = max(kec_counts.items(), key=lambda x: x[1])[0]
-                p['namakec'] = top_kec
+        # Re-finalize clusters with newly matched SLS & kecamatan
+        self._finalize_clusters()
 
     def get_data(self, kecamatan: Optional[str] = None, severity: Optional[str] = None,
                  fraud_category: Optional[str] = None, search: Optional[str] = None) -> Dict[str, Any]:
         """Mengambil data klaster terfilter dan daftar opsi filter."""
-        filtered = list(self.clusters.values())
+        filtered_clusters = list(self.clusters.values())
+        filtered_petugas = list(self.petugas_ranking)
 
         if kecamatan:
             kec_clean = kecamatan.strip().lower()
-            filtered = [c for c in filtered if kec_clean in c['namakec'].lower()]
+            filtered_clusters = [c for c in filtered_clusters if kec_clean in c['namakec'].lower() or kec_clean == str(c.get('kodekec', '')).lower()]
+            filtered_petugas = [p for p in filtered_petugas if kec_clean in p['namakec'].lower()]
 
         if severity:
             sev_clean = severity.strip().lower()
-            filtered = [c for c in filtered if c['severity'].lower() == sev_clean]
+            filtered_clusters = [c for c in filtered_clusters if c['severity'].lower() == sev_clean]
+            filtered_petugas = [p for p in filtered_petugas if p['severity_counts'][sev_clean] > 0]
 
         if fraud_category:
             fraud_clean = fraud_category.strip().lower()
-            filtered = [c for c in filtered if c.get('fraud_category', '').lower() == fraud_clean]
+            filtered_clusters = [c for c in filtered_clusters if c.get('fraud_category', '').lower() == fraud_clean]
 
         if search:
             q = search.strip().lower()
-            filtered = [c for c in filtered if q in c['nama_petugas'].lower() or q in c['email'].lower() or q in c['id'].lower() or q in c.get('sls_nama', '').lower()]
+            filtered_clusters = [
+                c for c in filtered_clusters
+                if q in c['nama_petugas'].lower()
+                or q in c['email'].lower()
+                or q in c['id'].lower()
+                or q in c.get('sls_nama', '').lower()
+                or q in c.get('namadesa', '').lower()
+                or q in c.get('namasls', '').lower()
+                or q in c.get('landmark', '').lower()
+                or q in c.get('pml_nama', '').lower()
+            ]
+            filtered_petugas = [
+                p for p in filtered_petugas
+                if q in p['nama'].lower()
+                or q in p['email'].lower()
+                or q in p.get('pml_nama', '').lower()
+                or q in p.get('namakec', '').lower()
+            ]
 
-        kecamatans = sorted(list(set(c['namakec'] for c in self.clusters.values() if c['namakec'])))
+        # Re-group filtered clusters per officer for hierarchical accordion view
+        petugas_grouped = {}
+        for c in filtered_clusters:
+            email = c['email']
+            if email not in petugas_grouped:
+                petugas_grouped[email] = {
+                    'email': email,
+                    'nama': c['nama_petugas'],
+                    'namakec': c['namakec'],
+                    'pml_nama': c.get('pml_nama', '-'),
+                    'total_clusters': 0,
+                    'total_points': 0,
+                    'total_btt': 0,
+                    'total_bku': 0,
+                    'max_cluster_size': 0,
+                    'clusters': [],
+                }
+            pg = petugas_grouped[email]
+            pg['total_clusters'] += 1
+            pg['total_points'] += c['cluster_size']
+            pg['total_btt'] += c['btt_count']
+            pg['total_bku'] += c['bku_count']
+            if c['cluster_size'] > pg['max_cluster_size']:
+                pg['max_cluster_size'] = c['cluster_size']
+            pg['clusters'].append(c)
+
+        filtered_petugas_with_clusters = sorted(petugas_grouped.values(), key=lambda x: x['total_points'], reverse=True)
+
+        kecamatans = sorted(list(set(c['namakec'] for c in self.clusters.values() if c['namakec'] and c['namakec'] != 'Wilayah Terdeteksi')))
+
+        # Dynamic KPI based on current filtered clusters
+        fraud_c = [c for c in filtered_clusters if c.get('fraud_category') == 'fraud_btt']
+        wajar_c = [c for c in filtered_clusters if c.get('fraud_category') == 'wajar_bku']
+        camp_c = [c for c in filtered_clusters if c.get('fraud_category') == 'campuran']
+
+        kpi = {
+            'total_points': sum(c['cluster_size'] for c in filtered_clusters),
+            'total_clusters': len(filtered_clusters),
+            'total_petugas': len(set(c['email'] for c in filtered_clusters)),
+            'total_fraud_clusters': len(fraud_c),
+            'total_fraud_points': sum(c['cluster_size'] for c in fraud_c),
+            'total_fraud_sls': self.stats.get('total_sls_terdampak', 0),
+            'total_wajar_clusters': len(wajar_c),
+            'total_wajar_points': sum(c['cluster_size'] for c in wajar_c),
+            'total_campuran_clusters': len(camp_c),
+            'total_campuran_points': sum(c['cluster_size'] for c in camp_c),
+        }
 
         return {
             "stats": self.stats,
-            "clusters": filtered,
-            "petugas_ranking": self.petugas_ranking,
+            "kpi": kpi,
+            "clusters": filtered_clusters,
+            "petugas_ranking": filtered_petugas,
+            "petugas_with_clusters": filtered_petugas_with_clusters,
+            "kecamatan_summary": self.kecamatan_summary,
             "kecamatan_options": kecamatans,
             "sls_geojson": self.sls_geojson,
+            "generated_at": self.stats["generated_at"],
         }
 
-    def export_csv_stream(self, export_type: str = 'clusters') -> io.StringIO:
+    def export_csv_stream(self, export_type: str = 'clusters', cluster_id: Optional[str] = None) -> io.StringIO:
         """Menghasilkan CSV string dengan UTF-8 BOM untuk dibuka di Excel."""
         output = io.StringIO()
         output.write('\ufeff')
@@ -550,7 +813,7 @@ class GeotagAnomalyEngine:
 
         if export_type == 'petugas':
             writer.writerow([
-                'Rank', 'Nama Petugas', 'Email', 'Kecamatan',
+                'Rank', 'Nama Petugas', 'Email', 'Kecamatan', 'PML (Pengawas)',
                 'Tingkat Risiko', 'Total Klaster', 'Titik BTT (Rumah/Fraud)', 'Titik BKU (Pasar/Wajar)',
                 'Titik Terbanyak 1 Spot', 'Total Titik Anomali', 'Koordinat Klaster Terbesar'
             ])
@@ -560,6 +823,7 @@ class GeotagAnomalyEngine:
                     p.get('nama', ''),
                     p.get('email', ''),
                     p.get('namakec', ''),
+                    p.get('pml_nama', '-'),
                     p.get('severity_label', ''),
                     p.get('total_clusters', 0),
                     p.get('total_btt_points', 0),
@@ -568,22 +832,90 @@ class GeotagAnomalyEngine:
                     p.get('total_anomali_points', 0),
                     f"{p.get('top_cluster_lat', '')}, {p.get('top_cluster_lon', '')}"
                 ])
-        else:
+        elif export_type in ['titik', 'detail_bangunan']:
             writer.writerow([
-                'ID Klaster', 'Nama Petugas', 'Email', 'Kecamatan', 'SLS Terdampak',
-                'Klasifikasi Fraud', 'Komposisi Bangunan', 'Titik BTT (Rumah)', 'Titik BKU (Pasar)',
+                'No', 'ID Klaster', 'Label Klaster', 'Nama Petugas', 'Email Petugas', 'Kecamatan',
+                'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS',
+                'ID Assignment', 'No Bangunan', 'Nama Usaha / Responden',
+                'Jenis Bangunan', 'Tipe Anomali', 'Latitude Titik', 'Longitude Titik', 'Akurasi GPS (meter)', 'Google Maps Link Titik'
+            ])
+            point_no = 1
+            for c in self.clusters.values():
+                if cluster_id and c['id'] != cluster_id:
+                    continue
+
+                cluster_label = c.get('cluster_title') or f"Klaster #{c.get('officer_cluster_num', 1)}"
+
+                for pt in c['points']:
+                    p_lat = pt[0] if len(pt) > 0 else c['center_lat']
+                    p_lon = pt[1] if len(pt) > 1 else c['center_lon']
+                    b_type = pt[3] if len(pt) > 3 else 'lainnya'
+                    b_label = pt[4] if len(pt) > 4 else '-'
+                    nama_assign = pt[6] if len(pt) > 6 else ''
+                    no_bang = pt[7] if len(pt) > 7 else ''
+                    full_assign_id = pt[8] if len(pt) > 8 else (pt[2] if len(pt) > 2 else '')
+                    sub_sls = pt[9] if len(pt) > 9 else (c.get('id_sub_sls', ''))
+                    pt_desa = pt[10] if len(pt) > 10 and pt[10] != '-' else c.get('namadesa', '')
+                    pt_sls = pt[11] if len(pt) > 11 and pt[11] != '-' else c.get('namasls', '')
+                    p_acc = pt[12] if len(pt) > 12 else c.get('avg_accuracy', '')
+
+                    if b_type == 'bku':
+                        b_type_name = 'BKU (Khusus Usaha)'
+                    elif b_type == 'btt':
+                        b_type_name = 'BTT (Tempat Tinggal)'
+                    elif b_type == 'campuran':
+                        b_type_name = 'Campuran (Usaha & Hunian)'
+                    else:
+                        b_type_name = 'Lainnya / Bangunan Rusak'
+
+                    writer.writerow([
+                        point_no,
+                        c['id'],
+                        cluster_label,
+                        c['nama_petugas'],
+                        c['email'],
+                        c['namakec'],
+                        c.get('kodedesa', ''),
+                        pt_desa,
+                        c.get('kodesls', ''),
+                        pt_sls,
+                        sub_sls,
+                        full_assign_id,
+                        no_bang,
+                        nama_assign,
+                        b_type_name,
+                        b_label,
+                        p_lat,
+                        p_lon,
+                        p_acc,
+                        f"https://www.google.com/maps?q={p_lat},{p_lon}&z=20&t=k",
+                    ])
+                    point_no += 1
+        else:
+            # clusters export
+            writer.writerow([
+                'ID Klaster', 'Label Klaster', 'Nama Petugas', 'Email', 'Kecamatan',
+                'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS', 'Landmark / Usaha Utama',
+                'PML (Pengawas)', 'Klasifikasi Fraud', 'Komposisi', 'Titik BTT (Rumah)', 'Titik BKU (Pasar)',
                 'Tingkat Keparahan', 'Jumlah Titik Bertumpuk', 'Lat Pusat', 'Lon Pusat',
                 'Radius Sebaran (meter)', 'Akurasi GPS (meter)', 'Google Maps Link'
             ])
             for c in self.clusters.values():
                 writer.writerow([
                     c.get('id', ''),
+                    c.get('cluster_title', f"Klaster #{c.get('officer_cluster_num', 1)}"),
                     c.get('nama_petugas', ''),
                     c.get('email', ''),
                     c.get('namakec', ''),
-                    c.get('sls_nama', ''),
-                    c.get('fraud_label', ''),
-                    c.get('fraud_summary', ''),
+                    c.get('kodedesa', ''),
+                    c.get('namadesa', ''),
+                    c.get('kodesls', ''),
+                    c.get('namasls', ''),
+                    c.get('id_sub_sls', ''),
+                    c.get('landmark', ''),
+                    c.get('pml_nama', '-'),
+                    c.get('fraud_label', '-'),
+                    c.get('fraud_summary', '-'),
                     c.get('btt_count', 0),
                     c.get('bku_count', 0),
                     c.get('severity_label', ''),
