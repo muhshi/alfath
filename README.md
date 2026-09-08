@@ -69,8 +69,20 @@ Script `deploy.sh` secara otomatis mengeksekusi:
 
 ### 2026-09-08
 
-- **Pembaruan Aplikasi Standalone Deteksi Anomali Geotag SE2026 (`tools/anomali-geotag-standalone`)**:
-  - **Penyelarasan Fitur & Desain Antarmuka Versi Web**:
+- **Audit Kesesuaian Lokasi Tingkat Sub-SLS & Penyelesaian Poligon GeoJSON (Web & Standalone)**:
+  - **Perbaikan 100% Poligon GeoJSON (407 Sub-SLS)**:
+    - Mengidentifikasi akar masalah poligon yang muncul sebagian (sebelumnya hanya 137 poligon karena pembatasan klaster `fraud_btt`).
+    - Mengekstrak dan menyatukan seluruh 407 poligon Sub-SLS unik yang mencakup 347 klaster dan 8.785 titik ke dalam `public/SE2026/peta_sls_fraud_filtered.geojson` dan `tools/anomali-geotag-standalone/data/peta_sls.geojson` sehingga 100% klaster memiliki batas poligon visual di peta.
+  - **Mesin Audit Kesesuaian Spasial Titik vs Sub-SLS**:
+    - Menghitung uji geospasial *point-in-polygon* apakah titik pusat klaster dan titik individu berada di dalam batas Sub-SLS yang dideklarasikan petugas (`id_sub_sls` 16-digit atau `idsls` 14-digit).
+    - Menghasilkan status kesesuaian: **🟢 Sesuai Wilayah Sub-SLS** (220 klaster / 63.4%) dan **🚨 Melenceng dari Wilayah Sub-SLS** (127 klaster / 36.6%).
+    - Untuk klaster yang melenceng, sistem menghitung perkiraan jarak melenceng dalam meter (*distance in meters*) serta mendeteksi nama SLS/Desa sebenarnya tempat titik koordinat tersebut jatuh.
+  - **Antarmuka & Fitur Visual (Web Dashboard & Standalone)**:
+    - **Filter Kesesuaian Wilayah**: Menambahkan dropdown filter baru pada filter bar untuk menyaring klaster berdasarkan kesesuaian Sub-SLS (*Semua*, *Sesuai Sub-SLS*, *Melenceng*).
+    - **Badge Kesesuaian Spasial**: Menampilkan badge `🟢 Sesuai` / `🚨 Melenceng (X meter)` pada sub-cluster card per petugas, flat list klaster, popup marker Leaflet, dan tabel daftar lengkap klaster.
+    - **Kolom Kesesuaian di Modal Rincian Titik**: Menambahkan kolom status kesesuaian spasial untuk setiap baris titik bangunan pada modal inspeksi klaster (`clusterPointsModal`).
+    - **Ekspor CSV Lengkap**: Menambahkan kolom `Status Kesesuaian Sub-SLS`, `Jarak Melenceng (meter)`, dan `Lokasi SLS Sebenarnya` pada ekspor CSV klaster dan detail titik.
+  - **Penyelarasan Fitur & Desain Antarmuka Standalone Versi Web**:
     - Menerapkan header modern BPS lengkap dengan status badge *SE2026 Geotag Audit*, penanda waktu pembaruan (*timestamp*), serta menu dropdown ekspor laporan multi-tipe (Klaster, Semua Titik Bangunan ✨, dan Ranking Petugas).
     - **Banner Edukasi & Pemahaman Bangunan (BKU vs BTT)**: Menambahkan kotak penjelasan edukatif tentang indikasi fraud pada Bangunan Tempat Tinggal (BTT) vs potensi wajar pada sentra pasar/Bangunan Khusus Usaha (BKU).
     - **4 Kartu Ringkasan KPI Utama**: Total Geotag Teranomali, Indikasi Kuat Fraud (BTT), Potensi Wajar (BKU / Pasar), dan Campuran / Verifikasi.
@@ -78,7 +90,6 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - **Modal Inspeksi Titik Bangunan (`clusterPointsModal`)**: Pop-up inspeksi seluruh bangunan fisik yang menumpuk di dalam klaster dengan filter pencarian real-time dan ekspor CSV khusus klaster tersebut.
     - **Fitur Spotlight & Spiral Dispersion pada Peta**: Efek pemfokusan klaster aktif dengan pemekaran koordinat kembar 1–6m agar seluruh titik bertumpuk dapat terlihat jelas.
     - **Tab Persebaran per Kecamatan**: Tabel rekapitulasi agregasi beban klaster, petugas, titik BTT vs BKU, dan bar progres proporsi (%) per kecamatan.
-    - **Mesin Analisis Python (`engine.py`)**: Deteksi otomatis kolom `id_sub_sls`, nama desa, SLS, dan integrasi klasifikasi fraud cerdas yang konsisten dengan sistem web.
     - **Mempertahankan Fitur Upload**: Menjaga modal drag-and-drop file CSV dan GeoJSON di aplikasi standalone untuk kemudahan penggunaan di kabupaten/kota lain.
 
 ### 2026-09-04

@@ -386,10 +386,10 @@
         <div class="card-body p-3">
             <form method="GET" action="{{ route('dashboard.anomali-geotag') }}" id="filterForm">
                 <div class="row g-2 align-items-center">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small fw-semibold text-muted mb-1">Filter Kecamatan:</label>
                         <select name="kecamatan" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="">-- Semua Kecamatan (14 Kecamatan) --</option>
+                            <option value="">-- Semua Kecamatan --</option>
                             @foreach ($kecNameMap as $kCode => $kName)
                                 <option value="{{ $kCode }}" {{ $selectedKec === $kCode ? 'selected' : '' }}>
                                     {{ $kCode }} - {{ $kName }}
@@ -408,6 +408,14 @@
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Kesesuaian Sub-SLS:</label>
+                        <select name="lokasi_status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">-- Semua Kesesuaian --</option>
+                            <option value="sesuai" {{ ($selectedLokasi ?? '') === 'sesuai' ? 'selected' : '' }}>🟢 Sesuai Wilayah Sub-SLS</option>
+                            <option value="melenceng" {{ ($selectedLokasi ?? '') === 'melenceng' ? 'selected' : '' }}>🚨 Melenceng dari Sub-SLS</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label class="form-label small fw-semibold text-muted mb-1">Tingkat Keparahan:</label>
                         <select name="severity" class="form-select form-select-sm" onchange="this.form.submit()">
                             <option value="">-- Semua Severity --</option>
@@ -417,15 +425,15 @@
                             <option value="ringan" {{ $selectedSeverity === 'ringan' ? 'selected' : '' }}>🔵 Ringan (10 - 20 Titik)</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold text-muted mb-1">Pencarian Petugas / PML / Email:</label>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Pencarian Petugas / Email:</label>
                         <div class="input-group input-group-sm">
-                            <input type="text" name="search" class="form-control" placeholder="Ketik nama petugas / email..." value="{{ $search }}">
-                            <button class="btn btn-primary" type="submit"><i class="ti ti-search me-1"></i> Cari</button>
+                            <input type="text" name="search" class="form-control" placeholder="Ketik nama/email..." value="{{ $search }}">
+                            <button class="btn btn-primary" type="submit"><i class="ti ti-search"></i></button>
                         </div>
                     </div>
                     <div class="col-md-1 d-flex align-items-end">
-                        @if(!empty($selectedKec) || !empty($selectedSeverity) || !empty($selectedFraud) || !empty($search))
+                        @if(!empty($selectedKec) || !empty($selectedSeverity) || !empty($selectedFraud) || !empty($selectedLokasi) || !empty($search))
                             <a href="{{ route('dashboard.anomali-geotag') }}" class="btn btn-outline-danger btn-sm w-100" title="Reset Filter">
                                 <i class="ti ti-x"></i> Reset
                             </a>
@@ -545,15 +553,20 @@
                                                     <span class="fw-bold text-dark" style="font-size: 0.78rem;">
                                                         {{ $c['cluster_title'] ?? 'Klaster' }}
                                                     </span>
-                                                    <span class="badge {{ $c['fraud_badge'] ?? 'bg-secondary' }}" style="font-size: 0.65rem;">
-                                                        @if(($c['fraud_category'] ?? '') === 'fraud_btt')
-                                                            🚨 Fraud BTT
-                                                        @elseif(($c['fraud_category'] ?? '') === 'wajar_bku')
-                                                            🟢 Pasar BKU
-                                                        @else
-                                                            🟡 Campuran
-                                                        @endif
-                                                    </span>
+                                                    <div class="d-flex gap-1 align-items-center">
+                                                        <span class="badge {{ ($c['lokasi_status'] ?? '') === 'sesuai' ? 'bg-success-lt text-success' : 'bg-danger-lt text-danger' }} fw-bold" style="font-size: 0.62rem;">
+                                                            {{ ($c['lokasi_status'] ?? '') === 'sesuai' ? '🟢 Sesuai' : '🚨 Melenceng' }}
+                                                        </span>
+                                                        <span class="badge {{ $c['fraud_badge'] ?? 'bg-secondary' }}" style="font-size: 0.65rem;">
+                                                            @if(($c['fraud_category'] ?? '') === 'fraud_btt')
+                                                                🚨 Fraud BTT
+                                                            @elseif(($c['fraud_category'] ?? '') === 'wajar_bku')
+                                                                🟢 Pasar BKU
+                                                            @else
+                                                                🟡 Campuran
+                                                            @endif
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 <div class="text-secondary small" style="font-size: 0.72rem;">
                                                     <strong class="text-dark">Desa {{ $c['namadesa'] }}</strong> • {{ $c['namasls'] }}
@@ -593,15 +606,20 @@
                                         <span class="badge {{ $c['badge_class'] }} small py-0 px-1">
                                             {{ $c['cluster_size'] }} Titik
                                         </span>
-                                        <span class="badge {{ $c['fraud_badge'] ?? 'bg-secondary text-white' }} small py-0 px-1" style="font-size: 0.68rem;">
-                                            @if(($c['fraud_category'] ?? '') === 'fraud_btt')
-                                                🚨 Fraud BTT
-                                            @elseif(($c['fraud_category'] ?? '') === 'wajar_bku')
-                                                🟢 Pasar BKU
-                                            @else
-                                                🟡 Campuran
-                                            @endif
-                                        </span>
+                                        <div class="d-flex gap-1 align-items-center">
+                                            <span class="badge {{ ($c['lokasi_status'] ?? '') === 'sesuai' ? 'bg-success-lt text-success' : 'bg-danger-lt text-danger' }} fw-bold" style="font-size: 0.62rem;">
+                                                {{ ($c['lokasi_status'] ?? '') === 'sesuai' ? '🟢 Sesuai' : '🚨 Melenceng' }}
+                                            </span>
+                                            <span class="badge {{ $c['fraud_badge'] ?? 'bg-secondary text-white' }} small py-0 px-1" style="font-size: 0.68rem;">
+                                                @if(($c['fraud_category'] ?? '') === 'fraud_btt')
+                                                    🚨 Fraud BTT
+                                                @elseif(($c['fraud_category'] ?? '') === 'wajar_bku')
+                                                    🟢 Pasar BKU
+                                                @else
+                                                    🟡 Campuran
+                                                @endif
+                                            </span>
+                                        </div>
                                     </div>
                                     <div class="fw-bold text-dark small text-truncate" title="{{ $c['nama_petugas'] }}">
                                         {{ $c['cluster_title'] ?? 'Klaster' }} - {{ $c['nama_petugas'] }}
@@ -832,6 +850,7 @@
                                 <th style="width: 75px;">No Bang</th>
                                 <th>Nama Bangunan / Usaha</th>
                                 <th style="width: 140px;">Tipe Bangunan</th>
+                                <th style="width: 130px;">Kesesuaian Sub-SLS</th>
                                 <th>Wilayah (Desa & SLS)</th>
                                 <th style="width: 90px;">Akurasi GPS</th>
                                 <th class="text-center" style="width: 85px;">Aksi</th>
@@ -1079,7 +1098,7 @@
                     <div class="legend-item"><span class="legend-circle" style="background:#10b981;"></span> 🟢 BKU (Usaha / Potensi Pasar)</div>
                     <div class="legend-item"><span class="legend-circle" style="background:#f59e0b;"></span> 🟡 Campuran (Usaha & Hunian)</div>
                     <div class="legend-item"><span class="legend-circle" style="background:#8b5cf6;"></span> 🟣 Lainnya / Bangunan Rusak</div>
-                    <div class="legend-item mt-1 pt-1 border-top"><span class="legend-square"></span> 🏘️ Batas SLS Terdampak Fraud (137 SLS)</div>
+                    <div class="legend-item mt-1 pt-1 border-top"><span class="legend-square"></span> 🏘️ Batas Sub-SLS Wilayah Klaster</div>
                     <div class="text-muted small mt-2 pt-1 border-top" style="font-size:0.7rem;">
                         Zoom in (&ge; 15) untuk melihat titik individu berwarna sesuai tipe bangunannya.
                     </div>
@@ -1234,12 +1253,12 @@
             const visibleSlsCount = slsFraudLayer.getLayers().length;
 
             if (layerControlInstance) {
-                layerControlInstance.addOverlay(slsFraudLayer, "🏘️ Batas SLS Fraud (" + visibleSlsCount + " SLS)");
+                layerControlInstance.addOverlay(slsFraudLayer, "🏘️ Batas Sub-SLS Wilayah (" + visibleSlsCount + " Sub-SLS)");
             }
 
             const btn = document.getElementById('toggleSlsLayerBtn');
             if (btn) {
-                btn.innerHTML = '<i class="ti ti-polygon me-1"></i> Batas SLS Fraud (' + visibleSlsCount + ' SLS)';
+                btn.innerHTML = '<i class="ti ti-polygon me-1"></i> Batas Sub-SLS (' + visibleSlsCount + ' Wilayah)';
                 if (isSlsLayerVisible) {
                     btn.className = 'btn btn-sm btn-danger shadow-sm fw-bold me-2';
                 } else {
@@ -1291,7 +1310,7 @@
                 slsBtn.id = 'toggleSlsLayerBtn';
                 slsBtn.style.fontSize = '0.78rem';
                 slsBtn.style.borderRadius = '6px';
-                slsBtn.innerHTML = '<i class="ti ti-polygon me-1"></i> Batas SLS Fraud (137 SLS)';
+                slsBtn.innerHTML = '<i class="ti ti-polygon me-1"></i> Batas Sub-SLS (407 Wilayah)';
                 slsBtn.onclick = function (e) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1380,10 +1399,17 @@
                                 <span class="small text-muted">Klasifikasi:</span>
                                 <span class="badge ${c.fraud_badge || 'bg-secondary'}" style="font-size:0.72rem;">${c.fraud_label || '-'}</span>
                             </div>
-                            <div class="small">
+                            <div class="small mb-1">
                                 <span class="text-danger fw-bold">🏠 BTT (Rumah): ${c.btt_count || 0} (${c.pct_btt || 0}%)</span><br>
                                 <span class="text-success fw-bold">🏬 BKU (Pasar): ${c.bku_count || 0} (${c.pct_bku || 0}%)</span>
                             </div>
+                            <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                                <span class="small text-muted">Kesesuaian Sub-SLS:</span>
+                                <span class="badge ${c.lokasi_status === 'sesuai' ? 'bg-success text-white' : 'bg-danger text-white'}" style="font-size:0.68rem;">
+                                    ${c.lokasi_status === 'sesuai' ? '🟢 Sesuai Wilayah' : '🚨 Melenceng (' + Math.round(c.jarak_luar_m || 0) + 'm)'}
+                                </span>
+                            </div>
+                            ${c.lokasi_status !== 'sesuai' ? `<div class="small text-danger mt-0.5" style="font-size:0.68rem;">Terdeteksi di: <strong>${escapeHtml(c.actual_sls_nama || 'Luar SLS')}</strong></div>` : ''}
                         </div>
 
                         ${sampleNamesHtml}
@@ -1537,7 +1563,10 @@
                             ${assignNameHtml}
                             <div class="small text-muted mb-1">Bangunan: <strong>${bLabel}</strong></div>
                             <div class="small text-muted mb-1">Wilayah: <strong>${ptDesa}, SLS: ${ptSls}</strong></div>
-                            <div class="small text-muted mb-1">Sub-SLS: <code class="text-primary">${ptSubSls}</code></div>
+                            <div class="small text-muted mb-1 d-flex justify-content-between align-items-center">
+                                <span>Sub-SLS: <code class="text-primary">${ptSubSls}</code></span>
+                                ${pt[13] === 1 ? '<span class="badge bg-success-lt text-success" style="font-size:0.65rem;">🟢 Sesuai</span>' : '<span class="badge bg-danger-lt text-danger" style="font-size:0.65rem;">🚨 Melenceng (' + Math.round(pt[14] || 0) + 'm)</span>'}
+                            </div>
                             <div class="small text-muted mb-1">Kecamatan: <strong>${c.namakec}</strong></div>
                             <div class="small text-muted mb-1">Pengawas (PML): <strong>${c.pml_nama}</strong></div>
                             <div class="small text-muted mb-1">Akurasi GPS: <strong>${ptAcc}</strong></div>
@@ -1850,6 +1879,9 @@
                             <div class="text-muted small">${bLabel}</div>
                         </td>
                         <td>${badgeHtml}</td>
+                        <td>
+                            ${pt[13] === 1 ? '<span class="badge bg-success-lt text-success fw-bold">🟢 Sesuai</span>' : '<span class="badge bg-danger-lt text-danger fw-bold">🚨 Melenceng (' + Math.round(pt[14] || 0) + 'm)</span>'}
+                        </td>
                         <td>
                             <div class="fw-semibold text-dark small">${desaName}</div>
                             <div class="text-muted small">${slsName} <code class="small text-primary">${subSls}</code></div>

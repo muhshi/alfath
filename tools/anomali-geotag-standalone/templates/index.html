@@ -437,7 +437,7 @@
         <div class="card anomali-card mb-4">
             <div class="card-body p-3">
                 <div class="row g-2 align-items-center">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small fw-semibold text-muted mb-1">Filter Kecamatan:</label>
                         <select id="filter-kecamatan" class="form-select form-select-sm" onchange="applyFilters()">
                             <option value="">-- Semua Kecamatan --</option>
@@ -453,6 +453,14 @@
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Kesesuaian Sub-SLS:</label>
+                        <select id="filter-lokasi" class="form-select form-select-sm" onchange="applyFilters()">
+                            <option value="">-- Semua Kesesuaian --</option>
+                            <option value="sesuai">🟢 Sesuai Wilayah Sub-SLS</option>
+                            <option value="melenceng">🚨 Melenceng dari Sub-SLS</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label class="form-label small fw-semibold text-muted mb-1">Tingkat Keparahan:</label>
                         <select id="filter-severity" class="form-select form-select-sm" onchange="applyFilters()">
                             <option value="">-- Semua Severity --</option>
@@ -462,11 +470,11 @@
                             <option value="ringan">🔵 Ringan (10 - 20 Titik)</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small fw-semibold text-muted mb-1">Pencarian Petugas / Email / SLS:</label>
                         <div class="input-group input-group-sm">
-                            <input type="text" id="filter-search" class="form-control" placeholder="Ketik nama petugas / email / SLS..." onkeyup="applyFiltersDebounced()">
-                            <button class="btn btn-primary" type="button" onclick="applyFilters()"><i class="ti ti-search me-1"></i> Cari</button>
+                            <input type="text" id="filter-search" class="form-control" placeholder="Cari nama/email..." onkeyup="applyFiltersDebounced()">
+                            <button class="btn btn-primary" type="button" onclick="applyFilters()"><i class="ti ti-search"></i></button>
                         </div>
                     </div>
                     <div class="col-md-1 d-flex align-items-end">
@@ -644,6 +652,7 @@
                                     <th>Petugas</th>
                                     <th>Kecamatan</th>
                                     <th>Desa / SLS</th>
+                                    <th>Kesesuaian Sub-SLS</th>
                                     <th>Klasifikasi</th>
                                     <th>Tingkat</th>
                                     <th>Jumlah Titik</th>
@@ -699,6 +708,7 @@
                                         <th style="width: 75px;">No Bang</th>
                                         <th>Nama Bangunan / Usaha</th>
                                         <th style="width: 140px;">Tipe Bangunan</th>
+                                        <th style="width: 130px;">Kesesuaian Sub-SLS</th>
                                         <th>Wilayah (Desa & SLS)</th>
                                         <th style="width: 90px;">Akurasi GPS</th>
                                         <th class="text-center" style="width: 85px;">Aksi</th>
@@ -922,12 +932,14 @@
             const kec = $('#filter-kecamatan').val();
             const sev = $('#filter-severity').val();
             const frd = $('#filter-fraud').val();
+            const lok = $('#filter-lokasi').val();
             const q = $('#filter-search').val();
 
             const params = new URLSearchParams({
                 kecamatan: kec || '',
                 severity: sev || '',
                 fraud_category: frd || '',
+                lokasi_status: lok || '',
                 search: q || ''
             });
 
@@ -1143,10 +1155,17 @@
                                 <span class="small text-muted">Klasifikasi:</span>
                                 <span class="badge ${c.fraud_badge || 'bg-secondary'}" style="font-size:0.72rem;">${c.fraud_label || '-'}</span>
                             </div>
-                            <div class="small">
+                            <div class="small mb-1">
                                 <span class="text-danger fw-bold">🏠 BTT (Rumah): ${c.btt_count || 0} (${c.pct_btt || 0}%)</span><br>
                                 <span class="text-success fw-bold">🏬 BKU (Pasar): ${c.bku_count || 0} (${c.pct_bku || 0}%)</span>
                             </div>
+                            <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                                <span class="small text-muted">Kesesuaian Sub-SLS:</span>
+                                <span class="badge ${c.lokasi_status === 'sesuai' ? 'bg-success text-white' : 'bg-danger text-white'}" style="font-size:0.68rem;">
+                                    ${c.lokasi_status === 'sesuai' ? '🟢 Sesuai Wilayah' : '🚨 Melenceng (' + Math.round(c.jarak_luar_m || 0) + 'm)'}
+                                </span>
+                            </div>
+                            ${c.lokasi_status !== 'sesuai' ? `<div class="small text-danger mt-0.5" style="font-size:0.68rem;">Terdeteksi di: <strong>${escapeHtml(c.actual_sls_nama || 'Luar SLS')}</strong></div>` : ''}
                         </div>
 
                         ${sampleNamesHtml}
@@ -1294,7 +1313,10 @@
                             ${assignNameHtml}
                             <div class="small text-muted mb-1">Bangunan: <strong>${bLabel}</strong></div>
                             <div class="small text-muted mb-1">Wilayah: <strong>${ptDesa}, SLS: ${ptSls}</strong></div>
-                            <div class="small text-muted mb-1">Sub-SLS: <code class="text-primary">${ptSubSls}</code></div>
+                            <div class="small text-muted mb-1 d-flex justify-content-between align-items-center">
+                                <span>Sub-SLS: <code class="text-primary">${ptSubSls}</code></span>
+                                ${pt[13] === 1 ? '<span class="badge bg-success-lt text-success" style="font-size:0.65rem;">🟢 Sesuai</span>' : '<span class="badge bg-danger-lt text-danger" style="font-size:0.65rem;">🚨 Melenceng (' + Math.round(pt[14] || 0) + 'm)</span>'}
+                            </div>
                             <div class="small text-muted mb-1">Kecamatan: <strong>${c.namakec}</strong></div>
                             <div class="small text-muted mb-1">Akurasi GPS: <strong>${ptAcc}</strong></div>
                             <div class="small text-muted mb-1">Assignment ID: <code>${pAssign}</code></div>
@@ -1395,9 +1417,14 @@
                                     <span class="fw-bold text-dark" style="font-size: 0.78rem;">
                                         ${escapeHtml(c.cluster_title || 'Klaster')}
                                     </span>
-                                    <span class="badge ${fraudBadgeClass}" style="font-size: 0.65rem;">
-                                        ${fraudBadgeText}
-                                    </span>
+                                    <div class="d-flex gap-1 align-items-center">
+                                        <span class="badge ${c.lokasi_status === 'sesuai' ? 'bg-success-lt text-success' : 'bg-danger-lt text-danger'} fw-bold" style="font-size: 0.62rem;">
+                                            ${c.lokasi_status === 'sesuai' ? '🟢 Sesuai' : '🚨 Melenceng'}
+                                        </span>
+                                        <span class="badge ${fraudBadgeClass}" style="font-size: 0.65rem;">
+                                            ${fraudBadgeText}
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="text-secondary small" style="font-size: 0.72rem;">
                                     <strong class="text-dark">Desa ${escapeHtml(c.namadesa || '-')}</strong> • ${escapeHtml(c.namasls || '-')}
@@ -1476,9 +1503,14 @@
                                 <span class="badge ${c.badge_class} small py-0 px-1">
                                     ${c.cluster_size} Titik
                                 </span>
-                                <span class="badge ${fraudBadgeClass} small py-0 px-1" style="font-size: 0.68rem;">
-                                    ${fraudBadgeText}
-                                </span>
+                                <div class="d-flex gap-1 align-items-center">
+                                    <span class="badge ${c.lokasi_status === 'sesuai' ? 'bg-success-lt text-success' : 'bg-danger-lt text-danger'} fw-bold" style="font-size: 0.62rem;">
+                                        ${c.lokasi_status === 'sesuai' ? '🟢 Sesuai' : '🚨 Melenceng'}
+                                    </span>
+                                    <span class="badge ${fraudBadgeClass} small py-0 px-1" style="font-size: 0.65rem;">
+                                        ${fraudBadgeText}
+                                    </span>
+                                </div>
                             </div>
                             <div class="fw-bold text-dark small text-truncate" title="${escapeHtml(c.nama_petugas)}">
                                 ${escapeHtml(c.cluster_title || 'Klaster')} - ${escapeHtml(c.nama_petugas)}
@@ -1685,6 +1717,12 @@
                         <div class="small fw-bold">${escapeHtml(c.namadesa || '-')}</div>
                         <div class="small text-muted">${escapeHtml(c.namasls || '-')}</div>
                     </td>
+                    <td>
+                        <span class="badge ${c.lokasi_status === 'sesuai' ? 'bg-success-lt text-success' : 'bg-danger-lt text-danger'} fw-bold" style="font-size:0.7rem;">
+                            ${c.lokasi_status === 'sesuai' ? '🟢 Sesuai' : '🚨 Melenceng (' + Math.round(c.jarak_luar_m || 0) + 'm)'}
+                        </span>
+                        ${c.lokasi_status !== 'sesuai' ? `<div class="small text-danger mt-0.5" style="font-size:0.68rem;">${escapeHtml(c.actual_sls_nama || '')}</div>` : ''}
+                    </td>
                     <td><span class="badge ${c.fraud_badge}">${c.fraud_label}</span></td>
                     <td><span class="badge ${c.badge_class}">${c.severity_label}</span></td>
                     <td><strong>${c.cluster_size}</strong></td>
@@ -1705,7 +1743,7 @@
             $('#table-clusters tbody').html(clusterRows);
             tableClusters = $('#table-clusters').DataTable({
                 pageLength: 15,
-                order: [[6, 'desc']]
+                order: [[7, 'desc']]
             });
         }
 
@@ -1989,6 +2027,9 @@
                         </td>
                         <td>${badgeHtml}</td>
                         <td>
+                            ${pt[13] === 1 ? '<span class="badge bg-success-lt text-success fw-bold">🟢 Sesuai</span>' : '<span class="badge bg-danger-lt text-danger fw-bold">🚨 Melenceng (' + Math.round(pt[14] || 0) + 'm)</span>'}
+                        </td>
+                        <td>
                             <div class="fw-semibold text-dark small">${escapeHtml(desaName)}</div>
                             <div class="text-muted small">${escapeHtml(slsName)} <code class="small text-primary">${escapeHtml(subSls)}</code></div>
                         </td>
@@ -2055,6 +2096,7 @@
             $('#filter-kecamatan').val('');
             $('#filter-severity').val('');
             $('#filter-fraud').val('');
+            $('#filter-lokasi').val('');
             $('#filter-search').val('');
             $('#sidebarKecFilter').val('');
             $('#sidebarSearchInput').val('');

@@ -78,7 +78,8 @@ class GeotagAnomalyController extends Controller
                     'No', 'ID Klaster', 'Label Klaster', 'Nama Petugas', 'Email Petugas', 'Kecamatan',
                     'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS',
                     'ID Assignment', 'No Bangunan', 'Nama Usaha / Responden',
-                    'Jenis Bangunan', 'Tipe Anomali', 'Latitude Titik', 'Longitude Titik', 'Akurasi GPS (meter)', 'Google Maps Link Titik'
+                    'Jenis Bangunan', 'Tipe Anomali', 'Status Kesesuaian Sub-SLS', 'Jarak Melenceng (meter)',
+                    'Latitude Titik', 'Longitude Titik', 'Akurasi GPS (meter)', 'Google Maps Link Titik'
                 ]);
 
                 $pointNo = 1;
@@ -103,6 +104,8 @@ class GeotagAnomalyController extends Controller
                         $ptDesa = !empty($pt[10]) && $pt[10] !== '-' ? $pt[10] : ($c['namadesa'] ?? '');
                         $ptSls = !empty($pt[11]) && $pt[11] !== '-' ? $pt[11] : ($c['namasls'] ?? '');
                         $pAcc = $pt[12] ?? ($c['avg_accuracy'] ?? '');
+                        $ptInside = isset($pt[13]) ? ($pt[13] == 1 ? 'Sesuai' : 'Melenceng') : ($c['lokasi_status'] === 'sesuai' ? 'Sesuai' : 'Melenceng');
+                        $ptDist = $pt[14] ?? ($c['jarak_luar_m'] ?? 0);
 
                         $bTypeName = match($bType) {
                             'bku' => 'BKU (Khusus Usaha)',
@@ -128,6 +131,8 @@ class GeotagAnomalyController extends Controller
                             $namaAssign,
                             $bTypeName,
                             $bLabel,
+                            $ptInside,
+                            $ptDist,
                             $pLat,
                             $pLon,
                             $pAcc,
@@ -139,7 +144,9 @@ class GeotagAnomalyController extends Controller
                 fputcsv($handle, [
                     'ID Klaster', 'Label Klaster', 'Nama Petugas', 'Email', 'Kecamatan',
                     'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS', 'Landmark / Usaha Utama',
-                    'PML (Pengawas)', 'Klasifikasi Fraud', 'Komposisi', 'Titik BTT (Rumah)', 'Titik BKU (Pasar)',
+                    'PML (Pengawas)', 'Klasifikasi Fraud', 'Komposisi', 'Status Kesesuaian Sub-SLS',
+                    'Jarak Melenceng (meter)', 'Lokasi SLS Sebenarnya',
+                    'Titik BTT (Rumah)', 'Titik BKU (Pasar)',
                     'Tingkat Keparahan', 'Jumlah Titik Bertumpuk', 'Lat Pusat', 'Lon Pusat',
                     'Radius Sebaran (meter)', 'Akurasi GPS (meter)', 'Google Maps Link'
                 ]);
@@ -160,6 +167,9 @@ class GeotagAnomalyController extends Controller
                         $c['pml_nama'],
                         $c['fraud_label'] ?? '-',
                         $c['fraud_summary'] ?? '-',
+                        ($c['lokasi_status'] ?? '') === 'sesuai' ? 'Sesuai' : 'Melenceng',
+                        $c['jarak_luar_m'] ?? 0,
+                        $c['actual_sls_nama'] ?? '',
                         $c['btt_count'] ?? 0,
                         $c['bku_count'] ?? 0,
                         $c['severity_label'],

@@ -49,6 +49,8 @@ class GeotagAnomalyEngine:
         self.kecamatan_summary: List[Dict[str, Any]] = []
         self.sls_geojson: Dict[str, Any] = {"type": "FeatureCollection", "features": []}
         self.sls_indexed: List[Dict[str, Any]] = []
+        self.sls_by_subsls: Dict[str, Dict[str, Any]] = {}
+        self.sls_by_idsls: Dict[str, Dict[str, Any]] = {}
         self.stats = {
             "total_points": 0,
             "total_clusters": 0,
@@ -65,6 +67,10 @@ class GeotagAnomalyEngine:
             "total_wajar_clusters": 0,
             "total_campuran_points": 0,
             "total_campuran_clusters": 0,
+            "total_sesuai_lokasi": 0,
+            "total_melenceng_lokasi": 0,
+            "pct_sesuai_lokasi": 0.0,
+            "pct_melenceng_lokasi": 0.0,
             "csv_filename": "",
             "geojson_filename": "",
             "generated_at": datetime.datetime.now().strftime("%d %b %Y | %H:%M WIB"),
@@ -554,8 +560,10 @@ class GeotagAnomalyEngine:
         })
 
     def load_geojson(self, file_path_or_buffer, filename: str = "peta_sls.geojson") -> Dict[str, Any]:
-        """Parse file GeoJSON poligon SLS batas wilayah kabupaten."""
+        """Parse file GeoJSON poligon SLS/Sub-SLS batas wilayah kabupaten."""
         self.sls_indexed.clear()
+        self.sls_by_subsls.clear()
+        self.sls_by_idsls.clear()
         self.stats["geojson_filename"] = filename
 
         if isinstance(file_path_or_buffer, str):
@@ -574,6 +582,9 @@ class GeotagAnomalyEngine:
             if not geom or geom.get('type') not in ['Polygon', 'MultiPolygon']:
                 continue
 
+            sub_id = str(props.get('idsubsls') or props.get('id_sub_sls') or '')
+            sls_id = str(props.get('idsls') or props.get('id_sls') or (sub_id[:14] if len(sub_id) >= 14 else ''))
+
             if HAS_SHAPELY:
                 try:
                     s_geom = shape(geom)
@@ -587,6 +598,10 @@ class GeotagAnomalyEngine:
                         'prepared': prep(s_geom),
                     }
                     self.sls_indexed.append(item)
+                    if sub_id:
+                        self.sls_by_subsls[sub_id] = item
+                    if sls_id and sls_id not in self.sls_by_idsls:
+                        self.sls_by_idsls[sls_id] = item
                     continue
                 except Exception:
                     pass
@@ -619,6 +634,10 @@ class GeotagAnomalyEngine:
                 'prepared': None,
             }
             self.sls_indexed.append(item)
+            if sub_id:
+                self.sls_by_subsls[sub_id] = item
+            if sls_id and sls_id not in self.sls_by_idsls:
+                self.sls_by_idsls[sls_id] = item
 
         # Match clusters
         if self.clusters:
@@ -626,86 +645,161 @@ class GeotagAnomalyEngine:
 
         return {
             "status": "success",
-            "message": f"Berhasil memuat {len(self.sls_indexed):,} poligon SLS dari {filename}.",
+            "message": f"Berhasil memuat {len(self.sls_indexed):,} poligon Sub-SLS dari {filename}.",
             "total_sls": len(self.sls_indexed)
         }
 
     def match_clusters_with_sls(self):
-        """Mencocokkan titik klaster anomali dengan poligon SLS kabupaten secara instan."""
+        """Mencocokkan titik klaster anomali dengan poligon Sub-SLS dan melakukan audit kesesuaian lokasi."""
         if not self.clusters or not self.sls_indexed:
             return
 
-        matched_features = []
-        sls_matched_ids = set()
+        total_sesuai = 0
+        total_melenceng = 0
+        active_subsls_ids = set()
 
         for c in self.clusters.values():
-            lat = c['center_lat']
-            lon = c['center_lon']
+            sub_id = str(c.get('id_sub_sls') or '')
+            sls_id = str(c.get('kodesls') or (sub_id[:14] if len(sub_id) >= 14 else ''))
+            lat = float(c['center_lat'])
+            lon = float(c['center_lon'])
+            c_pt = Point(lon, lat) if HAS_SHAPELY else None
 
-            for sls in self.sls_indexed:
-                # Fast BBox reject
-                if not (sls['min_x'] <= lon <= sls['max_x'] and sls['min_y'] <= lat <= sls['max_y']):
-                    continue
+            # 1. Look up declared target Sub-SLS geometry by ID
+            sls_item = self.sls_by_subsls.get(sub_id) or self.sls_by_idsls.get(sls_id)
 
-                is_inside = False
-                if sls['prepared']:
-                    is_inside = sls['prepared'].contains(Point(lon, lat))
-                else:
-                    is_inside = True
+            # Fallback: jika tidak ketemu by ID, cari secara spasial (titik berada di dalam poligon apa)
+            if not sls_item and HAS_SHAPELY:
+                for s in self.sls_indexed:
+                    if s['min_x'] <= lon <= s['max_x'] and s['min_y'] <= lat <= s['max_y']:
+                        if s['prepared'] and s['prepared'].contains(c_pt):
+                            sls_item = s
+                            break
+
+            if sls_item:
+                props = sls_item['properties']
+                found_subsls = str(props.get('idsubsls') or props.get('id_sub_sls') or sub_id)
+                nmsls = props.get('nmsls') or props.get('nama_sls') or ''
+                nmdesa = props.get('nmdesa') or props.get('nama_desa') or ''
+                nmkec = props.get('nmkec') or props.get('nama_kec') or ''
+                kdkec = props.get('kd_kec_bps') or props.get('kdkec') or ''
+
+                c['sls_id'] = props.get('idsls') or sls_id
+                c['kodesls'] = props.get('idsls') or sls_id
+                c['id_sub_sls'] = found_subsls
+                c['sub_sls_short'] = props.get('kdsubsls') or (found_subsls[-4:] if len(found_subsls) >= 4 else '00')
+                if nmsls and (not c.get('namasls') or c['namasls'] == '-'):
+                    c['namasls'] = nmsls
+                if nmdesa and (not c.get('namadesa') or c['namadesa'] == '-'):
+                    c['namadesa'] = nmdesa
+                if nmkec and (not c.get('namakec') or c['namakec'] == '-'):
+                    c['namakec'] = nmkec.title()
+                if kdkec and not c.get('kodekec'):
+                    c['kodekec'] = kdkec
+
+                active_subsls_ids.add(found_subsls)
+
+                # Spatial Location Suitability Check (Cek Kesesuaian Lokasi terhadap Batas Sub-SLS)
+                s_geom = sls_item.get('shapely_geom')
+                prep_geom = sls_item.get('prepared')
+                is_inside = prep_geom.contains(c_pt) if prep_geom else (s_geom.contains(c_pt) if s_geom else True)
 
                 if is_inside:
-                    props = sls['properties']
-                    idsls = props.get('idsls') or props.get('id_sls') or str(props.get('OBJECTID', ''))
-                    nmsls = props.get('nmsls') or props.get('nama_sls') or ''
-                    nmdesa = props.get('nmdesa') or props.get('nama_desa') or ''
-                    nmkec = props.get('nmkec') or props.get('nama_kec') or ''
-                    kdkec = props.get('kd_kec_bps') or props.get('kdkec') or ''
+                    c['lokasi_status'] = 'sesuai'
+                    c['lokasi_label'] = '🟢 Sesuai Batas Sub-SLS'
+                    c['lokasi_badge'] = 'bg-success text-white'
+                    c['jarak_luar_m'] = 0
+                    total_sesuai += 1
+                else:
+                    dist_deg = s_geom.distance(c_pt) if s_geom else 0
+                    dist_m = round(dist_deg * 111320)
+                    c['lokasi_status'] = 'melenceng'
+                    c['jarak_luar_m'] = dist_m
+                    total_melenceng += 1
+                    if dist_m >= 1000:
+                        c['lokasi_label'] = f"🚨 Melenceng Jauh (~{dist_m/1000:.1f} km di luar Sub-SLS)"
+                        c['lokasi_badge'] = 'bg-danger text-white'
+                    else:
+                        c['lokasi_label'] = f"⚠️ Melenceng (~{dist_m} m di luar Sub-SLS)"
+                        c['lokasi_badge'] = 'bg-warning text-dark'
 
-                    c['sls_id'] = idsls
-                    c['kodesls'] = idsls
-                    c['namasls'] = nmsls
-                    c['namadesa'] = nmdesa
-                    c['sls_nama'] = f"{nmsls} - {nmdesa}".strip(' -')
-                    if nmkec:
-                        c['namakec'] = nmkec.title()
-                    if kdkec:
-                        c['kodekec'] = kdkec
+                    # Detect actual SLS where the coordinate was physically geotagged
+                    if HAS_SHAPELY:
+                        for s_other in self.sls_indexed:
+                            if s_other['min_x'] <= lon <= s_other['max_x'] and s_other['min_y'] <= lat <= s_other['max_y']:
+                                if s_other['prepared'] and s_other['prepared'].contains(c_pt):
+                                    op = s_other['properties']
+                                    c['actual_sls_nama'] = f"Desa {op.get('nmdesa', '')}, {op.get('nmsls', '')}"
+                                    c['actual_subsls_id'] = op.get('idsubsls', '')
+                                    break
 
-                    # Update point references if desa/sls empty
-                    for pt in c['points']:
-                        if not pt[10] or pt[10] == '-': pt[10] = nmdesa
-                        if not pt[11] or pt[11] == '-': pt[11] = nmsls
+                # Point-level spatial verification for all surveyed points
+                updated_points = []
+                for pt in c['points']:
+                    p_lat = float(pt[0]) if len(pt) > 0 and pt[0] != '' else lat
+                    p_lon = float(pt[1]) if len(pt) > 1 and pt[1] != '' else lon
+                    pt_obj = Point(p_lon, p_lat) if HAS_SHAPELY else None
+                    pt_in = prep_geom.contains(pt_obj) if prep_geom else (s_geom.contains(pt_obj) if s_geom else True)
+                    pt_d = 0 if pt_in else (round(s_geom.distance(pt_obj) * 111320) if s_geom else 0)
 
-                    if idsls and idsls not in sls_matched_ids:
-                        sls_matched_ids.add(idsls)
-                        matched_features.append({
-                            "type": "Feature",
-                            "properties": {
-                                "idsls": idsls,
-                                "nmsls": nmsls,
-                                "nmdesa": nmdesa,
-                                "nmkec": nmkec,
-                                "kd_kec_bps": kdkec,
-                                "fraud_clusters_count": props.get('fraud_clusters_count', 1),
-                                "fraud_points_count": props.get('fraud_points_count', c['cluster_size']),
-                                "petugas_list": props.get('petugas_list', [c['nama_petugas']]),
-                            },
-                            "geometry": sls['geometry']
-                        })
-                    break
+                    pt_row = list(pt)
+                    while len(pt_row) < 13:
+                        pt_row.append('')
+                    if len(pt_row) == 13:
+                        pt_row.extend([1 if pt_in else 0, pt_d])
+                    else:
+                        pt_row[13] = 1 if pt_in else 0
+                        if len(pt_row) > 14:
+                            pt_row[14] = pt_d
+                        else:
+                            pt_row.append(pt_d)
+                    updated_points.append(pt_row)
+                c['points'] = updated_points
+            else:
+                c['lokasi_status'] = 'tidak_terpetakan'
+                c['lokasi_label'] = '⚪ Batas Sub-SLS Belum Ada'
+                c['lokasi_badge'] = 'bg-secondary text-white'
+                c['jarak_luar_m'] = 0
+
+        # Output ALL matched/available Sub-SLS polygons to GeoJSON so no cluster has missing boundaries
+        matched_features = []
+        for sls in self.sls_indexed:
+            props = dict(sls['properties'])
+            sub_id = str(props.get('idsubsls') or props.get('id_sub_sls') or '')
+            sls_id = str(props.get('idsls') or props.get('id_sls') or '')
+
+            # Enhance properties with cluster counts
+            cluster_count = sum(1 for c in self.clusters.values() if c.get('id_sub_sls') == sub_id or c.get('kodesls') == sls_id)
+            points_count = sum(c['cluster_size'] for c in self.clusters.values() if c.get('id_sub_sls') == sub_id or c.get('kodesls') == sls_id)
+
+            props['total_clusters'] = cluster_count
+            props['total_points'] = points_count
+
+            matched_features.append({
+                "type": "Feature",
+                "properties": props,
+                "geometry": sls['geometry']
+            })
 
         self.sls_geojson = {
             "type": "FeatureCollection",
             "features": matched_features
         }
-        self.stats["total_sls_terdampak"] = len(sls_matched_ids)
-        self.stats["total_fraud_sls"] = len(sls_matched_ids)
+
+        total_cls = len(self.clusters)
+        self.stats["total_sls_terdampak"] = len(matched_features)
+        self.stats["total_fraud_sls"] = len(matched_features)
+        self.stats["total_sesuai_lokasi"] = total_sesuai
+        self.stats["total_melenceng_lokasi"] = total_melenceng
+        self.stats["pct_sesuai_lokasi"] = round((total_sesuai / total_cls * 100), 1) if total_cls else 0
+        self.stats["pct_melenceng_lokasi"] = round((total_melenceng / total_cls * 100), 1) if total_cls else 0
 
         # Re-finalize clusters with newly matched SLS & kecamatan
         self._finalize_clusters()
 
     def get_data(self, kecamatan: Optional[str] = None, severity: Optional[str] = None,
-                 fraud_category: Optional[str] = None, search: Optional[str] = None) -> Dict[str, Any]:
+                 fraud_category: Optional[str] = None, search: Optional[str] = None,
+                 lokasi_status: Optional[str] = None) -> Dict[str, Any]:
         """Mengambil data klaster terfilter dan daftar opsi filter."""
         filtered_clusters = list(self.clusters.values())
         filtered_petugas = list(self.petugas_ranking)
@@ -724,11 +818,18 @@ class GeotagAnomalyEngine:
             fraud_clean = fraud_category.strip().lower()
             filtered_clusters = [c for c in filtered_clusters if c.get('fraud_category', '').lower() == fraud_clean]
 
+        if lokasi_status:
+            lok_clean = lokasi_status.strip().lower()
+            filtered_clusters = [c for c in filtered_clusters if c.get('lokasi_status', '').lower() == lok_clean]
+
         if search:
             q = search.strip().lower()
             filtered_clusters = [
                 c for c in filtered_clusters
                 if q in c['nama_petugas'].lower()
+                or q in c['email'].lower()
+                or q in c['id'].lower()
+                or q in c.get('sls_nama', '').lower()
                 or q in c['email'].lower()
                 or q in c['id'].lower()
                 or q in c.get('sls_nama', '').lower()
@@ -837,7 +938,8 @@ class GeotagAnomalyEngine:
                 'No', 'ID Klaster', 'Label Klaster', 'Nama Petugas', 'Email Petugas', 'Kecamatan',
                 'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS',
                 'ID Assignment', 'No Bangunan', 'Nama Usaha / Responden',
-                'Jenis Bangunan', 'Tipe Anomali', 'Latitude Titik', 'Longitude Titik', 'Akurasi GPS (meter)', 'Google Maps Link Titik'
+                'Jenis Bangunan', 'Tipe Anomali', 'Latitude Titik', 'Longitude Titik', 'Akurasi GPS (meter)',
+                'Kesesuaian Sub-SLS', 'Jarak Melenceng (meter)', 'Google Maps Link Titik'
             ])
             point_no = 1
             for c in self.clusters.values():
@@ -858,6 +960,9 @@ class GeotagAnomalyEngine:
                     pt_desa = pt[10] if len(pt) > 10 and pt[10] != '-' else c.get('namadesa', '')
                     pt_sls = pt[11] if len(pt) > 11 and pt[11] != '-' else c.get('namasls', '')
                     p_acc = pt[12] if len(pt) > 12 else c.get('avg_accuracy', '')
+                    pt_in = pt[13] if len(pt) > 13 else 1
+                    pt_d = pt[14] if len(pt) > 14 else 0
+                    kesesuaian_str = '🟢 Sesuai Batas Sub-SLS' if pt_in else f'🚨 Melenceng (~{pt_d}m di luar Sub-SLS)'
 
                     if b_type == 'bku':
                         b_type_name = 'BKU (Khusus Usaha)'
@@ -888,6 +993,8 @@ class GeotagAnomalyEngine:
                         p_lat,
                         p_lon,
                         p_acc,
+                        kesesuaian_str,
+                        pt_d,
                         f"https://www.google.com/maps?q={p_lat},{p_lon}&z=20&t=k",
                     ])
                     point_no += 1
@@ -898,7 +1005,8 @@ class GeotagAnomalyEngine:
                 'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS', 'Landmark / Usaha Utama',
                 'PML (Pengawas)', 'Klasifikasi Fraud', 'Komposisi', 'Titik BTT (Rumah)', 'Titik BKU (Pasar)',
                 'Tingkat Keparahan', 'Jumlah Titik Bertumpuk', 'Lat Pusat', 'Lon Pusat',
-                'Radius Sebaran (meter)', 'Akurasi GPS (meter)', 'Google Maps Link'
+                'Radius Sebaran (meter)', 'Akurasi GPS (meter)',
+                'Status Kesesuaian Sub-SLS', 'Jarak Melenceng (meter)', 'Lokasi Geotag Sebenarnya', 'Google Maps Link'
             ])
             for c in self.clusters.values():
                 writer.writerow([
@@ -924,6 +1032,9 @@ class GeotagAnomalyEngine:
                     c.get('center_lon', ''),
                     c.get('approx_radius_m', ''),
                     c.get('avg_accuracy', ''),
+                    c.get('lokasi_label', '-'),
+                    c.get('jarak_luar_m', 0),
+                    c.get('actual_sls_nama', '-'),
                     c.get('google_maps_url', '')
                 ])
 

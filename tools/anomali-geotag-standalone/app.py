@@ -83,12 +83,14 @@ def api_data():
     kecamatan = request.args.get('kecamatan')
     severity = request.args.get('severity')
     fraud_category = request.args.get('fraud_category')
+    lokasi_status = request.args.get('lokasi_status')
     search = request.args.get('search')
 
     data = engine.get_data(
         kecamatan=kecamatan,
         severity=severity,
         fraud_category=fraud_category,
+        lokasi_status=lokasi_status,
         search=search
     )
     return jsonify(data)

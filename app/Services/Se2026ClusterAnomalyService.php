@@ -40,7 +40,7 @@ class Se2026ClusterAnomalyService
     public function getClusterData(bool $forceRefresh = false): array
     {
         $cacheStore = Cache::store('file');
-        $cacheKey = 'se2026_geotag_anomaly_dataset_v7';
+        $cacheKey = 'se2026_geotag_anomaly_dataset_v8';
 
         if ($forceRefresh) {
             $cacheStore->forget($cacheKey);
@@ -477,6 +477,9 @@ class Se2026ClusterAnomalyService
         }
         unset($c);
 
+        // Audit kesesuaian lokasi spasial terhadap Sub-SLS
+        $lokasiCounts = $this->auditSpatialSuitability($clusters);
+
         // Sort clusters by cluster_size desc
         uasort($clusters, function ($a, $b) {
             return $b['cluster_size'] <=> $a['cluster_size'];
@@ -675,6 +678,7 @@ class Se2026ClusterAnomalyService
             'max_cluster_size' => $maxClusterOverall,
             'severity_counts' => $severityCounts,
             'fraud_counts' => $fraudCounts,
+            'lokasi_counts' => $lokasiCounts,
             'batch_files' => $batchFiles,
             'clusters' => $clusterList,
             'petugas_ranking' => $petugasRanking,
@@ -694,6 +698,7 @@ class Se2026ClusterAnomalyService
         $selectedKec = trim((string) $request->get('kecamatan', ''));
         $selectedSeverity = trim((string) $request->get('severity', ''));
         $selectedFraud = trim((string) $request->get('fraud_category', ''));
+        $selectedLokasi = trim((string) $request->get('lokasi_status', ''));
         $search = trim((string) $request->get('search', ''));
 
         $filteredClusters = $raw['clusters'];
@@ -717,6 +722,13 @@ class Se2026ClusterAnomalyService
         if (!empty($selectedFraud)) {
             $filteredClusters = array_values(array_filter($filteredClusters, function ($c) use ($selectedFraud) {
                 return ($c['fraud_category'] ?? '') === $selectedFraud;
+            }));
+        }
+
+        // Filter Clusters by Lokasi Status (Sesuai Sub-SLS vs Melenceng)
+        if (!empty($selectedLokasi)) {
+            $filteredClusters = array_values(array_filter($filteredClusters, function ($c) use ($selectedLokasi) {
+                return ($c['lokasi_status'] ?? '') === $selectedLokasi;
             }));
         }
 
@@ -795,6 +807,7 @@ class Se2026ClusterAnomalyService
             'selectedKec' => $selectedKec,
             'selectedSeverity' => $selectedSeverity,
             'selectedFraud' => $selectedFraud,
+            'selectedLokasi' => $selectedLokasi,
             'search' => $search,
             'kpi' => [
                 'total_points' => array_sum(array_column($filteredClusters, 'cluster_size')),
@@ -808,7 +821,10 @@ class Se2026ClusterAnomalyService
                 'total_wajar_points' => array_sum(array_column($wajarClusters, 'cluster_size')),
                 'total_campuran_clusters' => count($campuranClusters),
                 'total_campuran_points' => array_sum(array_column($campuranClusters, 'cluster_size')),
+                'total_sesuai_clusters' => count(array_filter($filteredClusters, fn($c) => ($c['lokasi_status'] ?? '') === 'sesuai')),
+                'total_melenceng_clusters' => count(array_filter($filteredClusters, fn($c) => ($c['lokasi_status'] ?? '') === 'melenceng')),
                 'severity_counts' => $raw['severity_counts'],
+                'lokasi_counts' => $raw['lokasi_counts'] ?? [],
             ],
             'clusters' => $filteredClusters,
             'petugas_ranking' => $filteredPetugas,
@@ -850,16 +866,14 @@ class Se2026ClusterAnomalyService
         $dataset = $this->getClusterData();
         $fraudClusters = [];
         foreach ($dataset['clusters'] as $c) {
-            if (($c['fraud_category'] ?? '') === 'fraud_btt') {
-                $fraudClusters[] = [
-                    'id' => $c['id'],
-                    'lat' => (float) $c['center_lat'],
-                    'lon' => (float) $c['center_lon'],
-                    'petugas' => $c['nama_petugas'] ?? '',
-                    'kec_code' => $c['kodekec'] ?? '',
-                    'points_count' => count($c['points'] ?? []),
-                ];
-            }
+            $fraudClusters[] = [
+                'id' => $c['id'],
+                'lat' => (float) $c['center_lat'],
+                'lon' => (float) $c['center_lon'],
+                'petugas' => $c['nama_petugas'] ?? '',
+                'kec_code' => $c['kodekec'] ?? '',
+                'points_count' => count($c['points'] ?? []),
+            ];
         }
 
         $geojsonPath = public_path('SE2026/peta_sls_202513321 (2).geojson');
@@ -1030,6 +1044,216 @@ class Se2026ClusterAnomalyService
             return false;
         }
         return false;
+    }
+
+    /**
+     * Audit spatial conformity of clusters and points against Sub-SLS polygons.
+     */
+    protected function auditSpatialSuitability(array &$clusters): array
+    {
+        $geojsonPath = public_path('SE2026/peta_sls_fraud_filtered.geojson');
+        if (!file_exists($geojsonPath)) {
+            $geojsonPath = base_path('public/SE2026/peta_sls_fraud_filtered.geojson');
+        }
+        if (!file_exists($geojsonPath)) {
+            return ['sesuai' => 0, 'melenceng' => 0];
+        }
+
+        $raw = file_get_contents($geojsonPath);
+        $geojson = json_decode($raw, true);
+        unset($raw);
+
+        if (empty($geojson['features'])) {
+            return ['sesuai' => 0, 'melenceng' => 0];
+        }
+
+        $bySubsls = [];
+        $byIdsls = [];
+        $allFeatures = [];
+
+        foreach ($geojson['features'] as $f) {
+            $geom = $f['geometry'] ?? null;
+            if (!$geom) continue;
+
+            $props = $f['properties'] ?? [];
+            $minX = 180.0; $minY = 90.0; $maxX = -180.0; $maxY = -90.0;
+            if ($geom['type'] === 'Polygon') {
+                foreach ($geom['coordinates'] as $ring) {
+                    $this->scanRingBbox($ring, $minX, $minY, $maxX, $maxY);
+                }
+            } elseif ($geom['type'] === 'MultiPolygon') {
+                foreach ($geom['coordinates'] as $poly) {
+                    foreach ($poly as $ring) {
+                        $this->scanRingBbox($ring, $minX, $minY, $maxX, $maxY);
+                    }
+                }
+            }
+
+            $item = [
+                'minX' => $minX, 'minY' => $minY, 'maxX' => $maxX, 'maxY' => $maxY,
+                'geom' => $geom,
+                'props' => $props,
+            ];
+
+            $subId = trim((string) ($props['idsubsls'] ?? ''));
+            if ($subId !== '') {
+                $bySubsls[$subId] = $item;
+            }
+            $slsId = trim((string) ($props['idsls'] ?? ''));
+            if ($slsId !== '') {
+                if (!isset($byIdsls[$slsId])) {
+                    $byIdsls[$slsId] = [];
+                }
+                $byIdsls[$slsId][] = $item;
+            }
+            $allFeatures[] = $item;
+        }
+
+        $sesuaiCount = 0;
+        $melencengCount = 0;
+
+        foreach ($clusters as &$c) {
+            $rawSub = trim((string) ($c['id_sub_sls'] ?? ''));
+            $cLat = (float) $c['center_lat'];
+            $cLon = (float) $c['center_lon'];
+
+            // Find target boundary feature
+            $targetItem = null;
+            if ($rawSub !== '' && isset($bySubsls[$rawSub])) {
+                $targetItem = $bySubsls[$rawSub];
+            } elseif (strlen($rawSub) >= 14 && isset($byIdsls[substr($rawSub, 0, 14)])) {
+                $targetItem = $byIdsls[substr($rawSub, 0, 14)][0];
+            }
+
+            $isInside = false;
+            $distM = 0.0;
+            $actualSlsNama = '';
+            $actualSubSlsId = '';
+
+            if ($targetItem) {
+                if ($cLon >= $targetItem['minX'] && $cLon <= $targetItem['maxX'] &&
+                    $cLat >= $targetItem['minY'] && $cLat <= $targetItem['maxY']) {
+                    if ($this->pointInGeom($cLon, $cLat, $targetItem['geom'])) {
+                        $isInside = true;
+                    }
+                }
+                if (!$isInside) {
+                    $distM = $this->distToGeomM($cLon, $cLat, $targetItem['geom']);
+                }
+            }
+
+            if ($isInside) {
+                $sesuaiCount++;
+                $c['lokasi_status'] = 'sesuai';
+                $c['lokasi_label'] = '🟢 Sesuai Wilayah Sub-SLS';
+                $c['lokasi_badge'] = 'bg-success text-white';
+                $c['jarak_luar_m'] = 0;
+                $c['actual_sls_nama'] = $targetItem['props']['nmsls'] ?? ($c['namasls'] ?? '');
+                $c['actual_subsls_id'] = $rawSub;
+            } else {
+                $melencengCount++;
+                // Find actual location where point falls
+                foreach ($allFeatures as $feat) {
+                    if ($cLon >= $feat['minX'] && $cLon <= $feat['maxX'] &&
+                        $cLat >= $feat['minY'] && $cLat <= $feat['maxY']) {
+                        if ($this->pointInGeom($cLon, $cLat, $feat['geom'])) {
+                            $actualSlsNama = ($feat['props']['nmsls'] ?? '') . ' (' . ($feat['props']['nmdesa'] ?? '') . ')';
+                            $actualSubSlsId = $feat['props']['idsubsls'] ?? ($feat['props']['idsls'] ?? '');
+                            break;
+                        }
+                    }
+                }
+
+                $c['lokasi_status'] = 'melenceng';
+                $c['lokasi_label'] = '🚨 Melenceng dari Wilayah Sub-SLS';
+                $c['lokasi_badge'] = 'bg-danger text-white';
+                $c['jarak_luar_m'] = $distM;
+                $c['actual_sls_nama'] = $actualSlsNama ?: 'Luar SLS Terdaftar';
+                $c['actual_subsls_id'] = $actualSubSlsId;
+            }
+
+            // Verify each point in the cluster
+            if (!empty($c['points']) && $targetItem) {
+                foreach ($c['points'] as &$pt) {
+                    $pLat = (float) $pt[0];
+                    $pLon = (float) $pt[1];
+                    $pInside = false;
+                    $pDist = 0.0;
+                    if ($pLon >= $targetItem['minX'] && $pLon <= $targetItem['maxX'] &&
+                        $pLat >= $targetItem['minY'] && $pLat <= $targetItem['maxY']) {
+                        if ($this->pointInGeom($pLon, $pLat, $targetItem['geom'])) {
+                            $pInside = true;
+                        }
+                    }
+                    if (!$pInside) {
+                        $pDist = $this->distToGeomM($pLon, $pLat, $targetItem['geom']);
+                    }
+                    $pt[13] = $pInside ? 1 : 0;
+                    $pt[14] = $pDist;
+                }
+                unset($pt);
+            }
+        }
+        unset($c);
+
+        return [
+            'sesuai' => $sesuaiCount,
+            'melenceng' => $melencengCount,
+        ];
+    }
+
+    /**
+     * Compute approximate distance from point to polygon in meters.
+     */
+    protected function distToGeomM(float $px, float $py, array $geom): float
+    {
+        $type = $geom['type'] ?? '';
+        $coords = $geom['coordinates'] ?? [];
+        $minDist = PHP_FLOAT_MAX;
+
+        if ($type === 'Polygon') {
+            if (!empty($coords[0])) {
+                $d = $this->pointDistanceToRingM($px, $py, $coords[0]);
+                if ($d < $minDist) $minDist = $d;
+            }
+        } elseif ($type === 'MultiPolygon') {
+            foreach ($coords as $poly) {
+                if (!empty($poly[0])) {
+                    $d = $this->pointDistanceToRingM($px, $py, $poly[0]);
+                    if ($d < $minDist) $minDist = $d;
+                }
+            }
+        }
+        return ($minDist === PHP_FLOAT_MAX) ? 0.0 : $minDist;
+    }
+
+    /**
+     * Distance in meters from point (px, py) to exterior ring segments.
+     */
+    protected function pointDistanceToRingM(float $px, float $py, array $ring): float
+    {
+        $minDistDegSq = PHP_FLOAT_MAX;
+        $n = count($ring);
+        for ($i = 0; $i < $n - 1; $i++) {
+            $x1 = $ring[$i][0]; $y1 = $ring[$i][1];
+            $x2 = $ring[$i + 1][0]; $y2 = $ring[$i + 1][1];
+
+            $dx = $x2 - $x1;
+            $dy = $y2 - $y1;
+            $lenSq = $dx * $dx + $dy * $dy;
+            if ($lenSq == 0) {
+                $distSq = ($px - $x1) * ($px - $x1) + ($py - $y1) * ($py - $y1);
+            } else {
+                $t = max(0, min(1, (($px - $x1) * $dx + ($py - $y1) * $dy) / $lenSq));
+                $projX = $x1 + $t * $dx;
+                $projY = $y1 + $t * $dy;
+                $distSq = ($px - $projX) * ($px - $projX) + ($py - $projY) * ($py - $projY);
+            }
+            if ($distSq < $minDistDegSq) {
+                $minDistDegSq = $distSq;
+            }
+        }
+        return round(sqrt($minDistDegSq) * 111320, 1);
     }
 
     /**
