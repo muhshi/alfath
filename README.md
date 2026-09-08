@@ -368,7 +368,18 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Mengintegrasikan relasi langsung (*direct join*) antara `monitoring_se2026` dan `alokasi_pengawas` berbasis `region_code` SLS tugas pencacah. Kini Agus Supriyadi terpetakan akurat ke pengawas aslinya, yaitu **Shofiyatul Hanani** (`najwadwi648@gmail.com`).
     - Meremajakan (*cache busting*) dataset anomali geotag v5 untuk memastikan seluruh tampilan dashboard dan ranking petugas memuat nama PML yang tepat.
 
+### 2026-09-08
 
-
-
-
+- **Penyempurnaan UX & Interaktivitas Versi Standalone Anomali Geotag (`tools/anomali-geotag-standalone/`)**:
+  - **Sidebar Daftar Petugas Ringkas (*List Nama Saja*)**:
+    - Mode default sidebar menyajikan daftar nama petugas secara bersih dan rapi.
+    - Interaksi akordeon: mengeklik kartu nama petugas akan membuka daftar klaster miliknya (`Klaster #1`, `Klaster #2`, dst.) beserta ringkasan persentase BTT/BKU dan badge klasifikasi fraud, sementara petugas lain otomatis melipat rapi.
+  - **Efek Spotlight Peta Geospasial (*Fading Out Klaster Lain*)**:
+    - Saat suatu klaster diklik (baik dari sidebar maupun langsung di peta), peta melakukan *flyTo* (zoom 18) dan memudarkan seluruh klaster serta titik lain hingga mendekati tak terlihat (`opacity: 0.02` & badge cluster redup/grayscale).
+    - Klaster terpilih disorot dengan cincin emas berpendar (`#facc15`), seluruh titik bangunannya (merah BTT, hijau BKU, oranye campuran) ditampilkan kontras dan cerah, serta poligon batas SLS klaster terkait ditonjolkan.
+    - Banner mengambang (*floating spotlight banner*) di atas peta menyediakan tombol cepat `🔍 Rincian Titik & Unduh CSV` dan `✕ Tampilkan Semua (Reset)`.
+  - **Modal Rincian Titik Bangunan & Unduh CSV per Klaster**:
+    - Modal interaktif menyajikan daftar lengkap seluruh titik fisik bangunan di dalam klaster terpilih (No, No Bangunan, Nama Usaha/Responden, Tipe Bangunan, SLS, Akurasi GPS, dan Pin Google Maps).
+    - Dilengkapi fitur pencarian instan dan tombol utama **"Ekspor CSV Titik Klaster Ini"** (`/api/export?type=titik&cluster_id=...`) untuk kebutuhan audit lapangan langsung.
+  - **Mempertahankan Tombol & Modal Upload Data**:
+    - Fitur upload file CSV SQL Lab dan GeoJSON batas SLS tetap tersedia penuh dan mudah diakses via tombol toolbar atas.

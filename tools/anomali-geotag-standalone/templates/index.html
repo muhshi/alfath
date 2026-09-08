@@ -113,6 +113,23 @@
             box-shadow: 0 0 10px rgba(2, 132, 199, 0.6);
         }
 
+        /* Map Spotlight Mode: Fading other markers & clusters */
+        #anomali-map.spotlight-mode .custom-cluster-badge {
+            opacity: 0.04 !important;
+            filter: grayscale(100%) !important;
+            transform: scale(0.6) !important;
+            pointer-events: none !important;
+            transition: all 0.3s ease !important;
+        }
+        #anomali-map.spotlight-mode .custom-cluster-badge.active-spotlight-badge {
+            opacity: 1 !important;
+            filter: none !important;
+            transform: scale(1.2) !important;
+            pointer-events: auto !important;
+            box-shadow: 0 0 22px rgba(250, 204, 21, 0.9) !important;
+            border-color: #facc15 !important;
+        }
+
         /* Map Legend */
         .map-legend {
             background: rgba(255, 255, 255, 0.96);
@@ -494,14 +511,14 @@
                         <div class="card anomali-card p-2 position-relative">
                             <div id="anomali-map"></div>
                             <!-- Floating Spotlight Banner -->
-                            <div id="spotlightBanner" class="position-absolute top-0 start-50 translate-middle-x mt-3 shadow-lg p-2 px-3 rounded-pill text-white d-none" style="z-index: 1050; font-size: 0.8rem; backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.94) !important; border: 1px solid rgba(255,255,255,0.15);">
+                            <div id="spotlightBanner" class="position-absolute top-0 start-50 translate-middle-x mt-3 shadow-lg p-2 px-3 rounded-pill text-white d-none" style="z-index: 1050; font-size: 0.8rem; backdrop-filter: blur(10px); background: rgba(15, 23, 42, 0.94) !important; border: 1.5px solid rgba(250, 204, 21, 0.45);">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span><span class="badge bg-danger pulse-dot me-1">🎯 FOKUS</span> <strong id="spotlightTitle">Klaster</strong></span>
+                                    <span><span class="badge bg-danger pulse-dot me-1">🎯 FOKUS</span> <strong id="spotlightTitle" class="text-warning">Klaster</strong></span>
                                     <span class="text-white-50 small d-none d-md-inline" id="spotlightSubtitle"></span>
-                                    <button type="button" class="btn btn-xs btn-outline-light rounded-pill py-0 px-2" onclick="openClusterDetailModal(activeSpotlightClusterId)">
-                                        <i class="ti ti-list-details me-1"></i> Rincian Titik
+                                    <button type="button" class="btn btn-xs btn-primary rounded-pill py-0.5 px-2.5 fw-bold shadow-sm" onclick="openClusterDetailModal(activeSpotlightClusterId)">
+                                        <i class="ti ti-list-details me-1"></i> Rincian Titik & Unduh CSV
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-light rounded-pill py-0 px-2 text-dark fw-bold" onclick="resetSpotlight()">
+                                    <button type="button" class="btn btn-xs btn-light rounded-pill py-0.5 px-2.5 text-dark fw-bold" onclick="resetSpotlight()">
                                         <i class="ti ti-x me-1"></i> Tampilkan Semua
                                     </button>
                                 </div>
@@ -1388,8 +1405,8 @@
                                 ${landmarkHtml}
                                 <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="font-size: 0.7rem;">
                                     <span class="text-muted">BTT: ${c.pct_btt || 0}% | BKU: ${c.pct_bku || 0}%</span>
-                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1" onclick="event.stopPropagation(); openClusterDetailModal('${c.id}')">
-                                        <i class="ti ti-list-details"></i> Titik (${c.cluster_size})
+                                    <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1.5 fw-semibold shadow-sm" onclick="event.stopPropagation(); openClusterDetailModal('${c.id}')" title="Lihat rincian titik bangunan & unduh CSV">
+                                        <i class="ti ti-list-details me-0.5"></i> Rincian Titik (${c.cluster_size})
                                     </button>
                                 </div>
                             </div>
@@ -1401,7 +1418,7 @@
                              id="officerCard_${pEmailHash}"
                              data-kec="${escapeHtml(p.namakec)}"
                              data-search="${(p.nama + ' ' + p.email + ' ' + p.namakec).toLowerCase()}">
-                            <div class="officer-header p-2 d-flex justify-content-between align-items-center" onclick="toggleOfficerAccordion('${pEmailHash}')">
+                            <div class="officer-header p-2 d-flex justify-content-between align-items-center" onclick="toggleOfficerAccordion('${pEmailHash}')" title="Klik untuk melihat ${p.total_clusters} klaster milik ${escapeHtml(p.nama)}">
                                 <div class="d-flex align-items-center gap-2 overflow-hidden">
                                     <div class="avatar-circle-sm bg-primary-lt text-primary fw-bold">
                                         ${initialLetter}
@@ -1417,10 +1434,10 @@
                                     <span class="badge ${pointBadgeClass} fw-bold" style="font-size: 0.72rem;">
                                         ${p.total_points} Titik
                                     </span>
-                                    <i class="ti ti-chevron-down text-muted ms-1" id="arrow_${pEmailHash}" style="transition: transform 0.2s; ${pIdx === 0 ? 'transform: rotate(180deg);' : ''}"></i>
+                                    <i class="ti ti-chevron-down text-muted ms-1" id="arrow_${pEmailHash}" style="transition: transform 0.2s;"></i>
                                 </div>
                             </div>
-                            <div class="officer-clusters-sublist bg-light p-2 border-top" id="sublist_${pEmailHash}" style="${pIdx === 0 ? '' : 'display: none;'}">
+                            <div class="officer-clusters-sublist bg-light p-2 border-top" id="sublist_${pEmailHash}" style="display: none;">
                                 ${subCardsHtml}
                             </div>
                         </div>
@@ -1505,12 +1522,22 @@
             }
         }
 
-        function toggleOfficerAccordion(hash) {
+        function toggleOfficerAccordion(hash, forceOpen = false) {
             const sublist = document.getElementById('sublist_' + hash);
             const arrow = document.getElementById('arrow_' + hash);
             if (!sublist) return;
 
-            if (sublist.style.display === 'none') {
+            const willOpen = forceOpen || (sublist.style.display === 'none');
+
+            if (willOpen) {
+                // Collapse other officer accordions to keep the list clean and focused
+                document.querySelectorAll('.officer-clusters-sublist').forEach(el => {
+                    if (el.id !== 'sublist_' + hash) el.style.display = 'none';
+                });
+                document.querySelectorAll('.officer-header .ti-chevron-down').forEach(el => {
+                    if (el.id !== 'arrow_' + hash) el.style.transform = 'rotate(0deg)';
+                });
+
                 sublist.style.display = 'block';
                 if (arrow) arrow.style.transform = 'rotate(180deg)';
             } else {
@@ -1703,52 +1730,86 @@
             activeSpotlightClusterId = clusterId;
             const targetCluster = (globalData && globalData.clusters) ? globalData.clusters.find(c => String(c.id) === String(clusterId)) : null;
 
-            // 1. Dim / Highlight layers in clusterGroup
+            // 1. Add spotlight-mode class to map container so all unselected cluster badges fade out
+            const mapEl = document.getElementById('anomali-map');
+            if (mapEl) mapEl.classList.add('spotlight-mode');
+
+            // 2. Dim / Highlight layers in clusterGroup
             if (clusterGroup) {
                 clusterGroup.eachLayer(layer => {
                     if (layer._clusterId !== undefined) {
                         if (String(layer._clusterId) === String(clusterId)) {
                             if (layer.setStyle) {
-                                layer.setStyle({ opacity: 1, fillOpacity: 0.95, weight: (markersById[clusterId] === layer ? 3.5 : 2) });
+                                const isMain = markersById[clusterId] === layer;
+                                layer.setStyle({
+                                    opacity: 1,
+                                    fillOpacity: isMain ? 1 : 0.95,
+                                    weight: isMain ? 4 : 2,
+                                    color: isMain ? '#facc15' : '#ffffff'
+                                });
                             }
                             if (layer.bringToFront) layer.bringToFront();
                         } else {
                             if (layer.setStyle) {
-                                layer.setStyle({ opacity: 0.12, fillOpacity: 0.08, weight: 0.5 });
+                                layer.setStyle({ opacity: 0.02, fillOpacity: 0.01, weight: 0 });
                             }
                         }
                     }
                 });
             }
 
-            // 2. Dim / Highlight layers in rawPointsGroup
+            // 3. Dim / Highlight layers in rawPointsGroup
             if (rawPointsGroup) {
                 rawPointsGroup.eachLayer(layer => {
                     if (layer._clusterId !== undefined) {
                         if (String(layer._clusterId) === String(clusterId)) {
                             if (layer.setStyle) {
-                                layer.setStyle({ opacity: 1, fillOpacity: 0.95, weight: 2 });
+                                layer.setStyle({ opacity: 1, fillOpacity: 0.95, weight: 2, color: '#ffffff' });
                             }
                             if (layer.bringToFront) layer.bringToFront();
                         } else {
                             if (layer.setStyle) {
-                                layer.setStyle({ opacity: 0.12, fillOpacity: 0.08, weight: 0.5 });
+                                layer.setStyle({ opacity: 0.02, fillOpacity: 0.01, weight: 0 });
                             }
                         }
                     }
                 });
             }
 
-            // 3. Highlight main marker
+            // 4. Highlight main marker
             Object.keys(markersById).forEach(id => {
                 const m = markersById[id];
                 if (String(id) === String(clusterId)) {
-                    m.setStyle({ opacity: 1, fillOpacity: 1, radius: 10, weight: 3.5, color: '#facc15' });
+                    m.setStyle({ opacity: 1, fillOpacity: 1, radius: 10, weight: 4, color: '#facc15' });
                     m.bringToFront();
                 } else {
-                    m.setStyle({ opacity: 0.15, fillOpacity: 0.10, radius: 6, weight: 1, color: '#ffffff' });
+                    m.setStyle({ opacity: 0.02, fillOpacity: 0.01, radius: 4, weight: 0 });
                 }
             });
+
+            // 5. Highlight corresponding SLS polygon if SLS layer exists
+            if (slsFraudLayer) {
+                const targetSubSls = targetCluster ? (targetCluster.id_sub_sls || targetCluster.sub_sls_short || '') : '';
+                slsFraudLayer.eachLayer(layer => {
+                    const p = layer.feature ? layer.feature.properties : {};
+                    const featId = String(p.id_sub_sls || p.idsls || '');
+                    if (targetSubSls && featId && (featId === targetSubSls || targetSubSls.startsWith(featId) || featId.startsWith(targetSubSls))) {
+                        layer.setStyle({
+                            weight: 3.5,
+                            color: '#facc15',
+                            fillColor: '#dc2626',
+                            fillOpacity: 0.35
+                        });
+                        if (layer.bringToFront) layer.bringToFront();
+                    } else {
+                        layer.setStyle({
+                            weight: 0.8,
+                            color: '#94a3b8',
+                            fillOpacity: 0.02
+                        });
+                    }
+                });
+            }
 
             showSpotlightBanner(targetCluster);
             highlightListItem(clusterId);
@@ -1756,6 +1817,9 @@
 
         function resetSpotlight() {
             activeSpotlightClusterId = null;
+
+            const mapEl = document.getElementById('anomali-map');
+            if (mapEl) mapEl.classList.remove('spotlight-mode');
 
             if (clusterGroup) {
                 clusterGroup.eachLayer(layer => {
@@ -1797,6 +1861,12 @@
                 });
             });
 
+            if (slsFraudLayer) {
+                slsFraudLayer.eachLayer(layer => {
+                    slsFraudLayer.resetStyle(layer);
+                });
+            }
+
             hideSpotlightBanner();
             document.querySelectorAll('.cluster-item, .sub-cluster-card').forEach(el => el.classList.remove('active'));
         }
@@ -1828,28 +1898,24 @@
         function highlightListItem(id) {
             document.querySelectorAll('.cluster-item, .sub-cluster-card').forEach(el => el.classList.remove('active'));
 
-            const flatEl = document.getElementById('cItem_' + id);
-            if (flatEl) {
-                flatEl.classList.add('active');
-                if (currentSidebarMode === 'semua') {
-                    flatEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            }
-
             const subEl = document.getElementById('cItemSub_' + id);
             if (subEl) {
                 subEl.classList.add('active');
                 const parentSublist = subEl.closest('.officer-clusters-sublist');
                 if (parentSublist) {
-                    parentSublist.style.display = 'block';
-                    const parentCard = parentSublist.closest('.officer-accordion-item');
-                    if (parentCard) {
-                        const arrow = parentCard.querySelector('.ti-chevron-down');
-                        if (arrow) arrow.style.transform = 'rotate(180deg)';
-                    }
+                    const pHash = parentSublist.id.replace('sublist_', '');
+                    toggleOfficerAccordion(pHash, true);
                 }
                 if (currentSidebarMode === 'petugas') {
                     subEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+
+            const flatEl = document.getElementById('cItem_' + id);
+            if (flatEl) {
+                flatEl.classList.add('active');
+                if (currentSidebarMode === 'semua') {
+                    flatEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             }
         }
