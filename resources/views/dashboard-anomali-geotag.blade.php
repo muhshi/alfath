@@ -897,6 +897,11 @@
         let layerControlInstance = null;
         let activeSpotlightClusterId = null;
 
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             // 1. Initialize Leaflet Map FIRST and independently
             try {
@@ -1533,9 +1538,7 @@
                         offset: [0, -6]
                     });
 
-                    const noBangHtml = pNoBang
-                        ? `<div class="small mb-1 text-dark">Nomor Bangunan: <strong class="text-primary">No. ${pNoBang}</strong></div>`
-                        : '';
+                    const noBangHtml = `<div class="small mb-1 text-dark">Nomor Bangunan: <strong class="text-primary">${pNoBang ? 'No. ' + pNoBang : '<em>-</em>'}</strong></div>`;
 
                     const spreadNoticeHtml = coordCounts[k] > 1
                         ? `<div class="badge bg-warning-lt text-dark w-100 py-1 mb-2 text-wrap" style="font-size:0.7rem;">⚠️ Koordinat Kembar: Ada ${coordCounts[k]} titik bertumpuk di lokasi yang sama persis (posisi dimekarkan 1-5m agar semua titik terlihat).</div>`

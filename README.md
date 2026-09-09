@@ -74,6 +74,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Menghilangkan tampilan nama assignment/responden/usaha dari antarmuka dashboard web (`dashboard-anomali-geotag.blade.php`), tooltip titik peta, popup rincian titik, dan modal tabel rincian titik demi mematuhi prinsip kerahasiaan data statistik (UU Statistik No. 16 Tahun 1997).
     - Mengganti representasi informasi titik pada web hanya dengan **Nomor Bangunan Fisik** (`No. Bangunan`), jenis/keterangan bangunan, dan kategori BKU/BTT/Campuran.
     - Menghilangkan kolom *Nama Usaha / Responden* dan *Landmark / Usaha Utama* pada fitur ekspor CSV web.
+    - Memperbaiki bug JavaScript `escapeHtml is not defined` pada popup klaster yang sempat menghentikan rendering titik dan marker pada peta Leaflet.
     - Mempertahankan dataset dan fungsionalitas lengkap pada aplikasi standalone lokal (`tools/anomali-geotag-standalone`) untuk keperluan analisis internal petugas BPS secara offline di jaringan lokal.
 
 ### 2026-09-08
