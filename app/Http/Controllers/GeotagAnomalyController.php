@@ -77,7 +77,7 @@ class GeotagAnomalyController extends Controller
                 fputcsv($handle, [
                     'No', 'ID Klaster', 'Label Klaster', 'Nama Petugas', 'Email Petugas', 'Kecamatan',
                     'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS',
-                    'ID Assignment', 'No Bangunan', 'Nama Usaha / Responden',
+                    'ID Assignment', 'No Bangunan',
                     'Jenis Bangunan', 'Tipe Anomali', 'Status Kesesuaian Sub-SLS', 'Jarak Melenceng (meter)',
                     'Latitude Titik', 'Longitude Titik', 'Akurasi GPS (meter)', 'Google Maps Link Titik'
                 ]);
@@ -97,7 +97,6 @@ class GeotagAnomalyController extends Controller
                         $pLon = $pt[1] ?? $c['center_lon'];
                         $bType = $pt[3] ?? 'lainnya';
                         $bLabel = $pt[4] ?? '-';
-                        $namaAssign = $pt[6] ?? '';
                         $noBang = $pt[7] ?? '';
                         $fullAssignId = $pt[8] ?? ($pt[2] ?? '');
                         $subSls = $pt[9] ?? ($c['id_sub_sls'] ?? '');
@@ -128,7 +127,6 @@ class GeotagAnomalyController extends Controller
                             $subSls,
                             $fullAssignId,
                             $noBang,
-                            $namaAssign,
                             $bTypeName,
                             $bLabel,
                             $ptInside,
@@ -143,7 +141,7 @@ class GeotagAnomalyController extends Controller
             } else {
                 fputcsv($handle, [
                     'ID Klaster', 'Label Klaster', 'Nama Petugas', 'Email', 'Kecamatan',
-                    'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS', 'Landmark / Usaha Utama',
+                    'Kode Desa', 'Nama Desa', 'Kode SLS', 'Nama SLS', 'Kode Sub-SLS',
                     'PML (Pengawas)', 'Klasifikasi Fraud', 'Komposisi', 'Status Kesesuaian Sub-SLS',
                     'Jarak Melenceng (meter)', 'Lokasi SLS Sebenarnya',
                     'Titik BTT (Rumah)', 'Titik BKU (Pasar)',
@@ -163,7 +161,6 @@ class GeotagAnomalyController extends Controller
                         $c['kodesls'] ?? '',
                         $c['namasls'] ?? '',
                         $c['id_sub_sls'] ?? '',
-                        $c['landmark'] ?? '',
                         $c['pml_nama'],
                         $c['fraud_label'] ?? '-',
                         $c['fraud_summary'] ?? '-',

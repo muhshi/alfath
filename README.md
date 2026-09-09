@@ -67,6 +67,15 @@ Script `deploy.sh` secara otomatis mengeksekusi:
 
 ## 📜 Changelog
 
+### 2026-09-09
+
+- **Perlindungan Kerahasiaan Data Responden pada Dashboard Web Anomali Geotag SE2026**:
+  - **Penyembunyian Nama Assignment / Usaha / Responden di Dashboard Web**:
+    - Menghilangkan tampilan nama assignment/responden/usaha dari antarmuka dashboard web (`dashboard-anomali-geotag.blade.php`), tooltip titik peta, popup rincian titik, dan modal tabel rincian titik demi mematuhi prinsip kerahasiaan data statistik (UU Statistik No. 16 Tahun 1997).
+    - Mengganti representasi informasi titik pada web hanya dengan **Nomor Bangunan Fisik** (`No. Bangunan`), jenis/keterangan bangunan, dan kategori BKU/BTT/Campuran.
+    - Menghilangkan kolom *Nama Usaha / Responden* dan *Landmark / Usaha Utama* pada fitur ekspor CSV web.
+    - Mempertahankan dataset dan fungsionalitas lengkap pada aplikasi standalone lokal (`tools/anomali-geotag-standalone`) untuk keperluan analisis internal petugas BPS secara offline di jaringan lokal.
+
 ### 2026-09-08
 
 - **Audit Kesesuaian Lokasi Tingkat Sub-SLS & Penyelesaian Poligon GeoJSON (Web & Standalone)**:

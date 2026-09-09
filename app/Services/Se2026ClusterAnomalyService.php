@@ -381,8 +381,8 @@ class Se2026ClusterAnomalyService
                 $pLon = (float) ($row[$idxPointLon] ?? $cLon);
                 $pAcc = (float) ($idxPointAcc !== false ? ($row[$idxPointAcc] ?? 0) : 0);
 
-                if (!empty($namaAssign) && count($clusters[$clusterKey]['sample_names']) < 4 && !in_array($namaAssign, $clusters[$clusterKey]['sample_names'])) {
-                    $clusters[$clusterKey]['sample_names'][] = $namaAssign;
+                if (!empty($noBang) && count($clusters[$clusterKey]['sample_names']) < 4 && !in_array('No. ' . $noBang, $clusters[$clusterKey]['sample_names'])) {
+                    $clusters[$clusterKey]['sample_names'][] = 'No. ' . $noBang;
                 }
 
                 if (!empty($assignId) && !isset($clusters[$clusterKey]['points'][$assignId])) {
@@ -420,7 +420,7 @@ class Se2026ClusterAnomalyService
                         $bType,
                         $label,
                         $pointColor,
-                        $namaAssign,
+                        '', // nama_assignment dihilangkan untuk privasi responden
                         $noBang,
                         $assignId,
                         $rawSubSls,
@@ -492,7 +492,7 @@ class Se2026ClusterAnomalyService
             $officerClusterCounts[$email] = ($officerClusterCounts[$email] ?? 0) + 1;
             $c['officer_cluster_num'] = $officerClusterCounts[$email];
             $c['cluster_title'] = "Klaster #{$c['officer_cluster_num']} ({$c['cluster_size']} Titik)";
-            $c['landmark'] = !empty($c['sample_names']) ? $c['sample_names'][0] : '';
+            $c['landmark'] = '';
         }
         unset($c);
 

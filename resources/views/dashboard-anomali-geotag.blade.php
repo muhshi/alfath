@@ -547,7 +547,7 @@
                                                  id="cItemSub_{{ $c['id'] }}"
                                                  data-id="{{ $c['id'] }}"
                                                  data-kec="{{ $c['namakec'] }}"
-                                                 data-search="{{ strtolower($p['nama'] . ' ' . $p['email'] . ' ' . $c['namakec'] . ' ' . $c['namadesa'] . ' ' . $c['namasls'] . ' ' . ($c['landmark'] ?? '')) }}"
+                                                 data-search="{{ strtolower($p['nama'] . ' ' . $p['email'] . ' ' . $c['namakec'] . ' ' . $c['namadesa'] . ' ' . $c['namasls']) }}"
                                                  onclick="focusCluster({{ $c['center_lat'] }}, {{ $c['center_lon'] }}, '{{ $c['id'] }}')">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                                     <span class="fw-bold text-dark" style="font-size: 0.78rem;">
@@ -571,11 +571,6 @@
                                                 <div class="text-secondary small" style="font-size: 0.72rem;">
                                                     <strong class="text-dark">Desa {{ $c['namadesa'] }}</strong> • {{ $c['namasls'] }}
                                                 </div>
-                                                @if(!empty($c['landmark']))
-                                                    <div class="badge bg-purple-lt text-purple mt-1 text-truncate" style="font-size: 0.68rem; max-width: 100%;">
-                                                        <i class="ti ti-building-store me-1"></i> {{ $c['landmark'] }}
-                                                    </div>
-                                                @endif
                                                 <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="font-size: 0.7rem;">
                                                     <span class="text-muted">BTT: {{ $c['pct_btt'] ?? 0 }}% | BKU: {{ $c['pct_bku'] ?? 0 }}%</span>
                                                     <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1" onclick="event.stopPropagation(); openClusterDetailModal('{{ $c['id'] }}')">
@@ -600,7 +595,7 @@
                                 <div class="cluster-item {{ $idx === 0 ? 'active' : '' }}" 
                                      id="cItem_{{ $c['id'] }}"
                                      data-kec="{{ $c['namakec'] }}"
-                                     data-search="{{ strtolower($c['nama_petugas'] . ' ' . $c['email'] . ' ' . $c['namakec'] . ' ' . $c['namadesa'] . ' ' . $c['namasls'] . ' ' . ($c['landmark'] ?? '')) }}"
+                                     data-search="{{ strtolower($c['nama_petugas'] . ' ' . $c['email'] . ' ' . $c['namakec'] . ' ' . $c['namadesa'] . ' ' . $c['namasls']) }}"
                                      onclick="focusCluster({{ $c['center_lat'] }}, {{ $c['center_lon'] }}, '{{ $c['id'] }}')">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="badge {{ $c['badge_class'] }} small py-0 px-1">
@@ -627,11 +622,6 @@
                                     <div class="text-secondary small mt-0.5" style="font-size: 0.72rem;">
                                         <strong>Desa {{ $c['namadesa'] }}</strong> • {{ $c['namasls'] }}
                                     </div>
-                                    @if(!empty($c['landmark']))
-                                        <div class="badge bg-purple-lt text-purple mt-1 text-truncate" style="font-size: 0.68rem; max-width: 100%;">
-                                            <i class="ti ti-building-store me-1"></i> {{ $c['landmark'] }}
-                                        </div>
-                                    @endif
                                     <div class="text-muted small d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="font-size: 0.7rem;">
                                         <span><i class="ti ti-map-pin text-primary"></i> {{ $c['namakec'] }}</span>
                                         <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1" onclick="event.stopPropagation(); openClusterDetailModal('{{ $c['id'] }}')">
@@ -839,7 +829,7 @@
                         <span class="badge bg-warning text-dark" id="modalBadgeCampuran">0 Campuran</span>
                     </div>
                     <div style="min-width: 260px;">
-                        <input type="text" id="modalSearchPoints" class="form-control form-control-sm" placeholder="🔍 Cari nama usaha / no bangunan...">
+                        <input type="text" id="modalSearchPoints" class="form-control form-control-sm" placeholder="🔍 Cari no bangunan / SLS / tipe...">
                     </div>
                 </div>
                 <div class="table-responsive" style="max-height: 480px;">
@@ -847,9 +837,9 @@
                         <thead class="table-light sticky-top" style="font-size: 0.78rem;">
                             <tr>
                                 <th class="text-center" style="width: 45px;">No</th>
-                                <th style="width: 75px;">No Bang</th>
-                                <th>Nama Bangunan / Usaha</th>
-                                <th style="width: 140px;">Tipe Bangunan</th>
+                                <th style="width: 120px;">No. Bangunan</th>
+                                <th>Jenis / Keterangan Bangunan</th>
+                                <th style="width: 140px;">Kategori</th>
                                 <th style="width: 130px;">Kesesuaian Sub-SLS</th>
                                 <th>Wilayah (Desa & SLS)</th>
                                 <th style="width: 90px;">Akurasi GPS</th>
@@ -1380,7 +1370,7 @@
                 mainMarker._clusterId = c.id;
 
                 const sampleNamesHtml = (c.sample_names && c.sample_names.length > 0)
-                    ? `<div class="small text-muted mb-2">Sampel Tempat: <strong class="text-dark">${c.sample_names.join(', ')}</strong></div>`
+                    ? `<div class="small text-muted mb-2">Sampel No. Bangunan: <strong class="text-dark">${c.sample_names.join(', ')}</strong></div>`
                     : '';
 
                 const popupContent = `
@@ -1537,14 +1527,14 @@
                     });
                     pointMarker._clusterId = c.id;
 
-                    const tooltipText = pNamaAssign ? `${c.nama_petugas} (#${pIdx + 1} - ${pNamaAssign})` : `${c.nama_petugas} (#${pIdx + 1} - ${bShort})`;
+                    const tooltipText = pNoBang ? `${c.nama_petugas} (Bangunan No. ${pNoBang} - ${bShort})` : `${c.nama_petugas} (#${pIdx + 1} - ${bShort})`;
                     pointMarker.bindTooltip(tooltipText, {
                         direction: 'top',
                         offset: [0, -6]
                     });
 
-                    const assignNameHtml = pNamaAssign
-                        ? `<div class="small mb-1 text-dark">Tempat/Responden: <strong class="text-primary">${pNamaAssign}</strong> ${pNoBang ? '<span class="badge bg-secondary-lt">No. ' + pNoBang + '</span>' : ''}</div>`
+                    const noBangHtml = pNoBang
+                        ? `<div class="small mb-1 text-dark">Nomor Bangunan: <strong class="text-primary">No. ${pNoBang}</strong></div>`
                         : '';
 
                     const spreadNoticeHtml = coordCounts[k] > 1
@@ -1560,7 +1550,7 @@
                             </div>
                             ${bStatusBadge}
                             ${spreadNoticeHtml}
-                            ${assignNameHtml}
+                            ${noBangHtml}
                             <div class="small text-muted mb-1">Bangunan: <strong>${bLabel}</strong></div>
                             <div class="small text-muted mb-1">Wilayah: <strong>${ptDesa}, SLS: ${ptSls}</strong></div>
                             <div class="small text-muted mb-1 d-flex justify-content-between align-items-center">
@@ -1869,14 +1859,13 @@
 
                     const row = document.createElement('tr');
                     row.className = 'point-table-row';
-                    row.setAttribute('data-search', `${namaAssign} ${noBang} ${bLabel} ${desaName} ${slsName} ${subSls}`.toLowerCase());
+                    row.setAttribute('data-search', `${noBang} ${bLabel} ${desaName} ${slsName} ${subSls}`.toLowerCase());
 
                     row.innerHTML = `
                         <td class="text-center text-muted">${idx + 1}</td>
-                        <td><span class="badge bg-light text-dark border">${noBang}</span></td>
+                        <td><span class="badge bg-light text-dark border px-2 py-1 fw-bold fs-6">No. ${noBang || '-'}</span></td>
                         <td>
-                            <div class="fw-bold text-dark">${namaAssign !== '-' ? namaAssign : '<span class="text-muted fst-italic">Tanpa Nama Usaha</span>'}</div>
-                            <div class="text-muted small">${bLabel}</div>
+                            <div class="fw-bold text-dark">${bLabel}</div>
                         </td>
                         <td>${badgeHtml}</td>
                         <td>
