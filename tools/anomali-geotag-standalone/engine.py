@@ -51,6 +51,9 @@ class GeotagAnomalyEngine:
         self.sls_indexed: List[Dict[str, Any]] = []
         self.sls_by_subsls: Dict[str, Dict[str, Any]] = {}
         self.sls_by_idsls: Dict[str, Dict[str, Any]] = {}
+        self.geojson_kec_map: Dict[str, str] = {}
+        self.geojson_desa_map: Dict[str, str] = {}
+        self.geojson_sls_map: Dict[str, str] = {}
         self.stats = {
             "total_points": 0,
             "total_clusters": 0,
@@ -138,12 +141,12 @@ class GeotagAnomalyEngine:
         idx_p_acc = find_col(['point_accuracy', 'p_acc', 'akurasi', 'accuracy_point'])
         idx_sub_sls = find_col(['id_sub_sls', 'sub_sls', 'kode_sub_sls', 'kodesubsls', 'id_subsls'])
         idx_pml = find_col(['pml_nama', 'nama_pml', 'pengawas', 'pml_email', 'email_pengawas'])
-        idx_nmkec = find_col(['namakec', 'nama_kec', 'kecamatan', 'nmkec'])
-        idx_kdkec = find_col(['kodekec', 'kode_kec', 'kdkec', 'kd_kec_bps'])
-        idx_nmdesa = find_col(['namadesa', 'nama_desa', 'desa', 'kelurahan', 'nmdesa'])
-        idx_kddesa = find_col(['kodedesa', 'kode_desa', 'kddesa'])
-        idx_nmsls = find_col(['namasls', 'nama_sls', 'sls', 'nmsls'])
-        idx_kdsls = find_col(['kodesls', 'kode_sls', 'kdsls', 'idsls'])
+        idx_nmkec = find_col(['namakec', 'nama_kec', 'kecamatan', 'nmkec', 'nm_kec', 'nama_kecamatan'])
+        idx_kdkec = find_col(['kodekec', 'kode_kec', 'kdkec', 'kd_kec_bps', 'kd_kec'])
+        idx_nmdesa = find_col(['namadesa', 'nama_desa', 'desa', 'kelurahan', 'nmdesa', 'nm_desa', 'nama_kelurahan'])
+        idx_kddesa = find_col(['kodedesa', 'kode_desa', 'kddesa', 'kd_desa_bps', 'kd_desa'])
+        idx_nmsls = find_col(['namasls', 'nama_sls', 'sls', 'nmsls', 'nm_sls'])
+        idx_kdsls = find_col(['kodesls', 'kode_sls', 'kdsls', 'idsls', 'id_sls'])
 
         if idx_email is None or idx_c_lat is None or idx_c_lon is None:
             if should_close: f.close()
@@ -183,9 +186,33 @@ class GeotagAnomalyEngine:
 
             if raw_sub_sls and len(raw_sub_sls) >= 7:
                 sub_kd = raw_sub_sls[:7]
-                if sub_kd in KEC_NAME_MAP and not csv_kec:
+                if not csv_kdkec:
                     csv_kdkec = sub_kd
-                    csv_kec = KEC_NAME_MAP[sub_kd]
+                if not csv_kec:
+                    if sub_kd in self.geojson_kec_map:
+                        csv_kec = self.geojson_kec_map[sub_kd]
+                    elif sub_kd in KEC_NAME_MAP:
+                        csv_kec = KEC_NAME_MAP[sub_kd]
+                    elif sub_kd[-3:] in self.geojson_kec_map:
+                        csv_kec = self.geojson_kec_map[sub_kd[-3:]]
+                    else:
+                        # Fallback nama kecamatan agar tidak hilang dari dropdown filter
+                        kd_display = sub_kd[4:] if len(sub_kd) >= 7 else sub_kd
+                        csv_kec = f"Kecamatan {kd_display}"
+
+            if raw_sub_sls and len(raw_sub_sls) >= 10:
+                desa_kd = raw_sub_sls[:10]
+                if not csv_kddesa:
+                    csv_kddesa = desa_kd
+                if not csv_desa and desa_kd in self.geojson_desa_map:
+                    csv_desa = self.geojson_desa_map[desa_kd]
+
+            if raw_sub_sls and len(raw_sub_sls) >= 14:
+                sls_kd = raw_sub_sls[:14]
+                if not csv_kdsls:
+                    csv_kdsls = sls_kd
+                if not csv_sls and sls_kd in self.geojson_sls_map:
+                    csv_sls = self.geojson_sls_map[sls_kd]
 
             if cluster_key not in self.clusters:
                 size = int(row[idx_size]) if idx_size is not None and row[idx_size].isdigit() else 1
@@ -564,6 +591,9 @@ class GeotagAnomalyEngine:
         self.sls_indexed.clear()
         self.sls_by_subsls.clear()
         self.sls_by_idsls.clear()
+        self.geojson_kec_map.clear()
+        self.geojson_desa_map.clear()
+        self.geojson_sls_map.clear()
         self.stats["geojson_filename"] = filename
 
         if isinstance(file_path_or_buffer, str):
@@ -582,8 +612,29 @@ class GeotagAnomalyEngine:
             if not geom or geom.get('type') not in ['Polygon', 'MultiPolygon']:
                 continue
 
-            sub_id = str(props.get('idsubsls') or props.get('id_sub_sls') or '')
-            sls_id = str(props.get('idsls') or props.get('id_sls') or (sub_id[:14] if len(sub_id) >= 14 else ''))
+            sub_id = str(props.get('idsubsls') or props.get('id_sub_sls') or '').strip()
+            sls_id = str(props.get('idsls') or props.get('id_sls') or (sub_id[:14] if len(sub_id) >= 14 else '')).strip()
+
+            nmkec = str(props.get('nmkec') or props.get('nama_kec') or props.get('namakec') or props.get('kecamatan') or props.get('nm_kec') or props.get('nama_kecamatan') or '').strip()
+            kdkec = str(props.get('kd_kec_bps') or props.get('kdkec') or props.get('kodekec') or props.get('kode_kec') or (sub_id[:7] if len(sub_id) >= 7 else '')).strip()
+
+            nmdesa = str(props.get('nmdesa') or props.get('nama_desa') or props.get('namadesa') or props.get('desa') or props.get('kelurahan') or '').strip()
+            kddesa = str(props.get('kd_desa_bps') or props.get('kddesa') or props.get('kodedesa') or props.get('kode_desa') or (sub_id[:10] if len(sub_id) >= 10 else '')).strip()
+
+            nmsls = str(props.get('nmsls') or props.get('nama_sls') or props.get('namasls') or props.get('sls') or '').strip()
+
+            if nmkec:
+                if kdkec:
+                    self.geojson_kec_map[kdkec] = nmkec.title()
+                if sub_id and len(sub_id) >= 7:
+                    self.geojson_kec_map[sub_id[:7]] = nmkec.title()
+            if nmdesa:
+                if kddesa:
+                    self.geojson_desa_map[kddesa] = nmdesa.title()
+                if sub_id and len(sub_id) >= 10:
+                    self.geojson_desa_map[sub_id[:10]] = nmdesa.title()
+            if nmsls and sls_id:
+                self.geojson_sls_map[sls_id] = nmsls
 
             if HAS_SHAPELY:
                 try:
@@ -679,22 +730,22 @@ class GeotagAnomalyEngine:
             if sls_item:
                 props = sls_item['properties']
                 found_subsls = str(props.get('idsubsls') or props.get('id_sub_sls') or sub_id)
-                nmsls = props.get('nmsls') or props.get('nama_sls') or ''
-                nmdesa = props.get('nmdesa') or props.get('nama_desa') or ''
-                nmkec = props.get('nmkec') or props.get('nama_kec') or ''
-                kdkec = props.get('kd_kec_bps') or props.get('kdkec') or ''
+                nmsls = str(props.get('nmsls') or props.get('nama_sls') or props.get('namasls') or props.get('sls') or '').strip()
+                nmdesa = str(props.get('nmdesa') or props.get('nama_desa') or props.get('namadesa') or props.get('desa') or props.get('kelurahan') or '').strip()
+                nmkec = str(props.get('nmkec') or props.get('nama_kec') or props.get('namakec') or props.get('kecamatan') or props.get('nm_kec') or props.get('nama_kecamatan') or '').strip()
+                kdkec = str(props.get('kd_kec_bps') or props.get('kdkec') or props.get('kodekec') or props.get('kode_kec') or '').strip()
 
                 c['sls_id'] = props.get('idsls') or sls_id
                 c['kodesls'] = props.get('idsls') or sls_id
                 c['id_sub_sls'] = found_subsls
                 c['sub_sls_short'] = props.get('kdsubsls') or (found_subsls[-4:] if len(found_subsls) >= 4 else '00')
-                if nmsls and (not c.get('namasls') or c['namasls'] == '-'):
+                if nmsls and (not c.get('namasls') or c['namasls'] in ['-', '', 'Wilayah Terdeteksi']):
                     c['namasls'] = nmsls
-                if nmdesa and (not c.get('namadesa') or c['namadesa'] == '-'):
-                    c['namadesa'] = nmdesa
-                if nmkec and (not c.get('namakec') or c['namakec'] == '-'):
+                if nmdesa and (not c.get('namadesa') or c['namadesa'] in ['-', '', 'Wilayah Terdeteksi']):
+                    c['namadesa'] = nmdesa.title()
+                if nmkec and (not c.get('namakec') or c['namakec'] in ['-', '', 'Wilayah Terdeteksi'] or c['namakec'].startswith('Kecamatan ') or c['namakec'].startswith('Kec. ')):
                     c['namakec'] = nmkec.title()
-                if kdkec and not c.get('kodekec'):
+                if kdkec and (not c.get('kodekec') or c['kodekec'] in ['-', '', 'other']):
                     c['kodekec'] = kdkec
 
                 active_subsls_ids.add(found_subsls)
@@ -760,6 +811,16 @@ class GeotagAnomalyEngine:
                 c['lokasi_label'] = '⚪ Batas Sub-SLS Belum Ada'
                 c['lokasi_badge'] = 'bg-secondary text-white'
                 c['jarak_luar_m'] = 0
+
+                # Fallback resolve nama kecamatan/desa dari map GeoJSON berdasarkan kode prefix
+                kd7 = sub_id[:7] if len(sub_id) >= 7 else ''
+                if kd7 in self.geojson_kec_map and (not c.get('namakec') or c['namakec'] in ['-', '', 'Wilayah Terdeteksi'] or c['namakec'].startswith('Kecamatan ') or c['namakec'].startswith('Kec. ')):
+                    c['namakec'] = self.geojson_kec_map[kd7]
+                    c['kodekec'] = kd7
+                kd10 = sub_id[:10] if len(sub_id) >= 10 else ''
+                if kd10 in self.geojson_desa_map and (not c.get('namadesa') or c['namadesa'] in ['-', '', 'Wilayah Terdeteksi']):
+                    c['namadesa'] = self.geojson_desa_map[kd10]
+                    c['kodedesa'] = kd10
 
         # Output ALL matched/available Sub-SLS polygons to GeoJSON so no cluster has missing boundaries
         matched_features = []
@@ -875,6 +936,9 @@ class GeotagAnomalyEngine:
         filtered_petugas_with_clusters = sorted(petugas_grouped.values(), key=lambda x: x['total_points'], reverse=True)
 
         kecamatans = sorted(list(set(c['namakec'] for c in self.clusters.values() if c['namakec'] and c['namakec'] != 'Wilayah Terdeteksi')))
+        # Fallback jika hanya ada 'Wilayah Terdeteksi' agar dropdown tidak kosong
+        if not kecamatans and any(c.get('namakec') for c in self.clusters.values()):
+            kecamatans = sorted(list(set(c['namakec'] for c in self.clusters.values() if c.get('namakec'))))
 
         # Dynamic KPI based on current filtered clusters
         fraud_c = [c for c in filtered_clusters if c.get('fraud_category') == 'fraud_btt']

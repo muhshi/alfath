@@ -49,18 +49,18 @@ def auto_load_data_folder():
         os.makedirs(data_dir, exist_ok=True)
         return
 
+    # Cari file GeoJSON lebih dulu agar master kecamatan/desa siap sebelum CSV diproses
+    geojson_files = glob.glob(os.path.join(data_dir, '*.geojson'))
+    if geojson_files:
+        target_geojson = next((f for f in geojson_files if 'peta_sls' in os.path.basename(f).lower()), geojson_files[0])
+        engine.load_geojson(target_geojson, filename=os.path.basename(target_geojson))
+
     # Cari file CSV
     csv_files = glob.glob(os.path.join(data_dir, '*.csv'))
     if csv_files:
         # Prioritaskan input_anomali.csv jika ada
         target_csv = next((f for f in csv_files if 'input_anomali' in os.path.basename(f).lower()), csv_files[0])
         engine.load_csv(target_csv, filename=os.path.basename(target_csv))
-
-    # Cari file GeoJSON
-    geojson_files = glob.glob(os.path.join(data_dir, '*.geojson'))
-    if geojson_files:
-        target_geojson = next((f for f in geojson_files if 'peta_sls' in os.path.basename(f).lower()), geojson_files[0])
-        engine.load_geojson(target_geojson, filename=os.path.basename(target_geojson))
 
 # Load data otomatis saat inisialisasi
 auto_load_data_folder()
@@ -102,6 +102,14 @@ def api_upload():
 
     results = []
 
+    if uploaded_geojson and uploaded_geojson.filename:
+        data_dir = os.path.join(APP_DIR, 'data')
+        os.makedirs(data_dir, exist_ok=True)
+        save_path = os.path.join(data_dir, uploaded_geojson.filename)
+        uploaded_geojson.save(save_path)
+        res_geo = engine.load_geojson(save_path, filename=uploaded_geojson.filename)
+        results.append(f"GeoJSON: {res_geo.get('message', 'Sukses')}")
+
     if uploaded_csv and uploaded_csv.filename:
         # Simpan juga ke folder data/ agar bertahan saat restart
         data_dir = os.path.join(APP_DIR, 'data')
@@ -110,14 +118,6 @@ def api_upload():
         uploaded_csv.save(save_path)
         res_csv = engine.load_csv(save_path, filename=uploaded_csv.filename)
         results.append(f"CSV: {res_csv.get('message', 'Sukses')}")
-
-    if uploaded_geojson and uploaded_geojson.filename:
-        data_dir = os.path.join(APP_DIR, 'data')
-        os.makedirs(data_dir, exist_ok=True)
-        save_path = os.path.join(data_dir, uploaded_geojson.filename)
-        uploaded_geojson.save(save_path)
-        res_geo = engine.load_geojson(save_path, filename=uploaded_geojson.filename)
-        results.append(f"GeoJSON: {res_geo.get('message', 'Sukses')}")
 
     if not results:
         return jsonify({"status": "error", "message": "Tidak ada file yang dipilih untuk di-upload."}), 400

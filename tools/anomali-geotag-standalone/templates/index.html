@@ -999,12 +999,20 @@
             const select = $('#filter-kecamatan');
             const sidebarSelect = $('#sidebarKecFilter');
             const current = select.val();
-            if (select.children().length <= 1 && options && options.length > 0) {
+
+            // Bersihkan opsi lama kecuali opsi default pertama
+            select.find('option:not(:first)').remove();
+            sidebarSelect.find('option:not(:first)').remove();
+
+            if (options && options.length > 0) {
                 options.forEach(opt => {
                     select.append(`<option value="${opt}">${opt}</option>`);
                     sidebarSelect.append(`<option value="${opt}">${opt}</option>`);
                 });
-                if (current) select.val(current);
+                if (current && options.includes(current)) {
+                    select.val(current);
+                    sidebarSelect.val(current);
+                }
             }
         }
 

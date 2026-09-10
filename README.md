@@ -404,3 +404,13 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Dilengkapi fitur pencarian instan dan tombol utama **"Ekspor CSV Titik Klaster Ini"** (`/api/export?type=titik&cluster_id=...`) untuk kebutuhan audit lapangan langsung.
   - **Mempertahankan Tombol & Modal Upload Data**:
     - Fitur upload file CSV SQL Lab dan GeoJSON batas SLS tetap tersedia penuh dan mudah diakses via tombol toolbar atas.
+
+### 2026-09-10
+
+- **Perbaikan Filter Kecamatan Dinamis & Kompatibilitas Multi-Kabupaten Standalone (`tools/anomali-geotag-standalone/`)**:
+  - **Deteksi & Resolusi Kecamatan Universal**: Memperbaiki kendala pada aplikasi standalone di mana daftar kecamatan tidak muncul pada dropdown filter ketika dijalankan oleh rekan dari BPS kabupaten/kota lain (kode SLS selain Kabupaten Demak `3321`).
+  - **Ekstraksi Master Wilayah Otomatis dari GeoJSON**: Sistem secara otomatis mengekstrak pemetaan kode dan nama kecamatan (`nmkec`/`nama_kec`) serta desa (`nmdesa`/`nama_desa`) dari fitur poligon GeoJSON batas SLS yang dimuat, sehingga langsung mengenali nama wilayah kabupaten mana pun se-Indonesia.
+  - **Fallback Cerdas Tanpa File GeoJSON**: Jika pengguna hanya memasukkan/mengunggah file CSV tanpa GeoJSON, kode kecamatan diekstrak otomatis dari 7 digit awal `id_sub_sls` menjadi `Kecamatan [Kode]` sehingga seluruh klaster tetap terkelompok per wilayah dan opsi filter tidak kosong.
+  - **Perbaikan Kondisi Timpa Nama Wilayah (`match_clusters_with_sls`)**: Memperbaiki logika penimpaan nilai default `'Wilayah Terdeteksi'` dengan nama kecamatan dari GeoJSON yang sebelumnya tidak tereksekusi karena pengecekan kondisi yang terlalu kaku.
+  - **Auto-Refresh Dropdown Filter di Antarmuka (`templates/index.html`)**: Memperbarui fungsi `renderKecamatanOptions` agar selalu me-refresh dan mengisi ulang opsi `<select id="filter-kecamatan">` secara bersih saat file baru diunggah.
+  - **Prioritas Pemuatan GeoJSON Sebelum CSV (`app.py`)**: Menyesuaikan urutan `auto_load_data_folder()` dan endpoint `/api/upload` agar membaca file GeoJSON terlebih dahulu sebelum CSV, memastikan kamus wilayah siap pakai ketika titik koordinat CSV diolah.
