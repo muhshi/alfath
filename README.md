@@ -434,4 +434,9 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     7. 🏚️ **Bangunan Kosong/Lainnya Tinggi**: Persentase bangunan lainnya $\ge 5\%$ dari beban submit.
   - **Antarmuka Interaktif (`identifikasi-pendataan.blade.php`)**: Dilengkapi 8 kartu metrik KPI anomali interaktif (*klik untuk filter cepat*), bilah filter multi-kategori, filter kecamatan, filter status progres submit lapangan, tabel responsif DataTables dengan sorting default rasio muatan murni terendah, serta tombol Export Excel hasil identifikasi lapangan (`/identifikasi-pendataan/export`).
   - **Integrasi Navigasi Sistem**: Menambahkan item navigasi menu "Identifikasi Hasil" pada navbar panel Tablar (`config/tablar.php`), tombol pintasan di Beranda ALFATH (`home.blade.php`), dan banner akses cepat di Tab SLS Dashboard Pengolahan.
+- **Penyederhanaan & Perapihan Tombol Navigasi Beranda (`resources/views/home.blade.php`)**:
+  - Mengeliminasi tombol bertumpuk warna-warni yang berulang dan mencolok (merah, hijau, biru, oranye solid) pada header dan kartu hero Beranda ALFATH.
+  - Memadukan akses modul SE2026 di header ke dalam sebuah dropdown terpadu (*Pintasan Modul SE2026*) yang rapi, ringkas, dan profesional.
+  - Menata ulang hierarki tombol pada hero banner: 1 Call-to-Action utama (*Buka Executive Dashboard*), 1 tombol sekunder (*Tabel Petugas SE2026*), serta bilah akses analisis (*Timeline Submit*, *Anomali Geotag*, *Identifikasi Hasil SLS*) dalam format badge pill yang selaras dan elegan.
+
 

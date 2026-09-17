@@ -3,45 +3,63 @@
 @section('content')
     <!-- Page header -->
     <x-page-header title="Beranda ALFATH">
-        <div class="col-12 col-md-auto ms-auto d-print-none flex-wrap gap-2 d-flex" style="position: relative; z-index: 10;">
-            <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-primary font-weight-bold shadow-sm" style="border-radius: 10px; padding: 0.6rem 1.2rem; position: relative; z-index: 10; cursor: pointer;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M3 10h18"/><path d="M10 3v18"/></svg>
-                Tabel Petugas SE2026
-            </a>
-            <a href="{{ route('dashboard.timeline-petugas') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #059669; border-color: #059669; border-radius: 10px; padding: 0.6rem 1.2rem; position: relative; z-index: 10; cursor: pointer;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                    <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
-                    <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
-                    <path d="M15 3v4" />
-                    <path d="M7 3v4" />
-                    <path d="M3 11h16" />
-                    <path d="M18 16.496v1.504l1 1" />
-                </svg>
-                Timeline / Heatmap Submit
-            </a>
-            <a href="{{ route('dashboard.anomali-geotag') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #dc2626; border-color: #dc2626; border-radius: 10px; padding: 0.6rem 1.2rem; position: relative; z-index: 10; cursor: pointer;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-pin-off me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                    <path d="M9.442 9.432a3 3 0 0 0 4.113 4.134m1.445 -2.566a3 3 0 0 0 -3 -3" />
-                    <path d="M17.152 17.162l-3.714 3.712a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 0 1 -.48 -10.795m2.583 -1.427a8.018 8.018 0 0 1 10.902 1.458" />
-                    <path d="M3 3l18 18" />
-                </svg>
-                Anomali Geotag SE2026
-            </a>
-            <a href="{{ route('identifikasi.pendataan') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #2563eb; border-color: #2563eb; border-radius: 10px; padding: 0.6rem 1.2rem; position: relative; z-index: 10; cursor: pointer;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shield-check me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M9 12l2 2l4 -4"/></svg>
-                Identifikasi Hasil SLS
-            </a>
-            <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px; padding: 0.6rem 1.4rem; position: relative; z-index: 10; cursor: pointer;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path>
-                    <path d="M12 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path>
-                    <path d="M4 20l14 0"></path>
-                </svg>
-                Dashboard Executive SE2026
-            </a>
+        <div class="col-12 col-md-auto ms-auto d-print-none d-flex align-items-center gap-2" style="position: relative; z-index: 10;">
+            <div class="dropdown">
+                <button class="btn btn-white dropdown-toggle font-weight-medium shadow-xs border text-secondary px-3 py-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px; border-color: #e2e8f0; background: #ffffff;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-apps text-orange me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+                    Pintasan Modul SE2026
+                </button>
+                <div class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2" style="border-radius: 10px; min-width: 250px; border: 1px solid #e2e8f0 !important;">
+                    <div class="dropdown-header text-uppercase font-weight-bold text-muted small" style="letter-spacing: 0.5px;">Dashboard Utama</div>
+                    <a class="dropdown-item py-2 d-flex align-items-center" href="{{ route('dashboard.se2026') }}">
+                        <span class="avatar avatar-xs bg-orange-lt text-orange rounded me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M12 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M4 20l14 0"/></svg>
+                        </span>
+                        <div>
+                            <div class="font-weight-bold text-dark">Executive Dashboard</div>
+                            <div class="text-muted small">Ringkasan progress & estimasi</div>
+                        </div>
+                    </a>
+                    <a class="dropdown-item py-2 d-flex align-items-center" href="{{ route('dashboard.pengolahan') }}">
+                        <span class="avatar avatar-xs bg-blue-lt text-primary rounded me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M3 10h18"/><path d="M10 3v18"/></svg>
+                        </span>
+                        <div>
+                            <div class="font-weight-bold text-dark">Tabel Petugas SE2026</div>
+                            <div class="text-muted small">Alokasi & progres beban SLS</div>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider my-1"></div>
+                    <div class="dropdown-header text-uppercase font-weight-bold text-muted small" style="letter-spacing: 0.5px;">Quality Control & Analisis</div>
+                    <a class="dropdown-item py-2 d-flex align-items-center" href="{{ route('dashboard.timeline-petugas') }}">
+                        <span class="avatar avatar-xs bg-teal-lt text-teal rounded me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4"/><path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496v1.504l1 1"/></svg>
+                        </span>
+                        <div>
+                            <div class="font-weight-bold text-dark">Timeline Submit</div>
+                            <div class="text-muted small">Sebaran waktu pengiriman data</div>
+                        </div>
+                    </a>
+                    <a class="dropdown-item py-2 d-flex align-items-center" href="{{ route('dashboard.anomali-geotag') }}">
+                        <span class="avatar avatar-xs bg-red-lt text-danger rounded me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-pin-off" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M9.442 9.432a3 3 0 0 0 4.113 4.134m1.445 -2.566a3 3 0 0 0 -3 -3"/><path d="M17.152 17.162l-3.714 3.712a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 0 1 -.48 -10.795m2.583 -1.427a8.018 8.018 0 0 1 10.902 1.458"/><path d="M3 3l18 18"/></svg>
+                        </span>
+                        <div>
+                            <div class="font-weight-bold text-dark">Anomali Geotag</div>
+                            <div class="text-muted small">Deteksi titik di luar batas wilayah</div>
+                        </div>
+                    </a>
+                    <a class="dropdown-item py-2 d-flex align-items-center" href="{{ route('identifikasi.pendataan') }}">
+                        <span class="avatar avatar-xs bg-azure-lt text-azure rounded me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shield-check" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M9 12l2 2l4 -4"/></svg>
+                        </span>
+                        <div>
+                            <div class="font-weight-bold text-dark">Identifikasi Hasil SLS</div>
+                            <div class="text-muted small">Deteksi anomali muatan &lt; 80%</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
         </div>
     </x-page-header>
 
@@ -70,39 +88,38 @@
                                     <p class="fs-3 text-muted mb-4" style="max-width: 620px; line-height: 1.6;">
                                         Portal monitoring terpadu untuk pemanduan data harian pendataan Sensus Ekonomi 2026 dan survei statistik BPS Kabupaten Demak.
                                     </p>
-                                    <div class="d-flex flex-wrap gap-2" style="position: relative; z-index: 10;">
-                                        <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                                            Buka Executive Dashboard SE2026
+                                    
+                                    <!-- Action Buttons with Clear Visual Hierarchy -->
+                                    <div class="d-flex flex-wrap align-items-center gap-3 mb-4" style="position: relative; z-index: 10;">
+                                        <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #ea580c; border: none; border-radius: 10px; cursor: pointer;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                <path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path>
+                                                <path d="M12 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path>
+                                                <path d="M4 20l14 0"></path>
+                                            </svg>
+                                            Buka Executive Dashboard
                                         </a>
-                                        <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-primary font-weight-bold px-4 py-2 shadow-sm" style="border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M3 10h18"/><path d="M10 3v18"/></svg>
+                                        <a href="{{ route('dashboard.pengolahan') }}" class="btn btn-outline-secondary font-weight-bold px-4 py-2 shadow-xs" style="border-radius: 10px; border-color: #cbd5e1; color: #334155; background-color: #ffffff; cursor: pointer;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table me-1 text-primary" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M3 10h18"/><path d="M10 3v18"/></svg>
                                             Tabel Petugas SE2026
                                         </a>
-                                        <a href="{{ route('dashboard.timeline-petugas') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #059669; border-color: #059669; border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                                <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
-                                                <path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
-                                                <path d="M15 3v4" />
-                                                <path d="M7 3v4" />
-                                                <path d="M3 11h16" />
-                                                <path d="M18 16.496v1.504l1 1" />
-                                            </svg>
-                                            Timeline / Heatmap Submit
+                                    </div>
+
+                                    <!-- Clean Harmonious Sub-Navigation Pills -->
+                                    <div class="pt-3 border-top d-flex align-items-center flex-wrap gap-2" style="border-color: #f1f5f9 !important; position: relative; z-index: 10;">
+                                        <span class="text-muted small font-weight-semibold me-2 d-none d-sm-inline">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-bolt text-warning me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0z"/></svg>
+                                            Modul Analisis &amp; QC:
+                                        </span>
+                                        <a href="{{ route('dashboard.timeline-petugas') }}" class="badge bg-white text-secondary border px-3 py-2 text-decoration-none rounded-pill d-inline-flex align-items-center shadow-xs" style="font-size: 0.825rem; cursor: pointer;">
+                                            <span class="status-dot bg-teal me-2"></span> Timeline Submit
                                         </a>
-                                        <a href="{{ route('dashboard.anomali-geotag') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #dc2626; border-color: #dc2626; border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-map-pin-off me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                                <path d="M9.442 9.432a3 3 0 0 0 4.113 4.134m1.445 -2.566a3 3 0 0 0 -3 -3" />
-                                                <path d="M17.152 17.162l-3.714 3.712a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 0 1 -.48 -10.795m2.583 -1.427a8.018 8.018 0 0 1 10.902 1.458" />
-                                                <path d="M3 3l18 18" />
-                                            </svg>
-                                            Anomali Geotag SE2026
+                                        <a href="{{ route('dashboard.anomali-geotag') }}" class="badge bg-white text-secondary border px-3 py-2 text-decoration-none rounded-pill d-inline-flex align-items-center shadow-xs" style="font-size: 0.825rem; cursor: pointer;">
+                                            <span class="status-dot bg-danger me-2"></span> Anomali Geotag
                                         </a>
-                                        <a href="{{ route('identifikasi.pendataan') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #2563eb; border-color: #2563eb; border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shield-check me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M9 12l2 2l4 -4"/></svg>
-                                            Identifikasi Hasil SLS
+                                        <a href="{{ route('identifikasi.pendataan') }}" class="badge bg-white text-secondary border px-3 py-2 text-decoration-none rounded-pill d-inline-flex align-items-center shadow-xs" style="font-size: 0.825rem; cursor: pointer;">
+                                            <span class="status-dot bg-azure me-2"></span> Identifikasi Hasil SLS
                                         </a>
                                     </div>
                                 </div>
