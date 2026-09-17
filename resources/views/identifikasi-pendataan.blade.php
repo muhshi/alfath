@@ -209,7 +209,7 @@
                     <a href="{{ request()->fullUrlWithQuery(['kategori' => 'bangunan_lainnya']) }}" 
                        class="card qc-stat-card shadow-sm bg-amber-lt {{ $filterKategori === 'bangunan_lainnya' ? 'active-filter' : '' }}">
                         <div class="card-body p-2 text-center">
-                            <div class="text-orange small font-weight-bold">Bangunan Kosong &ge;5%</div>
+                            <div class="text-orange small font-weight-bold">Bangunan Kosong &ge;15%</div>
                             <div class="h3 m-0 font-weight-extrabold text-orange">{{ number_format($summary['cnt_bangunan_lainnya']) }} SLS</div>
                             <div class="text-muted small" style="font-size: 0.70rem;">Beban lari ke non-respon</div>
                         </div>
@@ -238,15 +238,15 @@
                         <div class="col-12 col-md-3">
                             <label class="form-label small text-muted font-weight-bold mb-1">Kategori Temuan / QC:</label>
                             <select name="kategori" class="form-select form-select-sm font-weight-bold" onchange="this.form.submit()">
-                                <option value="all" {{ $filterKategori === 'all' ? 'selected' : '' }}>📋 Semua SLS ({{ number_format($summary['total_sls']) }})</option>
                                 <option value="anomali_only" {{ $filterKategori === 'anomali_only' ? 'selected' : '' }}>⚠️ Semua SLS Anomali / Perlu QC ({{ number_format($summary['cnt_total_anomali']) }})</option>
+                                <option value="all" {{ $filterKategori === 'all' ? 'selected' : '' }}>📋 Semua SLS ({{ number_format($summary['total_sls']) }})</option>
                                 <option value="under_80" {{ $filterKategori === 'under_80' ? 'selected' : '' }}>🚨 Muatan Murni &lt; 80% Prelist ({{ number_format($summary['cnt_under_80']) }})</option>
                                 <option value="over_130" {{ $filterKategori === 'over_130' ? 'selected' : '' }}>📈 Lonjakan Muatan &gt; 130% Prelist ({{ number_format($summary['cnt_over_130']) }})</option>
                                 <option value="zero_usaha" {{ $filterKategori === 'zero_usaha' ? 'selected' : '' }}>🟣 Usaha SE Nol ({{ number_format($summary['cnt_zero_usaha']) }})</option>
                                 <option value="usaha_drop" {{ $filterKategori === 'usaha_drop' ? 'selected' : '' }}>📉 Usaha Drop vs Wilkerstat &gt;30% ({{ number_format($summary['cnt_usaha_drop']) }})</option>
                                 <option value="keluarga_drop" {{ $filterKategori === 'keluarga_drop' ? 'selected' : '' }}>🔴 Keluarga Tdk Ditemukan &ge;15% ({{ number_format($summary['cnt_keluarga_drop']) }})</option>
                                 <option value="ganda" {{ $filterKategori === 'ganda' ? 'selected' : '' }}>👥 Khusus Ganda Usaha ({{ number_format($summary['cnt_ganda']) }})</option>
-                                <option value="bangunan_lainnya" {{ $filterKategori === 'bangunan_lainnya' ? 'selected' : '' }}>🏚️ Bangunan Kosong/Lainnya &ge;5% ({{ number_format($summary['cnt_bangunan_lainnya']) }})</option>
+                                <option value="bangunan_lainnya" {{ $filterKategori === 'bangunan_lainnya' ? 'selected' : '' }}>🏚️ Bangunan Kosong/Lainnya &ge;15% ({{ number_format($summary['cnt_bangunan_lainnya']) }})</option>
                                 <option value="aman" {{ $filterKategori === 'aman' ? 'selected' : '' }}>✅ SLS Wajar / Aman ({{ number_format($summary['cnt_aman']) }})</option>
                             </select>
                         </div>
@@ -345,162 +345,30 @@
                             </thead>
                             <tbody>
                                 @forelse($records as $index => $row)
-                                    <tr>
-                                        <td class="text-muted text-center">{{ $index + 1 }}</td>
-                                        <td>
-                                            <div class="font-weight-bold">{{ $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec }}</div>
-                                            <div class="small text-muted">{{ $row->kode_kec }}</div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-1 flex-wrap">
-                                                <span class="font-weight-bold text-dark">{{ $row->nama_sls }}</span>
-                                                @if($row->is_non_pemukiman)
-                                                    <span class="badge bg-secondary-lt text-secondary px-1 py-0" style="font-size: 0.65rem;" title="Wilayah Non-Pemukiman (Sawah/Tambak/Hutan/Lahan Kosong)">
-                                                        🌾 Non-Pemukiman
-                                                    </span>
-                                                @endif
-                                            </div>
-                                            <div class="small text-muted font-monospace">{{ $row->region_code }}</div>
-                                        </td>
-                                        <td>
-                                            <div class="font-weight-bold text-dark">{{ $row->nama_pencacah }}</div>
-                                            <div class="small text-muted">PML: {{ $row->nama_pengawas ?: '-' }}</div>
-                                        </td>
-                                        <td class="text-center">
-                                            @if(!$row->has_anomali)
-                                                <span class="badge bg-success text-white badge-qc">✅ WAJAR / AMAN</span>
-                                            @else
-                                                <div class="d-flex flex-column gap-1 align-items-center">
-                                                    @if($row->is_under_80)
-                                                        <span class="badge bg-danger text-white badge-qc" title="Muatan Murni {{ number_format($row->pct_murni_vs_prelist, 1) }}% dari Prelist (< 80%)">
-                                                            🚨 Murni &lt; 80% Prelist
-                                                        </span>
-                                                    @endif
-                                                    @if($row->is_over_130)
-                                                        <span class="badge bg-warning text-dark badge-qc" title="Muatan Murni {{ number_format($row->pct_murni_vs_prelist, 1) }}% dari Prelist (> 130%)">
-                                                            📈 Lonjakan &gt; 130%
-                                                        </span>
-                                                    @endif
-                                                    @if($row->is_zero_usaha)
-                                                        <span class="badge bg-purple text-white badge-qc" title="Total Usaha SE = 0 padahal Wilkerstat = {{ number_format($row->wilkerstat_usaha) }}">
-                                                            🟣 Zero Usaha SE
-                                                        </span>
-                                                    @endif
-                                                    @if($row->is_usaha_drop)
-                                                        <span class="badge bg-orange text-white badge-qc" title="Usaha SE {{ number_format($row->pct_diff_usaha, 1) }}% vs Wilkerstat">
-                                                            📉 Usaha Drop vs Wilkerstat
-                                                        </span>
-                                                    @endif
-                                                    @if($row->is_keluarga_drop)
-                                                        <span class="badge bg-secondary text-white badge-qc" title="Keluarga Tidak Ditemukan/Meninggal: {{ number_format($row->pk_tdk) }}">
-                                                            🔴 Drop Keluarga Tinggi
-                                                        </span>
-                                                    @endif
-                                                    @if($row->is_ganda)
-                                                        <span class="badge bg-pink text-white badge-qc" title="Ganda Usaha: {{ number_format($row->total_ganda) }}">
-                                                            👥 Khusus Ganda ({{ $row->total_ganda }})
-                                                        </span>
-                                                    @endif
-                                                    @if($row->is_bangunan_lainnya)
-                                                        <span class="badge bg-amber text-dark badge-qc" title="Bangunan Kosong/Lainnya {{ number_format($row->pct_bangunan_lainnya, 1) }}%">
-                                                            🏚️ Bangunan Kosong &ge;5%
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                        </td>
-                                        <td class="text-end font-weight-bold text-blue bg-blue-lt" data-order="{{ $row->jml_prelist }}">
-                                            {{ number_format($row->jml_prelist) }}
-                                            <div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">
-                                                KK: {{ number_format($row->prelist_keluarga) }} | U: {{ number_format($row->prelist_usaha) }}
-                                            </div>
-                                        </td>
-                                        <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">
-                                            {{ number_format($row->muatan_murni) }}
-                                            <div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">
-                                                @if($row->muatan_murni == 0)
-                                                    @if($row->is_non_pemukiman)
-                                                        <span class="text-secondary opacity-75">Sawah/Non-Penduduk</span>
-                                                    @else
-                                                        <span class="text-danger font-weight-bold">0 Ditemukan</span>
-                                                    @endif
-                                                @else
-                                                    KK: {{ number_format($row->pk_ditemukan) }} | BKU: {{ number_format($row->up_ditemukan) }}
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="text-center" data-order="{{ $row->rasio_order ?? 99999 }}">
-                                            @if(($row->jml_prelist ?? 0) > 0)
-                                                @if($row->pct_murni_vs_prelist < 80.0)
-                                                    <span class="badge bg-danger text-white font-weight-extrabold px-2 py-1 fs-4 shadow-xs" title="Muatan Murni Kurang (< 80% Prelist)">
-                                                        🚨 {{ number_format($row->pct_murni_vs_prelist, 1) }}%
-                                                    </span>
-                                                @elseif($row->pct_murni_vs_prelist > 130.0)
-                                                    <span class="badge bg-warning text-dark font-weight-extrabold px-2 py-1 fs-4 shadow-xs" title="Muatan Murni Melonjak (> 130% Prelist)">
-                                                        📈 {{ number_format($row->pct_murni_vs_prelist, 1) }}%
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-success-lt text-success font-weight-bold px-2 py-1 fs-4" title="Rasio Murni terhadap Prelist Normal">
-                                                        ✅ {{ number_format($row->pct_murni_vs_prelist, 1) }}%
-                                                    </span>
-                                                @endif
-                                            @else
-                                                @if($row->muatan_murni > 0)
-                                                    <span class="badge bg-info-lt text-info font-weight-bold px-2 py-1" title="SLS Pemekaran Baru (Prelist Awal 0)">
-                                                        Baru ({{ number_format($row->muatan_murni) }})
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-light text-muted border px-2 py-1" title="Prelist Awal 0 & Muatan 0">
-                                                        Nol Prelist
-                                                    </span>
-                                                @endif
-                                            @endif
-                                        </td>
-                                        <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
-                                        <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
-                                        <td class="text-end" data-order="{{ $row->pct_submit }}">
-                                            <span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-0.5">
-                                                {{ number_format($row->pct_submit, 1) }}%
-                                            </span>
-                                        </td>
-                                        <td class="text-end font-weight-bold text-danger" data-order="{{ $row->status_open }}">{{ number_format($row->status_open) }}</td>
-                                        <td class="text-end font-weight-bold text-purple" data-order="{{ $row->total_usaha_se }}">
-                                            {{ number_format($row->total_usaha_se) }}
-                                            <div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">
-                                                vs Wil: {{ number_format($row->wilkerstat_usaha) }}
-                                                @if($row->wilkerstat_usaha > 0)
-                                                    <span class="{{ $row->pct_diff_usaha < -5 ? 'text-danger font-weight-bold' : 'text-success' }}">({{ number_format($row->pct_diff_usaha, 1) }}%)</span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="text-end font-weight-bold text-success" data-order="{{ $row->pk_ditemukan }}">
-                                            {{ number_format($row->pk_ditemukan) }}
-                                            <div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">
-                                                vs KK: {{ number_format($row->wilkerstat_kk) }}
-                                                @if($row->wilkerstat_kk > 0)
-                                                    <span class="{{ $row->pct_diff_kk < -5 ? 'text-danger font-weight-bold' : 'text-success' }}">({{ number_format($row->pct_diff_kk, 1) }}%)</span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="text-end text-muted" data-order="{{ $row->pk_tdk }}">{{ number_format($row->pk_tdk) }}</td>
-                                        <td class="text-end font-weight-bold bg-pink-lt" data-order="{{ $row->total_ganda }}">
-                                            @if($row->total_ganda > 0)
-                                                <span class="badge bg-pink text-white font-weight-bold px-2 py-0.5">⚠️ {{ $row->total_ganda }}</span>
-                                            @else
-                                                <span class="text-muted">0</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-end font-weight-bold" data-order="{{ $row->bangunan_lainnya }}">
-                                            {{ number_format($row->bangunan_lainnya) }}
-                                            @if($row->has_warning_bangunan_lainnya)
-                                                <div class="badge bg-orange text-white font-weight-bold px-1.5 py-0.2" style="font-size: 0.68rem;">
-                                                    ⚠️ {{ number_format($row->pct_bangunan_lainnya, 1) }}%
-                                                </div>
-                                            @else
-                                                <div class="small text-muted" style="font-size: 0.68rem;">({{ number_format($row->pct_bangunan_lainnya, 1) }}%)</div>
-                                            @endif
-                                        </td>
-                                    </tr>
+@php
+$kecNama = $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec;
+$pMurni = $row->pct_murni_vs_prelist !== null ? number_format($row->pct_murni_vs_prelist, 1) . '%' : '-';
+$pSubmit = number_format($row->pct_submit, 1) . '%';
+@endphp
+<tr>
+<td class="text-muted text-center">{{ $index + 1 }}</td>
+<td><div class="font-weight-bold">{{ $kecNama }}</div><div class="small text-muted">{{ $row->kode_kec }}</div></td>
+<td><div class="d-flex align-items-center gap-1 flex-wrap"><span class="font-weight-bold text-dark">{{ $row->nama_sls }}</span>@if($row->is_non_pemukiman)<span class="badge bg-secondary-lt text-secondary px-1 py-0" style="font-size: 0.65rem;" title="Wilayah Non-Pemukiman">🌾 Non-Pemukiman</span>@endif</div><div class="small text-muted font-monospace">{{ $row->region_code }}</div></td>
+<td><div class="font-weight-bold text-dark">{{ $row->nama_pencacah }}</div><div class="small text-muted">PML: {{ $row->nama_pengawas ?: '-' }}</div></td>
+<td class="text-center">@if(!$row->has_anomali)<span class="badge bg-success text-white badge-qc">✅ WAJAR / AMAN</span>@else<div class="d-flex flex-column gap-1 align-items-center">@if($row->is_under_80)<span class="badge bg-danger text-white badge-qc" title="Murni < 80% Prelist">🚨 Murni &lt; 80% Prelist</span>@endif @if($row->is_over_130)<span class="badge bg-warning text-dark badge-qc" title="Murni > 130% Prelist">📈 Lonjakan &gt; 130%</span>@endif @if($row->is_zero_usaha)<span class="badge bg-purple text-white badge-qc" title="Usaha SE Nol">🟣 Zero Usaha SE</span>@endif @if($row->is_usaha_drop)<span class="badge bg-orange text-white badge-qc" title="Usaha Drop vs Wilkerstat">📉 Usaha Drop vs Wilkerstat</span>@endif @if($row->is_keluarga_drop)<span class="badge bg-secondary text-white badge-qc" title="Keluarga Drop >= 15%">🔴 Drop Keluarga Tinggi</span>@endif @if($row->is_ganda)<span class="badge bg-pink text-white badge-qc" title="Khusus Ganda">👥 Khusus Ganda ({{ $row->total_ganda }})</span>@endif @if($row->is_bangunan_lainnya)<span class="badge bg-amber text-dark badge-qc" title="Bangunan Kosong >= 15%">🏚️ Bangunan Kosong &ge;15%</span>@endif</div>@endif</td>
+<td class="text-end font-weight-bold text-blue bg-blue-lt" data-order="{{ $row->jml_prelist }}">{{ number_format($row->jml_prelist) }}<div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">KK: {{ number_format($row->prelist_keluarga) }} | U: {{ number_format($row->prelist_usaha) }}</div></td>
+<td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">{{ number_format($row->muatan_murni) }}<div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">@if($row->muatan_murni == 0)@if($row->is_non_pemukiman)<span class="text-secondary opacity-75">Sawah/Non-Penduduk</span>@else<span class="text-danger font-weight-bold">0 Ditemukan</span>@endif @else KK: {{ number_format($row->pk_ditemukan) }} | BKU: {{ number_format($row->up_ditemukan) }}@endif</div></td>
+<td class="text-center" data-order="{{ $row->rasio_order ?? 99999 }}">@if(($row->jml_prelist ?? 0) > 0)@if($row->pct_murni_vs_prelist < 80.0)<span class="badge bg-danger text-white font-weight-extrabold px-2 py-1 fs-4 shadow-xs" title="Muatan Murni Kurang (< 80% Prelist)">🚨 {{ $pMurni }}</span>@elseif($row->pct_murni_vs_prelist > 130.0)<span class="badge bg-warning text-dark font-weight-extrabold px-2 py-1 fs-4 shadow-xs" title="Muatan Murni Melonjak (> 130% Prelist)">📈 {{ $pMurni }}</span>@else<span class="badge bg-success-lt text-success font-weight-bold px-2 py-1 fs-4" title="Rasio Normal">✅ {{ $pMurni }}</span>@endif @else @if($row->muatan_murni > 0)<span class="badge bg-info-lt text-info font-weight-bold px-2 py-1" title="SLS Pemekaran Baru">Baru ({{ number_format($row->muatan_murni) }})</span>@else<span class="badge bg-light text-muted border px-2 py-1" title="Prelist Awal 0 & Muatan 0">Nol Prelist</span>@endif @endif</td>
+<td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
+<td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
+<td class="text-end" data-order="{{ $row->pct_submit }}"><span class="badge {{ $row->pct_submit >= 70 ? 'bg-success-lt text-success' : ($row->pct_submit >= 50 ? 'bg-warning-lt text-warning' : 'bg-danger-lt text-danger') }} font-weight-bold px-2 py-0.5">{{ $pSubmit }}</span></td>
+<td class="text-end font-weight-bold text-danger" data-order="{{ $row->status_open }}">{{ number_format($row->status_open) }}</td>
+<td class="text-end font-weight-bold text-purple" data-order="{{ $row->total_usaha_se }}">{{ number_format($row->total_usaha_se) }}<div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">vs Wil: {{ number_format($row->wilkerstat_usaha) }}@if($row->wilkerstat_usaha > 0)<span class="{{ $row->pct_diff_usaha < -5 ? 'text-danger font-weight-bold' : 'text-success' }}">({{ number_format($row->pct_diff_usaha, 1) }}%)</span>@endif</div></td>
+<td class="text-end font-weight-bold text-success" data-order="{{ $row->pk_ditemukan }}">{{ number_format($row->pk_ditemukan) }}<div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">vs KK: {{ number_format($row->wilkerstat_kk) }}@if($row->wilkerstat_kk > 0)<span class="{{ $row->pct_diff_kk < -5 ? 'text-danger font-weight-bold' : 'text-success' }}">({{ number_format($row->pct_diff_kk, 1) }}%)</span>@endif</div></td>
+<td class="text-end text-muted" data-order="{{ $row->pk_tdk }}">{{ number_format($row->pk_tdk) }}</td>
+<td class="text-end font-weight-bold bg-pink-lt" data-order="{{ $row->total_ganda }}">@if($row->total_ganda > 0)<span class="badge bg-pink text-white font-weight-bold px-2 py-0.5">⚠️ {{ $row->total_ganda }}</span>@else<span class="text-muted">0</span>@endif</td>
+<td class="text-end font-weight-bold" data-order="{{ $row->bangunan_lainnya }}">{{ number_format($row->bangunan_lainnya) }}@if($row->is_bangunan_lainnya)<div class="badge bg-orange text-white font-weight-bold px-1.5 py-0.2" style="font-size: 0.68rem;">⚠️ {{ number_format($row->pct_bangunan_lainnya, 1) }}%</div>@else<div class="small text-muted" style="font-size: 0.68rem;">({{ number_format($row->pct_bangunan_lainnya, 1) }}%)</div>@endif</td>
+</tr>
                                 @empty
                                     <tr>
                                         <td colspan="17" class="text-center py-5 text-muted">

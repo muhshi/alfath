@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -21,19 +22,50 @@ class IdentifikasiPendataanService
     public function getIdentifikasiData(Request $request): array
     {
         ini_set('memory_limit', '512M');
+        set_time_limit(180);
+
+        $cacheStore = Cache::store('file');
+
+        if ($request->has('fresh') || $request->has('refresh')) {
+            try {
+                $cacheStore->increment('se2026_dash_version');
+            } catch (\Throwable $e) {}
+        }
+
+        $cacheVersion = 4;
+        try {
+            $cacheVersion = (int) $cacheStore->get('se2026_dash_version', 4);
+            if ($cacheVersion < 4) {
+                $cacheVersion = 4;
+                $cacheStore->set('se2026_dash_version', 4);
+            }
+        } catch (\Throwable $e) {}
 
         $filteredQuery = $this->monitoringService->getFilteredQuery($request);
         $selectedDate = $filteredQuery['selectedDate'];
         $availableDates = $filteredQuery['availableDates'];
         $kecNameMap = $this->monitoringService->getKecNameMap();
 
-        $rawSlsRecords = $this->monitoringService->getSlsQuery($request, $selectedDate);
-
-        $filterKategori = $request->get('kategori', 'all');
+        $filterKategori = $request->get('kategori', 'anomali_only');
         $statusSubmitFilter = $request->get('status_submit', 'all');
         $filterTipeWilayah = $request->get('tipe_wilayah', 'all');
         $kodekec = $request->get('kodekec', '');
         $search = trim((string) $request->get('search', ''));
+
+        $cacheKey = "se2026_identifikasi_v{$cacheVersion}_" . md5(json_encode([
+            'date' => $selectedDate,
+            'kodekec' => $kodekec,
+            'kategori' => $filterKategori,
+            'status_submit' => $statusSubmitFilter,
+            'tipe_wilayah' => $filterTipeWilayah,
+            'search' => $search,
+        ]));
+
+        return $cacheStore->remember($cacheKey, now()->addHours(12), function () use (
+            $request, $selectedDate, $availableDates, $kecNameMap,
+            $filterKategori, $statusSubmitFilter, $filterTipeWilayah, $kodekec, $search
+        ) {
+            $rawSlsRecords = $this->monitoringService->getSlsQuery($request, $selectedDate);
 
         $summary = [
             'total_sls' => 0,
@@ -99,7 +131,7 @@ class IdentifikasiPendataanService
             $isUsahaDrop = ($wilkerstatUsaha > 0 && ($row->pct_diff_usaha ?? 0) < -30.0);
             $isKeluargaDrop = ($prelist > 0 && ((int) $row->pk_tdk / max(1, $prelist)) * 100 >= 15.0);
             $isGanda = ((int) ($row->total_ganda ?? 0) > 0);
-            $isBangunanLainnya = (bool) ($row->has_warning_bangunan_lainnya ?? false);
+            $isBangunanLainnya = ((float) ($row->pct_bangunan_lainnya ?? 0) >= 15.0);
 
             $anomaliTags = [];
             if ($isUnder80) {
@@ -188,18 +220,19 @@ class IdentifikasiPendataanService
             $identifiedRecords[] = $row;
         }
 
-        return [
-            'records' => collect($identifiedRecords),
-            'summary' => $summary,
-            'availableDates' => $availableDates,
-            'selectedDate' => $selectedDate,
-            'kecNameMap' => $kecNameMap,
-            'filterKategori' => $filterKategori,
-            'statusSubmitFilter' => $statusSubmitFilter,
-            'filterTipeWilayah' => $filterTipeWilayah,
-            'kodekec' => $kodekec,
-            'search' => $search,
-        ];
+            return [
+                'records' => collect($identifiedRecords),
+                'summary' => $summary,
+                'availableDates' => $availableDates,
+                'selectedDate' => $selectedDate,
+                'kecNameMap' => $kecNameMap,
+                'filterKategori' => $filterKategori,
+                'statusSubmitFilter' => $statusSubmitFilter,
+                'filterTipeWilayah' => $filterTipeWilayah,
+                'kodekec' => $kodekec,
+                'search' => $search,
+            ];
+        });
     }
 
     /**

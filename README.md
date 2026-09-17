@@ -67,6 +67,22 @@ Script `deploy.sh` secara otomatis mengeksekusi:
 
 ## 📜 Changelog
 
+### 2026-09-17
+
+- **Menu Baru Identifikasi & Evaluasi Hasil Pendataan SLS (`/identifikasi-pendataan`)**:
+  - **Deteksi Komprehensif Anomali & Kualitas Hasil Lapangan**:
+    - **Fokus Utama**: Deteksi SLS dengan Muatan Murni (BKU + KK Ditemukan) < 80% dibanding Jumlah Prelist awal (KK + Usaha Prelist).
+    - **Indikator QC Tambahan**: Lonjakan Muatan > 130% Prelist, Usaha SE Nol padahal ada potensi di Wilkerstat, Drop Usaha vs Wilkerstat > 30%, Drop Keluarga Tidak Ditemukan $\ge$ 15%, Kasus Khusus Ganda Usaha, serta Bangunan Kosong/Lainnya Tinggi $\ge$ 15%.
+    - **Filter Interaktif & Kartu Metrik**: Kartu ringkasan jumlah temuan per kategori, filter tipe wilayah (Pemukiman vs Sawah/Non-Pemukiman), filter kecamatan, dan filter status progres (Open / In Progress / Completed).
+    - **Ekspor Excel Native (`.xlsx`)**: Unduhan laporan hasil identifikasi kualitas data SLS lengkap dengan indikator QC dan styling profesional.
+  - **Optimasi Performa & Eliminasi Fatal Error Timeout 30 Detik (`max_execution_time`)**:
+    - Menerapkan **File Caching Layer** (`Cache::store('file')`) dengan masa simpan 12 jam dan sinkronisasi versi atomik (`se2026_dash_version`), sehingga query besar antar-tabel yang sebelumnya memakan 8.4 detik terpangkas menjadi hanya **0.01 detik**.
+    - Menambahkan perlindungan batas eksekusi script `set_time_limit(180)` dan alokasi memori `memory_limit 512M` pada Controller dan Service.
+    - **Optimasi Payload HTML Blade**: Mengeliminasi pembengkakan whitespace indentasi berulang pada 8.270 baris tabel, mereduksi ukuran payload HTML hingga > 74% (dari 58 MB menjadi ~14 MB untuk seluruh wilayah dan ~2.8 MB per kecamatan), mempercepat responsivitas render halaman menjadi hanya **~1.5 detik**.
+  - **Peningkatan Tab Alokasi SLS di Dashboard Pengolahan (`/dashboard-pengolahan`)**:
+    - Menambahkan kolom **Jumlah Prelist** (KK + Usaha) beserta sub-rinciannya pada tabel Alokasi Per SLS.
+    - Merapikan visualisasi tombol aksi, navigasi, dan filter agar lebih bersih, modern, dan konsisten dengan Tablar theme.
+
 ### 2026-09-09
 
 - **Perlindungan Kerahasiaan Data Responden pada Dashboard Web Anomali Geotag SE2026**:
