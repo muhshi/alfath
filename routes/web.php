@@ -35,6 +35,10 @@ Route::get('/dashboard-anomali-geotag/export', [\App\Http\Controllers\GeotagAnom
 Route::get('/dashboard-anomali-geotag/sls-geojson', [\App\Http\Controllers\GeotagAnomalyController::class , 'slsGeojson'])->name('dashboard.anomali-geotag.sls-geojson');
 Route::get('/dashboard-pengolahan/export', [\App\Http\Controllers\PengolahanController::class , 'export'])->name('dashboard.pengolahan.export');
 Route::post('/dashboard-pengolahan/catatan-anomali', [\App\Http\Controllers\PengolahanController::class , 'simpanCatatanAnomali'])->name('dashboard.pengolahan.catatan-anomali');
+
+Route::get('/identifikasi-pendataan', [\App\Http\Controllers\IdentifikasiPendataanController::class , 'index'])->name('identifikasi.pendataan');
+Route::get('/identifikasi-pendataan/export', [\App\Http\Controllers\IdentifikasiPendataanController::class , 'export'])->name('identifikasi.pendataan.export');
+
 Route::get('/debug-db', function () {
     try {
         return 'Conn: ' . (new \App\Models\ScraperCookie)->getConnectionName();

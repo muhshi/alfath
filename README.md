@@ -414,3 +414,24 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - **Perbaikan Kondisi Timpa Nama Wilayah (`match_clusters_with_sls`)**: Memperbaiki logika penimpaan nilai default `'Wilayah Terdeteksi'` dengan nama kecamatan dari GeoJSON yang sebelumnya tidak tereksekusi karena pengecekan kondisi yang terlalu kaku.
   - **Auto-Refresh Dropdown Filter di Antarmuka (`templates/index.html`)**: Memperbarui fungsi `renderKecamatanOptions` agar selalu me-refresh dan mengisi ulang opsi `<select id="filter-kecamatan">` secara bersih saat file baru diunggah.
   - **Prioritas Pemuatan GeoJSON Sebelum CSV (`app.py`)**: Menyesuaikan urutan `auto_load_data_folder()` dan endpoint `/api/upload` agar membaca file GeoJSON terlebih dahulu sebelum CSV, memastikan kamus wilayah siap pakai ketika titik koordinat CSV diolah.
+
+### 2026-09-17
+
+- **Penambahan Kolom Jumlah Prelist di Tab Alokasi Per SLS (`Se2026MonitoringService.php`, `dashboard-pengolahan.blade.php`, `PengolahanExportService.php`)**:
+  - **Integrasi Data Prelist Otentik**: Menghubungkan data prelist per Sub-SLS (16 digit) dari agregasi `prelist_awal` Pemutakhiran Keluarga ($396.439$) dan `jumlah_prelist_usaha` Usaha Perusahaan ($110.153$) dengan total Kabupaten Demak sebanyak **$506.592$** entitas (100% identik dengan file ekspor FASIH `Export_Progres_Pendataan_Sub_Satuan_Lingkungan_Setempat_Sub-SLS`).
+  - **Tampilan Tabel Alokasi Per SLS**: Menambahkan kolom baru `Jml Prelist (KK + Usaha)` pada tabel `#sls-table` lengkap dengan sub-rincian `KK: x | U: y` serta indikator rasio Muatan Murni vs Prelist dengan peringatan visual (badge merah jika $< 80\%$, kuning jika $> 130\%$).
+  - **Ekspor Excel Native Alokasi SLS**: Memperbarui sheet SLS pada file ekspor Excel (`Export_Alokasi_SLS_SE2026.xlsx`) dengan menyertakan kolom `Jumlah Prelist (KK+Usaha)`, `Prelist KK`, `Prelist Usaha`, dan formula rasio capaian muatan murni terhadap prelist.
+  - **Busting Cache Dashboard**: Menaikkan cache version otomatis ke v4 pada `PengolahanController.php` agar pembaruan data prelist langsung ter-render tanpa menunggu kedaluwarsa cache lama.
+- **Pembangunan Menu Baru: Identifikasi Hasil Pendataan SLS / Quality Control (`/identifikasi-pendataan`)**:
+  - **Arsitektur Service Layer Terpisah**: Membangun `IdentifikasiPendataanService.php` dan controller ringkas `IdentifikasiPendataanController.php` sesuai aturan arsitektur Laravel untuk menjaga controller tetap bersih dan fokus sebagai HTTP coordinator.
+  - **Deteksi 7 Indikator Anomali & Quality Control (QC) SLS**:
+    1. 🚨 **Muatan Murni < 80% Prelist**: Indikasi kuat *undercoverage* atau responden terlewat saat pencacahan di lapangan.
+    2. 📈 **Lonjakan Muatan > 130% Prelist**: Indikasi potensi salah batas SLS atau duplikasi muatan dari SLS tetangga.
+    3. 🟣 **Zero Usaha (Usaha Nol)**: SLS dengan temuan usaha SE = 0 padahal di Wilkerstat 2025 tercatat memiliki potensi usaha (indikasi kurang probing).
+    4. 📉 **Usaha Drop Ekstrem vs Wilkerstat**: SLS dengan capaian usaha SE $> 30\%$ di bawah baseline Wilkerstat.
+    5. 🔴 **Drop Keluarga Tinggi**: SLS dengan keluarga tidak ditemukan/meninggal $\ge 15\%$ dari beban prelist.
+    6. 👥 **Khusus Ganda Usaha**: Terdeteksi entitas usaha BKU / UK ganda ($> 0$).
+    7. 🏚️ **Bangunan Kosong/Lainnya Tinggi**: Persentase bangunan lainnya $\ge 5\%$ dari beban submit.
+  - **Antarmuka Interaktif (`identifikasi-pendataan.blade.php`)**: Dilengkapi 8 kartu metrik KPI anomali interaktif (*klik untuk filter cepat*), bilah filter multi-kategori, filter kecamatan, filter status progres submit lapangan, tabel responsif DataTables dengan sorting default rasio muatan murni terendah, serta tombol Export Excel hasil identifikasi lapangan (`/identifikasi-pendataan/export`).
+  - **Integrasi Navigasi Sistem**: Menambahkan item navigasi menu "Identifikasi Hasil" pada navbar panel Tablar (`config/tablar.php`), tombol pintasan di Beranda ALFATH (`home.blade.php`), dan banner akses cepat di Tab SLS Dashboard Pengolahan.
+

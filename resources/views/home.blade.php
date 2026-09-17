@@ -29,6 +29,10 @@
                 </svg>
                 Anomali Geotag SE2026
             </a>
+            <a href="{{ route('identifikasi.pendataan') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #2563eb; border-color: #2563eb; border-radius: 10px; padding: 0.6rem 1.2rem; position: relative; z-index: 10; cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shield-check me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M9 12l2 2l4 -4"/></svg>
+                Identifikasi Hasil SLS
+            </a>
             <a href="{{ route('dashboard.se2026') }}" class="btn text-white font-weight-bold shadow-sm" style="background-color: #ea580c; border-color: #ea580c; border-radius: 10px; padding: 0.6rem 1.4rem; position: relative; z-index: 10; cursor: pointer;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-bar me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -95,6 +99,10 @@
                                                 <path d="M3 3l18 18" />
                                             </svg>
                                             Anomali Geotag SE2026
+                                        </a>
+                                        <a href="{{ route('identifikasi.pendataan') }}" class="btn text-white font-weight-bold px-4 py-2 shadow-sm" style="background-color: #2563eb; border-color: #2563eb; border-radius: 10px; position: relative; z-index: 10; cursor: pointer;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shield-check me-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M9 12l2 2l4 -4"/></svg>
+                                            Identifikasi Hasil SLS
                                         </a>
                                     </div>
                                 </div>

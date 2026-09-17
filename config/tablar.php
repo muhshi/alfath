@@ -172,6 +172,13 @@ return [
         ],
 
         [
+            'text' => 'Identifikasi Hasil',
+            'url' => 'identifikasi-pendataan',
+            'icon' => 'ti ti-shield-check',
+            'active' => ['identifikasi-pendataan*'],
+        ],
+
+        [
             'text' => 'Monitoring',
             'url' => 'surveys?category=monitoring',
             'icon' => 'ti ti-clipboard-data',

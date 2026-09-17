@@ -1,0 +1,309 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+
+class IdentifikasiPendataanService
+{
+    public function __construct(
+        protected Se2026MonitoringService $monitoringService
+    ) {}
+
+    /**
+     * Get processed & identified SLS records for Quality Control.
+     */
+    public function getIdentifikasiData(Request $request): array
+    {
+        ini_set('memory_limit', '512M');
+
+        $filteredQuery = $this->monitoringService->getFilteredQuery($request);
+        $selectedDate = $filteredQuery['selectedDate'];
+        $availableDates = $filteredQuery['availableDates'];
+        $kecNameMap = $this->monitoringService->getKecNameMap();
+
+        $rawSlsRecords = $this->monitoringService->getSlsQuery($request, $selectedDate);
+
+        $filterKategori = $request->get('kategori', 'all');
+        $statusSubmitFilter = $request->get('status_submit', 'all');
+        $kodekec = $request->get('kodekec', '');
+        $search = trim((string) $request->get('search', ''));
+
+        $summary = [
+            'total_sls' => 0,
+            'cnt_under_80' => 0,
+            'cnt_over_130' => 0,
+            'cnt_zero_usaha' => 0,
+            'cnt_usaha_drop' => 0,
+            'cnt_keluarga_drop' => 0,
+            'cnt_ganda' => 0,
+            'cnt_bangunan_lainnya' => 0,
+            'cnt_total_anomali' => 0,
+            'cnt_aman' => 0,
+            'total_murni' => 0,
+            'total_prelist' => 0,
+        ];
+
+        $identifiedRecords = [];
+
+        foreach ($rawSlsRecords as $row) {
+            $summary['total_sls']++;
+
+            $prelist = (int) ($row->jml_prelist ?? 0);
+            $murni = (int) ($row->muatan_murni ?? ($row->up_ditemukan + $row->pk_ditemukan));
+            $summary['total_prelist'] += $prelist;
+            $summary['total_murni'] += $murni;
+
+            $pctMurniPrelist = $prelist > 0 ? round(($murni / $prelist) * 100, 2) : 0.0;
+            $row->pct_murni_vs_prelist = $pctMurniPrelist;
+
+            $totalUsaha = (int) ($row->total_usaha_se ?? ($row->up_ditemukan + $row->uk_ditemukan));
+            $row->total_usaha_se = $totalUsaha;
+            $wilkerstatUsaha = (int) ($row->wilkerstat_usaha ?? 0);
+            $wilkerstatKk = (int) ($row->wilkerstat_kk ?? 0);
+
+            // Anomali Flags
+            $isUnder80 = ($prelist > 0 && $pctMurniPrelist < 80.0);
+            $isOver130 = ($prelist > 0 && $pctMurniPrelist > 130.0);
+            $isZeroUsaha = ($wilkerstatUsaha > 0 && $totalUsaha == 0);
+            $isUsahaDrop = ($wilkerstatUsaha > 0 && ($row->pct_diff_usaha ?? 0) < -30.0);
+            $isKeluargaDrop = ($prelist > 0 && ((int) $row->pk_tdk / max(1, $prelist)) * 100 >= 15.0);
+            $isGanda = ((int) ($row->total_ganda ?? 0) > 0);
+            $isBangunanLainnya = (bool) ($row->has_warning_bangunan_lainnya ?? false);
+
+            $anomaliTags = [];
+            if ($isUnder80) {
+                $summary['cnt_under_80']++;
+                $anomaliTags[] = 'under_80';
+            }
+            if ($isOver130) {
+                $summary['cnt_over_130']++;
+                $anomaliTags[] = 'over_130';
+            }
+            if ($isZeroUsaha) {
+                $summary['cnt_zero_usaha']++;
+                $anomaliTags[] = 'zero_usaha';
+            }
+            if ($isUsahaDrop) {
+                $summary['cnt_usaha_drop']++;
+                $anomaliTags[] = 'usaha_drop';
+            }
+            if ($isKeluargaDrop) {
+                $summary['cnt_keluarga_drop']++;
+                $anomaliTags[] = 'keluarga_drop';
+            }
+            if ($isGanda) {
+                $summary['cnt_ganda']++;
+                $anomaliTags[] = 'ganda';
+            }
+            if ($isBangunanLainnya) {
+                $summary['cnt_bangunan_lainnya']++;
+                $anomaliTags[] = 'bangunan_lainnya';
+            }
+
+            $hasAnomali = count($anomaliTags) > 0;
+            if ($hasAnomali) {
+                $summary['cnt_total_anomali']++;
+            } else {
+                $summary['cnt_aman']++;
+            }
+
+            $row->is_under_80 = $isUnder80;
+            $row->is_over_130 = $isOver130;
+            $row->is_zero_usaha = $isZeroUsaha;
+            $row->is_usaha_drop = $isUsahaDrop;
+            $row->is_keluarga_drop = $isKeluargaDrop;
+            $row->is_ganda = $isGanda;
+            $row->is_bangunan_lainnya = $isBangunanLainnya;
+            $row->has_anomali = $hasAnomali;
+            $row->anomali_tags = $anomaliTags;
+
+            // Apply Kategori Filter
+            if ($filterKategori === 'anomali_only' && !$hasAnomali) {
+                continue;
+            } elseif ($filterKategori === 'under_80' && !$isUnder80) {
+                continue;
+            } elseif ($filterKategori === 'over_130' && !$isOver130) {
+                continue;
+            } elseif ($filterKategori === 'zero_usaha' && !$isZeroUsaha) {
+                continue;
+            } elseif ($filterKategori === 'usaha_drop' && !$isUsahaDrop) {
+                continue;
+            } elseif ($filterKategori === 'keluarga_drop' && !$isKeluargaDrop) {
+                continue;
+            } elseif ($filterKategori === 'ganda' && !$isGanda) {
+                continue;
+            } elseif ($filterKategori === 'bangunan_lainnya' && !$isBangunanLainnya) {
+                continue;
+            } elseif ($filterKategori === 'aman' && $hasAnomali) {
+                continue;
+            }
+
+            // Apply Status Submit Filter
+            if ($statusSubmitFilter === 'completed' && (float) $row->pct_submit < 100.0) {
+                continue;
+            } elseif ($statusSubmitFilter === 'in_progress' && ((float) $row->pct_submit <= 0 || (float) $row->pct_submit >= 100.0)) {
+                continue;
+            } elseif ($statusSubmitFilter === 'open' && (int) $row->total_submit > 0) {
+                continue;
+            }
+
+            $identifiedRecords[] = $row;
+        }
+
+        return [
+            'records' => collect($identifiedRecords),
+            'summary' => $summary,
+            'availableDates' => $availableDates,
+            'selectedDate' => $selectedDate,
+            'kecNameMap' => $kecNameMap,
+            'filterKategori' => $filterKategori,
+            'statusSubmitFilter' => $statusSubmitFilter,
+            'kodekec' => $kodekec,
+            'search' => $search,
+        ];
+    }
+
+    /**
+     * Export Identifikasi Hasil Pendataan to native Excel (.xlsx).
+     */
+    public function exportToExcel(array $identifikasiData)
+    {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $records = $identifikasiData['records'];
+        $kecNameMap = $identifikasiData['kecNameMap'];
+        $selectedDate = $identifikasiData['selectedDate'];
+        $filterKategori = $identifikasiData['filterKategori'];
+
+        $dateSuffix = !empty($selectedDate) ? '_' . str_replace('-', '', $selectedDate) : '_' . date('Ymd');
+        $kategoriSuffix = '_' . strtolower($filterKategori);
+        $filename = "Export_Identifikasi_Hasil_SE2026{$kategoriSuffix}{$dateSuffix}.xlsx";
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Identifikasi Hasil SLS');
+
+        // Header Title
+        $sheet->mergeCells('A1:AA1');
+        $sheet->setCellValue('A1', 'IDENTIFIKASI & EVALUASI HASIL PENDATAAN SLS SE2026 - BPS KABUPATEN DEMAK');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0F172A'));
+
+        $subTitle = 'Kategori Filter: ' . strtoupper(str_replace('_', ' ', $filterKategori)) . ' | Tanggal Data: ' . (!empty($selectedDate) ? date('d M Y', strtotime($selectedDate)) : 'Semua Tanggal');
+        $sheet->mergeCells('A2:AA2');
+        $sheet->setCellValue('A2', $subTitle);
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('64748B'));
+
+        $headers = [
+            'No', 'Kode Kec', 'Nama Kecamatan', 'Kode SLS (16 Digit)', 'Nama SLS / Sub-SLS', 'Nama Pencacah', 'Nama Pengawas',
+            'Status Temuan / QC', 'Rincian Indikator Terdeteksi',
+            'Jml Prelist (KK+Usaha)', 'Prelist KK', 'Prelist Usaha',
+            'Total Ditemukan (Muatan Murni)', 'Rasio Murni vs Prelist (%)', 'Kategori Rasio Murni',
+            'Beban Saat Ini', 'Total Submit', 'Capaian Submit (%)', 'Belum Disentuh (Open)', 'Total Draft',
+            'BKU Ditemukan', 'UK Ditemukan', 'Total Usaha SE', 'Usaha Wilkerstat 2025', 'Selisih Usaha vs Wilkerstat (%)',
+            'Keluarga Ditemukan', 'KK Wilkerstat 2025', 'Khusus Ganda', 'Bangunan Kosong/Lainnya'
+        ];
+
+        foreach ($headers as $colIdx => $header) {
+            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . '4';
+            $sheet->setCellValue($cell, $header);
+        }
+
+        $headerRange = 'A4:AC4';
+        $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFF'))->setSize(10);
+        $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('DC2626');
+        $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(4)->setRowHeight(30);
+
+        $rowIdx = 5;
+        foreach ($records as $index => $row) {
+            $rincianList = [];
+            if ($row->is_under_80) $rincianList[] = "Muatan Murni < 80% Prelist (" . number_format($row->pct_murni_vs_prelist, 1) . "%)";
+            if ($row->is_over_130) $rincianList[] = "Lonjakan Muatan > 130% (" . number_format($row->pct_murni_vs_prelist, 1) . "%)";
+            if ($row->is_zero_usaha) $rincianList[] = "Usaha SE Nol (Potensi Wilkerstat: " . number_format($row->wilkerstat_usaha) . ")";
+            if ($row->is_usaha_drop) $rincianList[] = "Usaha Drop vs Wilkerstat (" . number_format($row->pct_diff_usaha, 1) . "%)";
+            if ($row->is_keluarga_drop) $rincianList[] = "Keluarga Tdk Ditemukan Tinggi (" . number_format($row->pk_tdk) . ")";
+            if ($row->is_ganda) $rincianList[] = "Khusus Ganda (" . number_format($row->total_ganda) . ")";
+            if ($row->is_bangunan_lainnya) $rincianList[] = "Bangunan Kosong/Lainnya >= 5% (" . number_format($row->pct_bangunan_lainnya, 1) . "%)";
+
+            $statusQc = $row->has_anomali ? "⚠️ PERLU KONFIRMASI" : "✅ WAJAR / AMAN";
+            $katRasio = $row->pct_murni_vs_prelist < 80.0 ? "🚨 KURANG (<80%)" : ($row->pct_murni_vs_prelist > 130.0 ? "📈 LONJAKAN (>130%)" : "✅ NORMAL");
+
+            $sheet->setCellValue('A' . $rowIdx, $index + 1);
+            $sheet->setCellValue('B' . $rowIdx, $row->kode_kec);
+            $sheet->setCellValue('C' . $rowIdx, $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec);
+            $sheet->setCellValue('D' . $rowIdx, $row->region_code);
+            $sheet->setCellValue('E' . $rowIdx, $row->nama_sls);
+            $sheet->setCellValue('F' . $rowIdx, $row->nama_pencacah);
+            $sheet->setCellValue('G' . $rowIdx, $row->nama_pengawas ?: '-');
+            $sheet->setCellValue('H' . $rowIdx, $statusQc);
+            $sheet->setCellValue('I' . $rowIdx, implode(" | ", $rincianList) ?: "-");
+            $sheet->setCellValue('J' . $rowIdx, (int) ($row->jml_prelist ?? 0));
+            $sheet->setCellValue('K' . $rowIdx, (int) ($row->prelist_keluarga ?? 0));
+            $sheet->setCellValue('L' . $rowIdx, (int) ($row->prelist_usaha ?? 0));
+            $sheet->setCellValue('M' . $rowIdx, (int) ($row->muatan_murni ?? 0));
+            $sheet->setCellValue('N' . $rowIdx, (float) ($row->pct_murni_vs_prelist ?? 0));
+            $sheet->setCellValue('O' . $rowIdx, $katRasio);
+            $sheet->setCellValue('P' . $rowIdx, (int) $row->beban_saat_ini);
+            $sheet->setCellValue('Q' . $rowIdx, (int) $row->total_submit);
+            $sheet->setCellValue('R' . $rowIdx, (float) $row->pct_submit);
+            $sheet->setCellValue('S' . $rowIdx, (int) $row->status_open);
+            $sheet->setCellValue('T' . $rowIdx, (int) $row->status_draft);
+            $sheet->setCellValue('U' . $rowIdx, (int) $row->up_ditemukan);
+            $sheet->setCellValue('V' . $rowIdx, (int) $row->uk_ditemukan);
+            $sheet->setCellValue('W' . $rowIdx, (int) $row->total_usaha_se);
+            $sheet->setCellValue('X' . $rowIdx, (int) ($row->wilkerstat_usaha ?? 0));
+            $sheet->setCellValue('Y' . $rowIdx, (float) ($row->pct_diff_usaha ?? 0));
+            $sheet->setCellValue('Z' . $rowIdx, (int) $row->pk_ditemukan);
+            $sheet->setCellValue('AA' . $rowIdx, (int) ($row->wilkerstat_kk ?? 0));
+            $sheet->setCellValue('AB' . $rowIdx, (int) ($row->total_ganda ?? 0));
+            $sheet->setCellValue('AC' . $rowIdx, (int) ($row->bangunan_lainnya ?? 0));
+
+            $sheet->getStyle('A' . $rowIdx . ':B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('D' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('J' . $rowIdx . ':M' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('N' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
+            $sheet->getStyle('P' . $rowIdx . ':Q' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('R' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
+            $sheet->getStyle('S' . $rowIdx . ':X' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('Y' . $rowIdx)->getNumberFormat()->setFormatCode('0.00"%"');
+            $sheet->getStyle('Z' . $rowIdx . ':AC' . $rowIdx)->getNumberFormat()->setFormatCode('#,##0');
+
+            if ($row->is_under_80) {
+                $sheet->getStyle('N' . $rowIdx . ':O' . $rowIdx)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('DC2626'));
+                $sheet->getStyle('N' . $rowIdx . ':O' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FEF2F2');
+            }
+
+            if ($index % 2 == 1) {
+                $sheet->getStyle('A' . $rowIdx . ':AC' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('F8FAFC');
+            }
+            $rowIdx++;
+        }
+
+        // Apply borders and auto widths
+        $lastRow = max(5, $rowIdx - 1);
+        $sheet->getStyle("A4:AC{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('CBD5E1');
+        foreach (range('A', 'Z') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        $sheet->getColumnDimension('AA')->setAutoSize(true);
+        $sheet->getColumnDimension('AB')->setAutoSize(true);
+        $sheet->getColumnDimension('AC')->setAutoSize(true);
+
+        $spreadsheet->setActiveSheetIndex(0);
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+}

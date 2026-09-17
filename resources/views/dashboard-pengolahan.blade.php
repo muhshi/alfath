@@ -1308,6 +1308,24 @@
 
                         <!-- TAB 3: ALOKASI & PROGRESS PER SLS / SUB-SLS -->
                         <div class="tab-pane fade" id="tab-sls" role="tabpanel" aria-labelledby="sls-tab">
+                            
+                            <!-- QC QUICK ACCESS BANNER -->
+                            <div class="p-3 bg-light border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-blue text-white p-2 rounded-circle">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shield-check" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M9 12l2 2l4 -4"/></svg>
+                                    </span>
+                                    <div>
+                                        <div class="font-weight-bold text-dark fs-4">Identifikasi Kualitas & Evaluasi Hasil Pendataan SLS</div>
+                                        <div class="text-muted small">Cek SLS dengan Muatan Murni &lt; 80% Prelist, Lonjakan &gt; 130%, Usaha Nol, dan Drop Ekstrem di menu khusus.</div>
+                                    </div>
+                                </div>
+                                <a href="{{ route('identifikasi.pendataan') }}" class="btn btn-sm btn-primary font-weight-bold shadow-sm rounded-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-zoom-in-area me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M15 13v4"/><path d="M13 15h4"/><path d="M15 15m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0"/><path d="M22 22l-3 -3"/><path d="M6 18h-1a2 2 0 0 1 -2 -2v-1"/><path d="M3 11v-1"/><path d="M3 6v-1a2 2 0 0 1 2 -2h1"/><path d="M10 3h1"/><path d="M15 3h1a2 2 0 0 1 2 2v1"/></svg>
+                                    Buka Menu Identifikasi Hasil Pendataan ➔
+                                </a>
+                            </div>
+
                             <table id="sls-table" class="table table-vcenter table-striped card-table text-nowrap w-100 datatable-pre-init">
                                 <thead>
                                     <tr class="bg-light text-uppercase small font-weight-bold">
@@ -1316,6 +1334,7 @@
                                         <th>Kode & Nama SLS / Sub-SLS</th>
                                         <th>Nama Petugas<br><span class="text-muted font-weight-normal small">/ Pencacah</span></th>
                                         <th>Nama<br>Pengawas</th>
+                                        <th class="text-end bg-blue-lt text-blue font-weight-bold">Jml Prelist ⭐<br><span class="font-weight-normal small">KK + Usaha</span></th>
                                         <th class="text-end">Beban<br>Saat Ini</th>
                                         <th class="text-end text-success font-weight-bold">Total<br>Submit</th>
                                         <th class="text-end text-purple font-weight-bold bg-purple-lt">Total<br>Draft</th>
@@ -1327,7 +1346,7 @@
                                         <th class="text-end text-orange font-weight-bold" style="background-color: #fff7ed !important;">UK<br><span class="font-weight-normal small">Tdk/Tutup/Ganda</span></th>
                                         <th class="text-end text-success font-weight-bold">Keluarga Ditemukan<br><span class="font-weight-normal small">vs Wilkerstat KK (Tol. 5%)</span></th>
                                         <th class="text-end text-muted font-weight-bold">Keluarga<br><span class="font-weight-normal small">Tdk/Meninggal</span></th>
-                                        <th class="text-end bg-success-lt text-success font-weight-extrabold fs-3">Total<br><span class="font-weight-bold small">Ditemukan</span></th>
+                                        <th class="text-end bg-success-lt text-success font-weight-extrabold fs-3">Total<br><span class="font-weight-bold small">Ditemukan (Murni)</span></th>
                                         <th class="text-end bg-danger-lt text-danger font-weight-extrabold fs-3">Total Tdk Ditemukan<br><span class="font-weight-bold small">/ Tutup / Ganda</span></th>
                                         <th class="text-end bg-pink-lt text-pink font-weight-bold">Khusus Ganda ⭐<br><span class="font-weight-normal small">(BKU + UK)</span></th>
                                         <th class="text-end text-orange font-weight-bold bg-amber-lt">Bangunan Kosong / Lainnya<br><span class="text-muted font-weight-normal small">(Submit - Murni - Tdk)</span></th>
@@ -1351,6 +1370,12 @@
                                             </td>
                                             <td>
                                                 <div class="small font-weight-medium">{{ $row->nama_pengawas ?: '-' }}</div>
+                                            </td>
+                                            <td class="text-end font-weight-bold text-blue bg-blue-lt" data-order="{{ $row->jml_prelist }}">
+                                                {{ number_format($row->jml_prelist) }}
+                                                <div class="small text-muted font-weight-normal" style="font-size: 0.70rem;" title="Prelist Keluarga: {{ number_format($row->prelist_keluarga) }} | Prelist Usaha: {{ number_format($row->prelist_usaha) }}">
+                                                    KK: {{ number_format($row->prelist_keluarga) }} | U: {{ number_format($row->prelist_usaha) }}
+                                                </div>
                                             </td>
                                             <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
                                             <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>
@@ -1404,7 +1429,26 @@
                                                 </div>
                                             </td>
                                             <td class="text-end text-muted" data-order="{{ $row->pk_tdk }}">{{ number_format($row->pk_tdk) }}</td>
-                                            <td class="text-end font-weight-extrabold text-success bg-success-lt fs-3" data-order="{{ $row->total_ditemukan }}">{{ number_format($row->total_ditemukan) }}</td>
+                                            <td class="text-end font-weight-extrabold text-success bg-success-lt fs-3" data-order="{{ $row->total_ditemukan }}">
+                                                {{ number_format($row->total_ditemukan) }}
+                                                @if(($row->jml_prelist ?? 0) > 0)
+                                                    <div class="mt-0.5" style="font-size: 0.70rem;">
+                                                        @if(($row->pct_murni_vs_prelist ?? 0) < 80.0)
+                                                            <span class="badge bg-danger-lt text-danger font-weight-bold px-1 py-0.2" title="Muatan Murni < 80% dari Prelist (Potensi Kurang / Undercoverage)">
+                                                                ⚠️ {{ number_format($row->pct_murni_vs_prelist, 1) }}% Prelist
+                                                            </span>
+                                                        @elseif(($row->pct_murni_vs_prelist ?? 0) > 130.0)
+                                                            <span class="badge bg-warning-lt text-warning font-weight-bold px-1 py-0.2" title="Muatan Murni > 130% dari Prelist (Lonjakan Tinggi)">
+                                                                📈 {{ number_format($row->pct_murni_vs_prelist, 1) }}% Prelist
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-success-lt text-success font-weight-normal px-1 py-0.2" title="Rasio Murni terhadap Prelist Normal">
+                                                                ✅ {{ number_format($row->pct_murni_vs_prelist, 1) }}% Prelist
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            </td>
                                             <td class="text-end font-weight-extrabold bg-danger-lt text-danger fs-3" data-order="{{ $row->total_tdk }}">
                                                 <span class="badge bg-danger text-white font-weight-extrabold px-2 py-1 fs-3">
                                                     {{ number_format($row->total_tdk) }}
@@ -1437,7 +1481,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="19" class="text-center py-5 text-muted">
+                                            <td colspan="21" class="text-center py-5 text-muted">
                                                 <div class="mb-2">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-inbox" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M4 13h3l3 3h4l3 -3h3"/></svg>
                                                 </div>

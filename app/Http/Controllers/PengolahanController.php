@@ -36,12 +36,12 @@ class PengolahanController extends Controller
 
         $data = $this->monitoringService->getFilteredQuery($request);
 
-        $cacheVersion = 3;
+        $cacheVersion = 4;
         try {
-            $cacheVersion = (int) $cacheStore->get('se2026_dash_version', 3);
-            if ($cacheVersion < 3) {
-                $cacheVersion = 3;
-                $cacheStore->set('se2026_dash_version', 3);
+            $cacheVersion = (int) $cacheStore->get('se2026_dash_version', 4);
+            if ($cacheVersion < 4) {
+                $cacheVersion = 4;
+                $cacheStore->set('se2026_dash_version', 4);
             }
         } catch (\Throwable $e) {}
 

@@ -233,6 +233,7 @@ class Se2026MonitoringService
             ->select(
                 'kode',
                 DB::raw('MAX(sub_sls) as sub_sls'),
+                DB::raw('SUM(CAST(prelist_awal AS SIGNED)) AS pk_prelist'),
                 DB::raw('SUM(ditemukan + keluarga_baru) AS pk_ditemukan'),
                 DB::raw('SUM(meninggal + tidak_eligible + tidak_dapat_ditemui + tidak_ditemukan) AS pk_tdk')
             )
@@ -242,6 +243,7 @@ class Se2026MonitoringService
             ->when($upDate, fn ($q) => $q->where('tanggal_data', $upDate))
             ->select(
                 'kode',
+                DB::raw('SUM(CAST(jumlah_prelist_usaha AS SIGNED)) AS up_prelist'),
                 DB::raw('SUM(CAST(status___ditemukan AS SIGNED) + CAST(status___baru AS SIGNED)) AS up_ditemukan'),
                 DB::raw('SUM(CAST(status___ganda AS SIGNED)) AS up_ganda'),
                 DB::raw('SUM(CAST(status___tutup AS SIGNED) + CAST(status___ganda AS SIGNED) + CAST(status___tidak_ditemukan AS SIGNED)) AS up_tdk')
@@ -281,6 +283,9 @@ class Se2026MonitoringService
                 'm.email_pencacah',
                 DB::raw('IFNULL(p_cacah.nama_lengkap, m.email_pencacah) as nama_pencacah'),
                 DB::raw('GROUP_CONCAT(DISTINCT p_awas.nama_lengkap SEPARATOR ", ") as nama_pengawas'),
+                DB::raw('(IFNULL(SUM(pk.pk_prelist), 0) + IFNULL(SUM(up.up_prelist), 0)) as jml_prelist'),
+                DB::raw('IFNULL(SUM(pk.pk_prelist), 0) as prelist_keluarga'),
+                DB::raw('IFNULL(SUM(up.up_prelist), 0) as prelist_usaha'),
                 DB::raw('SUM(m.total_beban) as beban_saat_ini'),
                 DB::raw('(IFNULL(SUM(m.total_beban), 0) - IFNULL(SUM(m.status_open), 0) - IFNULL(SUM(m.status_draft), 0)) as total_submit'),
                 DB::raw('IFNULL(SUM(m.status_open), 0) as status_open'),
@@ -295,7 +300,9 @@ class Se2026MonitoringService
                 DB::raw('(IFNULL(SUM(up.up_ganda), 0) + IFNULL(SUM(uk.uk_ganda), 0)) as total_ganda'),
                 DB::raw('IFNULL(SUM(pk.pk_ditemukan), 0) as pk_ditemukan'),
                 DB::raw('IFNULL(SUM(pk.pk_tdk), 0) as pk_tdk'),
+                DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) as muatan_murni'),
                 DB::raw('(IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(uk.uk_ditemukan), 0)) as total_usaha_se'),
+                DB::raw('CASE WHEN (IFNULL(SUM(pk.pk_prelist), 0) + IFNULL(SUM(up.up_prelist), 0)) > 0 THEN ROUND(((IFNULL(SUM(up.up_ditemukan), 0) + IFNULL(SUM(pk.pk_ditemukan), 0)) / (IFNULL(SUM(pk.pk_prelist), 0) + IFNULL(SUM(up.up_prelist), 0))) * 100, 2) ELSE 0 END as pct_murni_vs_prelist'),
                 DB::raw('IFNULL(sipw.wilkerstat_kk, 0) as wilkerstat_kk'),
                 DB::raw('IFNULL(sipw.wilkerstat_bku, 0) as wilkerstat_bku'),
                 DB::raw('IFNULL(sipw.wilkerstat_usaha, 0) as wilkerstat_usaha'),
