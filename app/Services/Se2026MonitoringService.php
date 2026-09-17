@@ -222,6 +222,7 @@ class Se2026MonitoringService
             ->select(
                 'id_subsls',
                 DB::raw('MAX(nama_sls) as nama_sls'),
+                DB::raw('MAX(jenis_sls) as jenis_sls'),
                 DB::raw('MAX(CAST(muatan_kk AS SIGNED)) as wilkerstat_kk'),
                 DB::raw('MAX(CAST(bku AS SIGNED)) as wilkerstat_bku'),
                 DB::raw('MAX(CAST(muatan_usaha AS SIGNED)) as wilkerstat_usaha')
@@ -280,6 +281,7 @@ class Se2026MonitoringService
                     NULLIF(pk.sub_sls, "TIDAK DIKETAHUI"),
                     CONCAT("SLS ", m.region_code)
                 ) as nama_sls'),
+                DB::raw('IFNULL(MAX(sipw.jenis_sls), "SLS") as jenis_sls'),
                 'm.email_pencacah',
                 DB::raw('IFNULL(p_cacah.nama_lengkap, m.email_pencacah) as nama_pencacah'),
                 DB::raw('GROUP_CONCAT(DISTINCT p_awas.nama_lengkap SEPARATOR ", ") as nama_pengawas'),

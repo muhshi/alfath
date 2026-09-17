@@ -31,11 +31,14 @@ class IdentifikasiPendataanService
 
         $filterKategori = $request->get('kategori', 'all');
         $statusSubmitFilter = $request->get('status_submit', 'all');
+        $filterTipeWilayah = $request->get('tipe_wilayah', 'all');
         $kodekec = $request->get('kodekec', '');
         $search = trim((string) $request->get('search', ''));
 
         $summary = [
             'total_sls' => 0,
+            'cnt_pemukiman' => 0,
+            'cnt_non_pemukiman' => 0,
             'cnt_under_80' => 0,
             'cnt_over_130' => 0,
             'cnt_zero_usaha' => 0,
@@ -54,13 +57,37 @@ class IdentifikasiPendataanService
         foreach ($rawSlsRecords as $row) {
             $summary['total_sls']++;
 
+            // Deteksi Karakteristik SLS: Pemukiman vs Non-Pemukiman (Sawah/Tambak/Hutan/Lahan Kosong)
+            $isNonPemukiman = (isset($row->jenis_sls) && !in_array($row->jenis_sls, ['SLS', 'NONSLS_PEMUKIMAN']))
+                || preg_match('/(SAWAH|HUTAN|TAMBAK|LAHAN|KOSONG|KUBURAN|MAKAM|SUNGAI|DANAU|POLDER|RAWA|LADANG|TEGALAN|JALAN TOL|PERTANIAN|PENGAIRAN|PERAIRAN)/i', $row->nama_sls);
+            $row->is_non_pemukiman = (bool) $isNonPemukiman;
+
+            if ($isNonPemukiman) {
+                $summary['cnt_non_pemukiman']++;
+            } else {
+                $summary['cnt_pemukiman']++;
+            }
+
             $prelist = (int) ($row->jml_prelist ?? 0);
             $murni = (int) ($row->muatan_murni ?? ($row->up_ditemukan + $row->pk_ditemukan));
             $summary['total_prelist'] += $prelist;
             $summary['total_murni'] += $murni;
 
-            $pctMurniPrelist = $prelist > 0 ? round(($murni / $prelist) * 100, 2) : 0.0;
+            // Perhitungan Rasio Murni vs Prelist
+            if ($prelist > 0) {
+                $pctMurniPrelist = round(($murni / $prelist) * 100, 2);
+                $isUnder80 = ($pctMurniPrelist < 80.0);
+                $isOver130 = ($pctMurniPrelist > 130.0);
+                $rasioOrder = $pctMurniPrelist;
+            } else {
+                $pctMurniPrelist = null; // Prelist 0 bukan rasio 0.0%
+                $isUnder80 = false;      // Jangan anggap anomali kurang prelist jika prelist awalnya memang 0
+                $isOver130 = ($murni > 0); // Jika prelist 0 tapi ada muatan, ini temuan baru / pemekaran
+                $rasioOrder = 99999;     // Nilai order tinggi agar tidak meloncat ke atas saat sorting ascending
+            }
+
             $row->pct_murni_vs_prelist = $pctMurniPrelist;
+            $row->rasio_order = $rasioOrder;
 
             $totalUsaha = (int) ($row->total_usaha_se ?? ($row->up_ditemukan + $row->uk_ditemukan));
             $row->total_usaha_se = $totalUsaha;
@@ -68,8 +95,6 @@ class IdentifikasiPendataanService
             $wilkerstatKk = (int) ($row->wilkerstat_kk ?? 0);
 
             // Anomali Flags
-            $isUnder80 = ($prelist > 0 && $pctMurniPrelist < 80.0);
-            $isOver130 = ($prelist > 0 && $pctMurniPrelist > 130.0);
             $isZeroUsaha = ($wilkerstatUsaha > 0 && $totalUsaha == 0);
             $isUsahaDrop = ($wilkerstatUsaha > 0 && ($row->pct_diff_usaha ?? 0) < -30.0);
             $isKeluargaDrop = ($prelist > 0 && ((int) $row->pk_tdk / max(1, $prelist)) * 100 >= 15.0);
@@ -123,6 +148,13 @@ class IdentifikasiPendataanService
             $row->has_anomali = $hasAnomali;
             $row->anomali_tags = $anomaliTags;
 
+            // Apply Tipe Wilayah Filter
+            if ($filterTipeWilayah === 'pemukiman' && $isNonPemukiman) {
+                continue;
+            } elseif ($filterTipeWilayah === 'non_pemukiman' && !$isNonPemukiman) {
+                continue;
+            }
+
             // Apply Kategori Filter
             if ($filterKategori === 'anomali_only' && !$hasAnomali) {
                 continue;
@@ -164,6 +196,7 @@ class IdentifikasiPendataanService
             'kecNameMap' => $kecNameMap,
             'filterKategori' => $filterKategori,
             'statusSubmitFilter' => $statusSubmitFilter,
+            'filterTipeWilayah' => $filterTipeWilayah,
             'kodekec' => $kodekec,
             'search' => $search,
         ];

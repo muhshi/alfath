@@ -235,8 +235,8 @@
                     <form method="GET" action="{{ route('identifikasi.pendataan') }}" class="row g-2 align-items-center">
                         
                         <!-- Filter Kategori -->
-                        <div class="col-12 col-md-4">
-                            <label class="form-label small text-muted font-weight-bold mb-1">Kategori Identifikasi / Temuan:</label>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label small text-muted font-weight-bold mb-1">Kategori Temuan / QC:</label>
                             <select name="kategori" class="form-select form-select-sm font-weight-bold" onchange="this.form.submit()">
                                 <option value="all" {{ $filterKategori === 'all' ? 'selected' : '' }}>📋 Semua SLS ({{ number_format($summary['total_sls']) }})</option>
                                 <option value="anomali_only" {{ $filterKategori === 'anomali_only' ? 'selected' : '' }}>⚠️ Semua SLS Anomali / Perlu QC ({{ number_format($summary['cnt_total_anomali']) }})</option>
@@ -251,25 +251,35 @@
                             </select>
                         </div>
 
-                        <!-- Filter Kecamatan -->
+                        <!-- Filter Tipe Wilayah -->
                         <div class="col-12 col-md-3">
+                            <label class="form-label small text-muted font-weight-bold mb-1">Tipe Wilayah SLS:</label>
+                            <select name="tipe_wilayah" class="form-select form-select-sm font-weight-medium" onchange="this.form.submit()">
+                                <option value="all" {{ ($filterTipeWilayah ?? 'all') === 'all' ? 'selected' : '' }}>Semua Wilayah ({{ number_format($summary['total_sls']) }} SLS)</option>
+                                <option value="pemukiman" {{ ($filterTipeWilayah ?? '') === 'pemukiman' ? 'selected' : '' }}>🏡 Pemukiman / RT-RW ({{ number_format($summary['cnt_pemukiman']) }} SLS)</option>
+                                <option value="non_pemukiman" {{ ($filterTipeWilayah ?? '') === 'non_pemukiman' ? 'selected' : '' }}>🌾 Non-Pemukiman / Sawah-Tambak ({{ number_format($summary['cnt_non_pemukiman']) }} SLS)</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter Kecamatan -->
+                        <div class="col-12 col-md-2">
                             <label class="form-label small text-muted font-weight-bold mb-1">Filter Kecamatan:</label>
                             <select name="kodekec" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">Semua Kecamatan (14 Kec)</option>
+                                <option value="">Semua (14 Kec)</option>
                                 @foreach($kecNameMap as $code => $name)
-                                    <option value="{{ $code }}" {{ $kodekec == $code ? 'selected' : '' }}>{{ $name }} ({{ $code }})</option>
+                                    <option value="{{ $code }}" {{ $kodekec == $code ? 'selected' : '' }}>{{ $name }}</option>
                                 @endforeach
                             </select>
                         </div>
 
                         <!-- Filter Status Submit -->
-                        <div class="col-12 col-md-3">
-                            <label class="form-label small text-muted font-weight-bold mb-1">Status Progres Lapangan:</label>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label small text-muted font-weight-bold mb-1">Progres Lapangan:</label>
                             <select name="status_submit" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="all" {{ $statusSubmitFilter === 'all' ? 'selected' : '' }}>Semua Status Pengerjaan</option>
+                                <option value="all" {{ $statusSubmitFilter === 'all' ? 'selected' : '' }}>Semua Status</option>
                                 <option value="completed" {{ $statusSubmitFilter === 'completed' ? 'selected' : '' }}>🎉 Selesai 100%</option>
-                                <option value="in_progress" {{ $statusSubmitFilter === 'in_progress' ? 'selected' : '' }}>⏳ Sedang Berjalan (&lt;100%)</option>
-                                <option value="open" {{ $statusSubmitFilter === 'open' ? 'selected' : '' }}>🚪 Belum Disentuh (Open 100%)</option>
+                                <option value="in_progress" {{ $statusSubmitFilter === 'in_progress' ? 'selected' : '' }}>⏳ Berjalan (&lt;100%)</option>
+                                <option value="open" {{ $statusSubmitFilter === 'open' ? 'selected' : '' }}>🚪 Belum (Open)</option>
                             </select>
                         </div>
 
@@ -342,7 +352,14 @@
                                             <div class="small text-muted">{{ $row->kode_kec }}</div>
                                         </td>
                                         <td>
-                                            <div class="font-weight-bold text-dark">{{ $row->nama_sls }}</div>
+                                            <div class="d-flex align-items-center gap-1 flex-wrap">
+                                                <span class="font-weight-bold text-dark">{{ $row->nama_sls }}</span>
+                                                @if($row->is_non_pemukiman)
+                                                    <span class="badge bg-secondary-lt text-secondary px-1 py-0" style="font-size: 0.65rem;" title="Wilayah Non-Pemukiman (Sawah/Tambak/Hutan/Lahan Kosong)">
+                                                        🌾 Non-Pemukiman
+                                                    </span>
+                                                @endif
+                                            </div>
                                             <div class="small text-muted font-monospace">{{ $row->region_code }}</div>
                                         </td>
                                         <td>
@@ -401,10 +418,18 @@
                                         <td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">
                                             {{ number_format($row->muatan_murni) }}
                                             <div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">
-                                                KK: {{ number_format($row->pk_ditemukan) }} | BKU: {{ number_format($row->up_ditemukan) }}
+                                                @if($row->muatan_murni == 0)
+                                                    @if($row->is_non_pemukiman)
+                                                        <span class="text-secondary opacity-75">Sawah/Non-Penduduk</span>
+                                                    @else
+                                                        <span class="text-danger font-weight-bold">0 Ditemukan</span>
+                                                    @endif
+                                                @else
+                                                    KK: {{ number_format($row->pk_ditemukan) }} | BKU: {{ number_format($row->up_ditemukan) }}
+                                                @endif
                                             </div>
                                         </td>
-                                        <td class="text-center" data-order="{{ $row->pct_murni_vs_prelist }}">
+                                        <td class="text-center" data-order="{{ $row->rasio_order ?? 99999 }}">
                                             @if(($row->jml_prelist ?? 0) > 0)
                                                 @if($row->pct_murni_vs_prelist < 80.0)
                                                     <span class="badge bg-danger text-white font-weight-extrabold px-2 py-1 fs-4 shadow-xs" title="Muatan Murni Kurang (< 80% Prelist)">
@@ -420,7 +445,15 @@
                                                     </span>
                                                 @endif
                                             @else
-                                                <span class="text-muted">-</span>
+                                                @if($row->muatan_murni > 0)
+                                                    <span class="badge bg-info-lt text-info font-weight-bold px-2 py-1" title="SLS Pemekaran Baru (Prelist Awal 0)">
+                                                        Baru ({{ number_format($row->muatan_murni) }})
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-light text-muted border px-2 py-1" title="Prelist Awal 0 & Muatan 0">
+                                                        Nol Prelist
+                                                    </span>
+                                                @endif
                                             @endif
                                         </td>
                                         <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
@@ -526,7 +559,7 @@
                         },
                         pageLength: 25,
                         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
-                        order: [[7, 'asc']], // Default sort: Rasio Murni vs Prelist (Index 7) ascending agar yang terendah (<80%) paling atas!
+                        order: {!! $filterKategori === 'under_80' ? '[[7, "asc"]]' : ($filterKategori === 'over_130' ? '[[7, "desc"]]' : '[[1, "asc"], [2, "asc"]]') !!},
                         columnDefs: [
                             { orderable: false, targets: [0, 4] } // Disable sort for No and Anomali badges
                         ],
