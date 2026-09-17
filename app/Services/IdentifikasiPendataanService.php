@@ -41,9 +41,9 @@ class IdentifikasiPendataanService
             }
         } catch (\Throwable $e) {}
 
-        $filteredQuery = $this->monitoringService->getFilteredQuery($request);
-        $selectedDate = $filteredQuery['selectedDate'];
-        $availableDates = $filteredQuery['availableDates'];
+        $datesInfo = $this->monitoringService->getAvailableDates($request->get('tanggal_data'));
+        $selectedDate = $datesInfo['selectedDate'];
+        $availableDates = $datesInfo['availableDates'];
         $kecNameMap = $this->monitoringService->getKecNameMap();
 
         $filterKategori = $request->get('kategori', 'anomali_only');

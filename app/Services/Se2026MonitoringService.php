@@ -28,21 +28,22 @@ class Se2026MonitoringService
         '3321130' => 'Wedung',
     ];
 
+    protected array $runtimeDateCache = [];
+
     public function getKecNameMap(): array
     {
         return $this->kecNameMap;
     }
 
     /**
-     * Build the filtered query for SE2026 Data Petugas (PPL).
+     * Get available dates list and resolved selected date.
      */
-    public function getFilteredQuery(Request $request): array
+    public function getAvailableDates(?string $selectedDate = null): array
     {
         $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
         $db = $connName ? DB::connection($connName) : DB::connection();
 
         $availableDates = [];
-        $selectedDate = $request->get('tanggal_data');
 
         if (Schema::connection($connName)->hasTable('monitoring_se2026')) {
             $availableDates = $db->table('monitoring_se2026')
@@ -56,6 +57,24 @@ class Se2026MonitoringService
                 $selectedDate = $availableDates[0];
             }
         }
+
+        return [
+            'availableDates' => $availableDates,
+            'selectedDate' => $selectedDate,
+        ];
+    }
+
+    /**
+     * Build the filtered query for SE2026 Data Petugas (PPL).
+     */
+    public function getFilteredQuery(Request $request): array
+    {
+        $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
+        $db = $connName ? DB::connection($connName) : DB::connection();
+
+        $datesInfo = $this->getAvailableDates($request->get('tanggal_data'));
+        $availableDates = $datesInfo['availableDates'];
+        $selectedDate = $datesInfo['selectedDate'];
 
         $search = trim((string) $request->get('search', ''));
         $kodekec = trim((string) $request->get('kodekec', ''));
@@ -515,11 +534,16 @@ class Se2026MonitoringService
      */
     public function getTargetDateForTable(string $tableName, ?string $selectedDate): ?string
     {
+        $cacheKey = "{$tableName}_" . ($selectedDate ?? 'latest');
+        if (array_key_exists($cacheKey, $this->runtimeDateCache)) {
+            return $this->runtimeDateCache[$cacheKey];
+        }
+
         $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
         $db = DB::connection($connName);
 
         if (!Schema::connection($connName)->hasTable($tableName)) {
-            return null;
+            return $this->runtimeDateCache[$cacheKey] = null;
         }
 
         $targetDate = $db->table($tableName)
@@ -534,6 +558,6 @@ class Se2026MonitoringService
             $targetDate = $db->table($tableName)->max('tanggal_data');
         }
 
-        return $targetDate;
+        return $this->runtimeDateCache[$cacheKey] = $targetDate;
     }
 }
