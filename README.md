@@ -512,4 +512,7 @@ Script `deploy.sh` secara otomatis mengeksekusi:
 - **Optimasi Kontrol Filter Identifikasi SLS Manual via Tombol Submit (`identifikasi-pendataan.blade.php`)**:
   - Menghapus perilaku auto-submit otomatis (`onchange="this.form.submit()"`) pada seluruh dropdown filter (Kategori QC, Cakupan Wilayah, Kecamatan, Status Submit, dan Tanggal Data).
   - Pengguna kini dapat memilih beberapa kombinasi filter sekaligus dengan leluasa tanpa gangguan interupsi reload halaman, kemudian mengeksekusi pencarian dengan menekan tombol utama **Filter** atau tombol **Reset**.
+- **Integrasi Baseline Muatan Wilkerstat di Kolom Prelist (`identifikasi-pendataan.blade.php`)**:
+  - Menampilkan informasi komparasi ganda pada kolom **Jml Prelist & Wilkerstat**: total prelist FASIH beserta sub-rincian `KK | Usaha`, berdampingan dengan total target muatan Wilkerstat 2025 (`wilkerstat_kk + wilkerstat_usaha`) beserta breakdown per entitasnya.
+
 
