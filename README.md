@@ -479,8 +479,9 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - **Pengelompokan Navbar Sensus Ekonomi 2026 ke dalam Submenu**:
     - Merestrukturisasi menu navbar atas yang sebelumnya membentang melebar (7 menu berjejer) menjadi lebih ringkas, elegan, dan terstruktur.
     - Seluruh modul SE2026 kini dikelompokkan ke dalam satu dropdown menu induk **`Sensus Ekonomi 2026`** (`Executive Dashboard`, `Tabel Petugas & SLS`, `Timeline Submit`, `Anomali Geotag`, dan `Identifikasi Hasil SLS`), berdampingan dengan menu rutin `Monitoring` dan `Validasi`.
-  - **Perbaikan Dropdown Pintasan Beranda & Export Global Library**:
-    - Mengintegrasikan `@popperjs/core` dan `bootstrap` ke dalam `tabler-init.js` serta menyediakan script handler interaktif (*click toggle*, *click-outside-to-close*, dan *ESC key support*), sehingga dropdown Pintasan Modul SE2026 di Beranda dapat dibuka dan ditutup dengan responsif dan mulus di seluruh browser.
+  - **Perbaikan Dropdown Pintasan & Global Navbar Dropdown Handler (`master.blade.php`, `dropdown-item.blade.php`)**:
+    - Menyediakan script delegasi global event dan CSS styling (`display: block !important`) di master layout Tablar sehingga seluruh dropdown (baik menu navbar `Sensus Ekonomi 2026 ▾`, dropdown pintasan beranda, maupun dropdown export) dijamin berfungsi 100% di server production tanpa bergantung pada build aset Vite lama.
+    - Menambahkan dukungan efek *hover auto-open* pada desktop (layar lebar) untuk horizontal top navbar, memberikan kemudahan akses langsung ke submenu SE2026 tanpa harus mengeklik berulang kali.
   - **Pembersihan Redundansi Tombol di Beranda (`home.blade.php`)**:
     - Menata ulang hierarki tombol pada hero banner untuk mengurangi kelelahan visual (*cognitive load*): 2 Call-to-Action utama yang menonjol (`Buka Executive Dashboard` & `Tabel Petugas SE2026`), didukung *Quick Access Bar* minimalis untuk modul Analisis & QC.
 
