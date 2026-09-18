@@ -99,6 +99,9 @@
                             </div>
                             <div class="text-muted small" style="font-size: 0.72rem;">
                                 Potensi undercoverage / responden terlewat
+                                @if($hideNonSls)
+                                    <span class="badge bg-blue-lt text-blue py-0 px-1 font-weight-normal ms-1">Non-SLS Di-hide</span>
+                                @endif
                             </div>
                         </div>
                     </a>
@@ -253,11 +256,11 @@
 
                         <!-- Filter Tipe Wilayah -->
                         <div class="col-12 col-md-3">
-                            <label class="form-label small text-muted font-weight-bold mb-1">Tipe Wilayah SLS:</label>
+                            <label class="form-label small text-muted font-weight-bold mb-1">Cakupan Wilayah:</label>
                             <select name="tipe_wilayah" class="form-select form-select-sm font-weight-medium" onchange="this.form.submit()">
-                                <option value="all" {{ ($filterTipeWilayah ?? 'all') === 'all' ? 'selected' : '' }}>Semua Wilayah ({{ number_format($summary['total_sls']) }} SLS)</option>
-                                <option value="pemukiman" {{ ($filterTipeWilayah ?? '') === 'pemukiman' ? 'selected' : '' }}>🏡 Pemukiman / RT-RW ({{ number_format($summary['cnt_pemukiman']) }} SLS)</option>
-                                <option value="non_pemukiman" {{ ($filterTipeWilayah ?? '') === 'non_pemukiman' ? 'selected' : '' }}>🌾 Non-Pemukiman / Sawah-Tambak ({{ number_format($summary['cnt_non_pemukiman']) }} SLS)</option>
+                                <option value="sls" {{ in_array($filterTipeWilayah, ['sls', 'pemukiman']) ? 'selected' : '' }}>🏡 Hanya SLS ({{ number_format($summary['cnt_sls']) }} SLS) — Fokus Penduduk</option>
+                                <option value="all" {{ $filterTipeWilayah === 'all' ? 'selected' : '' }}>🌐 Semua Wilayah ({{ number_format($summary['total_all_sls']) }} SLS & Non-SLS)</option>
+                                <option value="non_sls" {{ in_array($filterTipeWilayah, ['non_sls', 'non_pemukiman']) ? 'selected' : '' }}>🌾 Hanya Non-SLS ({{ number_format($summary['cnt_non_sls']) }} Sawah/Hutan)</option>
                             </select>
                         </div>
 
@@ -305,17 +308,29 @@
             <!-- TABLE IDENTIFIKASI HASIL SLS -->
             <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
                 <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom">
-                    <div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <h4 class="card-title font-weight-bold text-dark m-0">
                             📋 Daftar Identifikasi Hasil SLS 
                             <span class="badge bg-primary text-white ms-1 rounded-pill">{{ number_format($records->count()) }} SLS</span>
                         </h4>
-                        <div class="small text-muted">
-                            Kategori Aktif: <strong class="text-primary">{{ strtoupper(str_replace('_', ' ', $filterKategori)) }}</strong>
+                        <div class="small text-muted ms-2">
+                            Kategori: <strong class="text-primary">{{ strtoupper(str_replace('_', ' ', $filterKategori)) }}</strong>
                         </div>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-muted small">Total Prelist Filter: <strong>{{ number_format($records->sum('jml_prelist')) }}</strong> | Muatan Murni: <strong>{{ number_format($records->sum('muatan_murni')) }}</strong></span>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <!-- Toggle Switch: Sembunyikan Non-SLS -->
+                        <a href="{{ request()->fullUrlWithQuery(['hide_non_sls' => ($hideNonSls ? 0 : 1), 'tipe_wilayah' => ($hideNonSls ? 'all' : 'sls')]) }}" 
+                           class="btn btn-sm {{ $hideNonSls ? 'btn-outline-primary active' : 'btn-outline-secondary' }} d-flex align-items-center gap-1.5 shadow-xs px-2.5 py-1" 
+                           title="{{ $hideNonSls ? 'Klik untuk menampilkan semua wilayah (termasuk Non-SLS sawah/perairan)' : 'Klik untuk menyembunyikan wilayah Non-SLS (fokus SLS penduduk)' }}">
+                            <span class="form-check form-switch p-0 m-0 d-inline-flex align-items-center pointer-events-none">
+                                <input class="form-check-input ms-0 me-1" type="checkbox" {{ $hideNonSls ? 'checked' : '' }} style="pointer-events: none;">
+                            </span>
+                            <span class="font-weight-bold" style="font-size: 0.78rem;">
+                                {{ $hideNonSls ? '🚫 Non-SLS Tersembunyi (' . number_format($summary['cnt_non_sls']) . ')' : '🌾 Tampilkan Non-SLS (' . number_format($summary['cnt_non_sls']) . ')' }}
+                            </span>
+                        </a>
+
+                        <span class="text-muted small ms-1">Prelist: <strong>{{ number_format($records->sum('jml_prelist')) }}</strong> | Murni: <strong>{{ number_format($records->sum('muatan_murni')) }}</strong></span>
                     </div>
                 </div>
 
@@ -353,11 +368,11 @@ $pSubmit = number_format($row->pct_submit, 1) . '%';
 <tr>
 <td class="text-muted text-center">{{ $index + 1 }}</td>
 <td><div class="font-weight-bold">{{ $kecNama }}</div><div class="small text-muted">{{ $row->kode_kec }}</div></td>
-<td><div class="d-flex align-items-center gap-1 flex-wrap"><span class="font-weight-bold text-dark">{{ $row->nama_sls }}</span>@if($row->is_non_pemukiman)<span class="badge bg-secondary-lt text-secondary px-1 py-0" style="font-size: 0.65rem;" title="Wilayah Non-Pemukiman">🌾 Non-Pemukiman</span>@endif</div><div class="small text-muted font-monospace">{{ $row->region_code }}</div></td>
+<td><div class="d-flex align-items-center gap-1 flex-wrap"><span class="font-weight-bold text-dark">{{ $row->nama_sls }}</span>@if($row->is_non_sls)<span class="badge bg-secondary-lt text-secondary px-1 py-0" style="font-size: 0.65rem;" title="Wilayah Non-SLS (Digit 11 > 0: Sawah/Perairan/Hutan)">🌾 Non-SLS</span>@endif</div><div class="small text-muted font-monospace">{{ $row->region_code }}</div></td>
 <td><div class="font-weight-bold text-dark">{{ $row->nama_pencacah }}</div><div class="small text-muted">PML: {{ $row->nama_pengawas ?: '-' }}</div></td>
 <td class="text-center">@if(!$row->has_anomali)<span class="badge bg-success text-white badge-qc">✅ WAJAR / AMAN</span>@else<div class="d-flex flex-column gap-1 align-items-center">@if($row->is_under_80)<span class="badge bg-danger text-white badge-qc" title="Murni < 80% Prelist">🚨 Murni &lt; 80% Prelist</span>@endif @if($row->is_over_130)<span class="badge bg-warning text-dark badge-qc" title="Murni > 130% Prelist">📈 Lonjakan &gt; 130%</span>@endif @if($row->is_zero_usaha)<span class="badge bg-purple text-white badge-qc" title="Usaha SE Nol">🟣 Zero Usaha SE</span>@endif @if($row->is_usaha_drop)<span class="badge bg-orange text-white badge-qc" title="Usaha Drop vs Wilkerstat">📉 Usaha Drop vs Wilkerstat</span>@endif @if($row->is_keluarga_drop)<span class="badge bg-secondary text-white badge-qc" title="Keluarga Drop >= 15%">🔴 Drop Keluarga Tinggi</span>@endif @if($row->is_ganda)<span class="badge bg-pink text-white badge-qc" title="Khusus Ganda">👥 Khusus Ganda ({{ $row->total_ganda }})</span>@endif @if($row->is_bangunan_lainnya)<span class="badge bg-amber text-dark badge-qc" title="Bangunan Kosong >= 15%">🏚️ Bangunan Kosong &ge;15%</span>@endif</div>@endif</td>
 <td class="text-end font-weight-bold text-blue bg-blue-lt" data-order="{{ $row->jml_prelist }}">{{ number_format($row->jml_prelist) }}<div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">KK: {{ number_format($row->prelist_keluarga) }} | U: {{ number_format($row->prelist_usaha) }}</div></td>
-<td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">{{ number_format($row->muatan_murni) }}<div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">@if($row->muatan_murni == 0)@if($row->is_non_pemukiman)<span class="text-secondary opacity-75">Sawah/Non-Penduduk</span>@else<span class="text-danger font-weight-bold">0 Ditemukan</span>@endif @else KK: {{ number_format($row->pk_ditemukan) }} | BKU: {{ number_format($row->up_ditemukan) }}@endif</div></td>
+<td class="text-end font-weight-extrabold text-teal bg-teal-lt fs-3" data-order="{{ $row->muatan_murni }}">{{ number_format($row->muatan_murni) }}<div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">@if($row->muatan_murni == 0)@if($row->is_non_sls)<span class="text-secondary opacity-75">Non-SLS (Sawah/Perairan)</span>@else<span class="text-danger font-weight-bold">0 Ditemukan</span>@endif @else KK: {{ number_format($row->pk_ditemukan) }} | BKU: {{ number_format($row->up_ditemukan) }}@endif</div></td>
 <td class="text-center" data-order="{{ $row->rasio_order ?? 99999 }}">@if(($row->jml_prelist ?? 0) > 0)@if($row->pct_murni_vs_prelist < 80.0)<span class="badge bg-danger text-white font-weight-extrabold px-2 py-1 fs-4 shadow-xs" title="Muatan Murni Kurang (< 80% Prelist)">🚨 {{ $pMurni }}</span>@elseif($row->pct_murni_vs_prelist > 130.0)<span class="badge bg-warning text-dark font-weight-extrabold px-2 py-1 fs-4 shadow-xs" title="Muatan Murni Melonjak (> 130% Prelist)">📈 {{ $pMurni }}</span>@else<span class="badge bg-success-lt text-success font-weight-bold px-2 py-1 fs-4" title="Rasio Normal">✅ {{ $pMurni }}</span>@endif @else @if($row->muatan_murni > 0)<span class="badge bg-info-lt text-info font-weight-bold px-2 py-1" title="SLS Pemekaran Baru">Baru ({{ number_format($row->muatan_murni) }})</span>@else<span class="badge bg-light text-muted border px-2 py-1" title="Prelist Awal 0 & Muatan 0">Nol Prelist</span>@endif @endif</td>
 <td class="text-end font-weight-bold" data-order="{{ $row->beban_saat_ini }}">{{ number_format($row->beban_saat_ini) }}</td>
 <td class="text-end font-weight-bold text-success" data-order="{{ $row->total_submit }}">{{ number_format($row->total_submit) }}</td>

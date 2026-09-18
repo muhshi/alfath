@@ -460,5 +460,21 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - **Penambahan Filter Tipe Wilayah**: Menambahkan opsi filter cerdas `Tipe Wilayah SLS` (*Semua Wilayah*, *🏡 Pemukiman / RT-RW*, *🌾 Non-Pemukiman / Sawah-Tambak*) agar evaluasi pengawas fokus ke pemukiman penduduk riil.
   - **Penanganan Akurat Prelist 0**: SLS pemekaran baru dengan prelist $0$ tidak lagi dihitung rasio $0\%$ atau salah terlabeli anomali $< 80\%$, melainkan diberi badge `Baru` / `Nol Prelist`.
 
+### 2026-09-18
+
+- **Implementasi Standar BPS Digit ke-11 Wilayah SLS & Toggle Hide Non-SLS (`IdentifikasiPendataanService.php`, `identifikasi-pendataan.blade.php`)**:
+  - **Identifikasi Wilayah SLS vs Non-SLS Berbasis Digit ke-11**:
+    - Menerapkan aturan resmi BPS pada kode wilayah 16 digit (contoh `3321060001600100`): karakter digit ke-11 (`substr($region_code, 10, 1)`) membedakan jenis wilayah secara presisi:
+      - **Digit 11 = '0'**: Wilayah SLS Pemukiman Penduduk biasa (RT, RW, Dusun, Lingkungan). Di Kabupaten Demak tercatat **7.337 SLS**.
+      - **Digit 11 > '0'** (1 s.d. 6): Wilayah Non-SLS (Sawah, Hutan, Perkebunan, Tambak, Perairan, Lahan Kosong). Di Kabupaten Demak tercatat **933 wilayah Non-SLS**.
+  - **Fitur Toggle Interaktif "Sembunyikan Non-SLS" (`hide_non_sls`)**:
+    - Menyediakan tombol switch/toggle interaktif di card header dan opsi dropdown cakupan wilayah untuk menyembunyikan wilayah Non-SLS secara default (`hide_non_sls = 1`).
+    - Wilayah Non-SLS sawah/perairan secara alamiah memiliki temuan muatan murni sedikit atau nol sehingga 65% darinya (607 dari 933) otomatis terpicu anomali `< 80%` prelist.
+    - Dengan menyembunyikan Non-SLS, pengawas dan pimpinan BPS dapat 100% fokus mengawal SLS penduduk riil, memangkas daftar evaluasi undercoverage dari 3.333 menjadi 2.726 SLS murni yang benar-benar memerlukan perhatian lapangan.
+  - **Sinkronisasi Cache & Metrik Responsif**:
+    - Parameter `hide_non_sls` dan `tipe_wilayah` disertakan dalam key caching 12 jam, memastikan pergantian filter berjalan instan dan akurat tanpa lag.
+    - Metrik kartu ringkasan KPI dan badge tabel diperbarui untuk menampilkan penanda khusus `🌾 Non-SLS` serta status penyembunyian Non-SLS yang jelas.
+
+
 
 
