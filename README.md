@@ -78,9 +78,9 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Menampilkan lencana perlindungan `🛡️ Aman Wilkerstat (≥90%)` pada kartu Fokus Utama dan kolom Rasio tabel.
     - Menambahkan opsi filter khusus `🛡️ Lolos Toleransi Wilkerstat ≥90%` pada pilihan kategori evaluasi.
     - Memperbarui berkas Ekspor Excel Native (`.xlsx`) dengan 3 kolom baru: *Muatan Wilkerstat 2025*, *Rasio Murni vs Wilkerstat (%)*, dan *Toleransi Wilkerstat (≥90%)*.
-  - **Navigasi Sub-Menu & Default Filter SLS**:
-    - Menerapkan pengelompokan sub-menu SE2026 pada navbar Tablar agar ringkas dan rapi.
-    - Pengaturan default switch filter langsung menyembunyikan wilayah non-pemukiman/Non-SLS (`hide_non_sls = 1`).
+  - **Perbaikan Kompatibilitas Cache & Defensive Fallback Summary**:
+    - Menambahkan operator null-coalescing (`?? 0`) pada seluruh akses `$summary` di template Blade dan menerapkan `array_merge` default keys di Service layer untuk mencegah `ErrorException: Undefined array key "cnt_saved_by_wilkerstat"` saat transisi data cache.
+    - Menaikkan versi cache atomik ke `v7` guna memastikan cache kedaluwarsa segera dibersihkan secara otomatis.
 
 ### 2026-09-17
 

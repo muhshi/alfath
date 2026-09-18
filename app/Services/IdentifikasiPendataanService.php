@@ -32,12 +32,12 @@ class IdentifikasiPendataanService
             } catch (\Throwable $e) {}
         }
 
-        $cacheVersion = 5;
+        $cacheVersion = 7;
         try {
-            $cacheVersion = (int) $cacheStore->get('se2026_dash_version', 5);
-            if ($cacheVersion < 5) {
-                $cacheVersion = 5;
-                $cacheStore->set('se2026_dash_version', 5);
+            $cacheVersion = (int) $cacheStore->get('se2026_dash_version', 7);
+            if ($cacheVersion < 7) {
+                $cacheVersion = 7;
+                $cacheStore->set('se2026_dash_version', 7);
             }
         } catch (\Throwable $e) {}
 
@@ -72,7 +72,7 @@ class IdentifikasiPendataanService
             'search' => $search,
         ]));
 
-        return $cacheStore->remember($cacheKey, now()->addHours(12), function () use (
+        $result = $cacheStore->remember($cacheKey, now()->addHours(12), function () use (
             $request, $selectedDate, $availableDates, $kecNameMap,
             $filterKategori, $statusSubmitFilter, $filterTipeWilayah, $hideNonSls, $kodekec, $search
         ) {
@@ -290,6 +290,32 @@ class IdentifikasiPendataanService
                 'search' => $search,
             ];
         });
+
+        // Defensive fallback: Pastikan summary selalu memiliki semua default keys
+        $defaultSummary = [
+            'total_sls' => 0,
+            'total_all_sls' => 0,
+            'cnt_sls' => 0,
+            'cnt_non_sls' => 0,
+            'cnt_pemukiman' => 0,
+            'cnt_non_pemukiman' => 0,
+            'cnt_under_80' => 0,
+            'cnt_saved_by_wilkerstat' => 0,
+            'cnt_over_130' => 0,
+            'cnt_zero_usaha' => 0,
+            'cnt_usaha_drop' => 0,
+            'cnt_keluarga_drop' => 0,
+            'cnt_ganda' => 0,
+            'cnt_bangunan_lainnya' => 0,
+            'cnt_total_anomali' => 0,
+            'cnt_aman' => 0,
+            'total_murni' => 0,
+            'total_prelist' => 0,
+            'total_wilkerstat' => 0,
+        ];
+        $result['summary'] = array_merge($defaultSummary, (array) ($result['summary'] ?? []));
+
+        return $result;
     }
 
     /**

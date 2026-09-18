@@ -88,11 +88,11 @@
                                     🚨 FOKUS UTAMA
                                 </span>
                                 <span class="text-danger small font-weight-bold">
-                                    {{ $summary['total_sls'] > 0 ? number_format(($summary['cnt_under_80'] / $summary['total_sls']) * 100, 1) : 0 }}%
+                                    {{ ($summary['total_sls'] ?? 0) > 0 ? number_format((($summary['cnt_under_80'] ?? 0) / $summary['total_sls']) * 100, 1) : 0 }}%
                                 </span>
                             </div>
                             <div class="h2 m-0 font-weight-extrabold text-danger">
-                                {{ number_format($summary['cnt_under_80']) }} <span class="fs-4 font-weight-normal text-muted">SLS</span>
+                                {{ number_format($summary['cnt_under_80'] ?? 0) }} <span class="fs-4 font-weight-normal text-muted">SLS</span>
                             </div>
                             <div class="text-danger font-weight-bold mt-1" style="font-size: 0.82rem;">
                                 Muatan Murni &lt; 80% Prelist
@@ -101,7 +101,7 @@
                                 <div>Potensi undercoverage lapangan</div>
                                 @if(!empty($summary['cnt_saved_by_wilkerstat']))
                                     <div class="text-teal font-weight-bold" title="SLS yang <80% Prelist tapi muatannya sudah ≥90% dari Wilkerstat dianggap aman/wajar">
-                                        🛡️ <strong>{{ number_format($summary['cnt_saved_by_wilkerstat']) }} SLS</strong> aman Wilkerstat (≥90%)
+                                        🛡️ <strong>{{ number_format($summary['cnt_saved_by_wilkerstat'] ?? 0) }} SLS</strong> aman Wilkerstat (≥90%)
                                     </div>
                                 @endif
                                 @if($hideNonSls)
@@ -122,11 +122,11 @@
                                     📈 LONJAKAN
                                 </span>
                                 <span class="text-warning small font-weight-bold">
-                                    {{ $summary['total_sls'] > 0 ? number_format(($summary['cnt_over_130'] / $summary['total_sls']) * 100, 1) : 0 }}%
+                                    {{ ($summary['total_sls'] ?? 0) > 0 ? number_format((($summary['cnt_over_130'] ?? 0) / $summary['total_sls']) * 100, 1) : 0 }}%
                                 </span>
                             </div>
                             <div class="h2 m-0 font-weight-extrabold text-dark">
-                                {{ number_format($summary['cnt_over_130']) }} <span class="fs-4 font-weight-normal text-muted">SLS</span>
+                                {{ number_format($summary['cnt_over_130'] ?? 0) }} <span class="fs-4 font-weight-normal text-muted">SLS</span>
                             </div>
                             <div class="text-warning font-weight-bold mt-1" style="font-size: 0.82rem;">
                                 Muatan Murni &gt; 130% Prelist
@@ -148,11 +148,11 @@
                                     🟣 NOL USAHA
                                 </span>
                                 <span class="text-purple small font-weight-bold">
-                                    {{ $summary['total_sls'] > 0 ? number_format(($summary['cnt_zero_usaha'] / $summary['total_sls']) * 100, 1) : 0 }}%
+                                    {{ ($summary['total_sls'] ?? 0) > 0 ? number_format((($summary['cnt_zero_usaha'] ?? 0) / $summary['total_sls']) * 100, 1) : 0 }}%
                                 </span>
                             </div>
                             <div class="h2 m-0 font-weight-extrabold text-purple">
-                                {{ number_format($summary['cnt_zero_usaha']) }} <span class="fs-4 font-weight-normal text-muted">SLS</span>
+                                {{ number_format($summary['cnt_zero_usaha'] ?? 0) }} <span class="fs-4 font-weight-normal text-muted">SLS</span>
                             </div>
                             <div class="text-purple font-weight-bold mt-1" style="font-size: 0.82rem;">
                                 Usaha SE Nol (0 Usaha)
@@ -174,11 +174,11 @@
                                     📉 DROP USAHA
                                 </span>
                                 <span class="text-orange small font-weight-bold">
-                                    {{ $summary['total_sls'] > 0 ? number_format(($summary['cnt_usaha_drop'] / $summary['total_sls']) * 100, 1) : 0 }}%
+                                    {{ ($summary['total_sls'] ?? 0) > 0 ? number_format((($summary['cnt_usaha_drop'] ?? 0) / $summary['total_sls']) * 100, 1) : 0 }}%
                                 </span>
                             </div>
                             <div class="h2 m-0 font-weight-extrabold text-orange">
-                                {{ number_format($summary['cnt_usaha_drop']) }} <span class="fs-4 font-weight-normal text-muted">SLS</span>
+                                {{ number_format($summary['cnt_usaha_drop'] ?? 0) }} <span class="fs-4 font-weight-normal text-muted">SLS</span>
                             </div>
                             <div class="text-orange font-weight-bold mt-1" style="font-size: 0.82rem;">
                                 Usaha SE &lt; Wilkerstat (&gt;30%)
@@ -196,7 +196,7 @@
                        class="card qc-stat-card shadow-sm bg-light {{ $filterKategori === 'keluarga_drop' ? 'active-filter' : '' }}">
                         <div class="card-body p-2 text-center">
                             <div class="text-muted small font-weight-bold">Drop Keluarga &ge;15%</div>
-                            <div class="h3 m-0 font-weight-extrabold text-danger">{{ number_format($summary['cnt_keluarga_drop']) }} SLS</div>
+                            <div class="h3 m-0 font-weight-extrabold text-danger">{{ number_format($summary['cnt_keluarga_drop'] ?? 0) }} SLS</div>
                             <div class="text-muted small" style="font-size: 0.70rem;">Keluarga tdk ditemukan tinggi</div>
                         </div>
                     </a>
@@ -207,7 +207,7 @@
                        class="card qc-stat-card shadow-sm bg-pink-lt {{ $filterKategori === 'ganda' ? 'active-filter' : '' }}">
                         <div class="card-body p-2 text-center">
                             <div class="text-pink small font-weight-bold">Khusus Ganda &gt; 0</div>
-                            <div class="h3 m-0 font-weight-extrabold text-pink">{{ number_format($summary['cnt_ganda']) }} SLS</div>
+                            <div class="h3 m-0 font-weight-extrabold text-pink">{{ number_format($summary['cnt_ganda'] ?? 0) }} SLS</div>
                             <div class="text-muted small" style="font-size: 0.70rem;">BKU/UK duplikat tercatat</div>
                         </div>
                     </a>
@@ -218,7 +218,7 @@
                        class="card qc-stat-card shadow-sm bg-amber-lt {{ $filterKategori === 'bangunan_lainnya' ? 'active-filter' : '' }}">
                         <div class="card-body p-2 text-center">
                             <div class="text-orange small font-weight-bold">Bangunan Kosong &ge;15%</div>
-                            <div class="h3 m-0 font-weight-extrabold text-orange">{{ number_format($summary['cnt_bangunan_lainnya']) }} SLS</div>
+                            <div class="h3 m-0 font-weight-extrabold text-orange">{{ number_format($summary['cnt_bangunan_lainnya'] ?? 0) }} SLS</div>
                             <div class="text-muted small" style="font-size: 0.70rem;">Beban lari ke non-respon</div>
                         </div>
                     </a>
@@ -229,7 +229,7 @@
                        class="card qc-stat-card shadow-sm bg-blue-lt {{ $filterKategori === 'anomali_only' ? 'active-filter' : '' }}">
                         <div class="card-body p-2 text-center">
                             <div class="text-blue small font-weight-bold">Semua SLS Perlu QC</div>
-                            <div class="h3 m-0 font-weight-extrabold text-blue">{{ number_format($summary['cnt_total_anomali']) }} SLS</div>
+                            <div class="h3 m-0 font-weight-extrabold text-blue">{{ number_format($summary['cnt_total_anomali'] ?? 0) }} SLS</div>
                             <div class="text-muted small" style="font-size: 0.70rem;">Memiliki &ge;1 jenis anomali</div>
                         </div>
                     </a>
@@ -247,17 +247,17 @@
                         <div class="col-12 col-md-3">
                             <label class="form-label small text-muted font-weight-bold mb-1">Kategori Temuan / QC:</label>
                             <select name="kategori" class="form-select form-select-sm font-weight-bold" onchange="this.form.submit()">
-                                <option value="anomali_only" {{ $filterKategori === 'anomali_only' ? 'selected' : '' }}>⚠️ Semua SLS Anomali / Perlu QC ({{ number_format($summary['cnt_total_anomali']) }})</option>
-                                <option value="all" {{ $filterKategori === 'all' ? 'selected' : '' }}>📋 Semua SLS ({{ number_format($summary['total_sls']) }})</option>
-                                <option value="under_80" {{ $filterKategori === 'under_80' ? 'selected' : '' }}>🚨 Muatan Murni &lt; 80% Prelist ({{ number_format($summary['cnt_under_80']) }})</option>
-                                <option value="saved_wilkerstat" {{ $filterKategori === 'saved_wilkerstat' ? 'selected' : '' }}>🛡️ Lolos Toleransi Wilkerstat &ge;90% ({{ number_format($summary['cnt_saved_by_wilkerstat']) }})</option>
-                                <option value="over_130" {{ $filterKategori === 'over_130' ? 'selected' : '' }}>📈 Lonjakan Muatan &gt; 130% Prelist ({{ number_format($summary['cnt_over_130']) }})</option>
-                                <option value="zero_usaha" {{ $filterKategori === 'zero_usaha' ? 'selected' : '' }}>🟣 Usaha SE Nol ({{ number_format($summary['cnt_zero_usaha']) }})</option>
-                                <option value="usaha_drop" {{ $filterKategori === 'usaha_drop' ? 'selected' : '' }}>📉 Usaha Drop vs Wilkerstat &gt;30% ({{ number_format($summary['cnt_usaha_drop']) }})</option>
-                                <option value="keluarga_drop" {{ $filterKategori === 'keluarga_drop' ? 'selected' : '' }}>🔴 Keluarga Tdk Ditemukan &ge;15% ({{ number_format($summary['cnt_keluarga_drop']) }})</option>
-                                <option value="ganda" {{ $filterKategori === 'ganda' ? 'selected' : '' }}>👥 Khusus Ganda Usaha ({{ number_format($summary['cnt_ganda']) }})</option>
-                                <option value="bangunan_lainnya" {{ $filterKategori === 'bangunan_lainnya' ? 'selected' : '' }}>🏚️ Bangunan Kosong/Lainnya &ge;15% ({{ number_format($summary['cnt_bangunan_lainnya']) }})</option>
-                                <option value="aman" {{ $filterKategori === 'aman' ? 'selected' : '' }}>✅ SLS Wajar / Aman ({{ number_format($summary['cnt_aman']) }})</option>
+                                <option value="anomali_only" {{ $filterKategori === 'anomali_only' ? 'selected' : '' }}>⚠️ Semua SLS Anomali / Perlu QC ({{ number_format($summary['cnt_total_anomali'] ?? 0) }})</option>
+                                <option value="all" {{ $filterKategori === 'all' ? 'selected' : '' }}>📋 Semua SLS ({{ number_format($summary['total_sls'] ?? 0) }})</option>
+                                <option value="under_80" {{ $filterKategori === 'under_80' ? 'selected' : '' }}>🚨 Muatan Murni &lt; 80% Prelist ({{ number_format($summary['cnt_under_80'] ?? 0) }})</option>
+                                <option value="saved_wilkerstat" {{ $filterKategori === 'saved_wilkerstat' ? 'selected' : '' }}>🛡️ Lolos Toleransi Wilkerstat &ge;90% ({{ number_format($summary['cnt_saved_by_wilkerstat'] ?? 0) }})</option>
+                                <option value="over_130" {{ $filterKategori === 'over_130' ? 'selected' : '' }}>📈 Lonjakan Muatan &gt; 130% Prelist ({{ number_format($summary['cnt_over_130'] ?? 0) }})</option>
+                                <option value="zero_usaha" {{ $filterKategori === 'zero_usaha' ? 'selected' : '' }}>🟣 Usaha SE Nol ({{ number_format($summary['cnt_zero_usaha'] ?? 0) }})</option>
+                                <option value="usaha_drop" {{ $filterKategori === 'usaha_drop' ? 'selected' : '' }}>📉 Usaha Drop vs Wilkerstat &gt;30% ({{ number_format($summary['cnt_usaha_drop'] ?? 0) }})</option>
+                                <option value="keluarga_drop" {{ $filterKategori === 'keluarga_drop' ? 'selected' : '' }}>🔴 Keluarga Tdk Ditemukan &ge;15% ({{ number_format($summary['cnt_keluarga_drop'] ?? 0) }})</option>
+                                <option value="ganda" {{ $filterKategori === 'ganda' ? 'selected' : '' }}>👥 Khusus Ganda Usaha ({{ number_format($summary['cnt_ganda'] ?? 0) }})</option>
+                                <option value="bangunan_lainnya" {{ $filterKategori === 'bangunan_lainnya' ? 'selected' : '' }}>🏚️ Bangunan Kosong/Lainnya &ge;15% ({{ number_format($summary['cnt_bangunan_lainnya'] ?? 0) }})</option>
+                                <option value="aman" {{ $filterKategori === 'aman' ? 'selected' : '' }}>✅ SLS Wajar / Aman ({{ number_format($summary['cnt_aman'] ?? 0) }})</option>
                             </select>
                         </div>
 
@@ -266,8 +266,8 @@
                             <label class="form-label small text-muted font-weight-bold mb-1">Cakupan Wilayah:</label>
                             <select name="tipe_wilayah" class="form-select form-select-sm font-weight-medium" onchange="this.form.submit()">
                                 <option value="sls" {{ in_array($filterTipeWilayah, ['sls', 'pemukiman']) ? 'selected' : '' }}>🏡 SLS Penduduk (Default)</option>
-                                <option value="all" {{ $filterTipeWilayah === 'all' ? 'selected' : '' }}>🌐 Semua Wilayah ({{ number_format($summary['total_all_sls']) }})</option>
-                                <option value="non_sls" {{ in_array($filterTipeWilayah, ['non_sls', 'non_pemukiman']) ? 'selected' : '' }}>🌾 Hanya Non-SLS ({{ number_format($summary['cnt_non_sls']) }})</option>
+                                <option value="all" {{ $filterTipeWilayah === 'all' ? 'selected' : '' }}>🌐 Semua Wilayah ({{ number_format($summary['total_all_sls'] ?? 0) }})</option>
+                                <option value="non_sls" {{ in_array($filterTipeWilayah, ['non_sls', 'non_pemukiman']) ? 'selected' : '' }}>🌾 Hanya Non-SLS ({{ number_format($summary['cnt_non_sls'] ?? 0) }})</option>
                             </select>
                         </div>
 
@@ -344,10 +344,10 @@
                                 <span class="form-check-label font-weight-bold" style="font-size: 0.78rem;">
                                     @if($hideNonSls)
                                         <span class="text-primary">🛡️ Sembunyikan Non-SLS (Default)</span>
-                                        <span class="text-muted font-weight-normal ms-1">({{ number_format($summary['cnt_non_sls']) }} disembunyikan)</span>
+                                        <span class="text-muted font-weight-normal ms-1">({{ number_format($summary['cnt_non_sls'] ?? 0) }} disembunyikan)</span>
                                     @else
                                         <span class="text-dark">🌾 Tampilkan Semua Wilayah</span>
-                                        <span class="text-muted font-weight-normal ms-1">(Termasuk {{ number_format($summary['cnt_non_sls']) }} Non-SLS)</span>
+                                        <span class="text-muted font-weight-normal ms-1">(Termasuk {{ number_format($summary['cnt_non_sls'] ?? 0) }} Non-SLS)</span>
                                     @endif
                                 </span>
                             </label>
