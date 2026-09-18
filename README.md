@@ -467,10 +467,11 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Menerapkan aturan resmi BPS pada kode wilayah 16 digit (contoh `3321060001600100`): karakter digit ke-11 (`substr($region_code, 10, 1)`) membedakan jenis wilayah secara presisi:
       - **Digit 11 = '0'**: Wilayah SLS Pemukiman Penduduk biasa (RT, RW, Dusun, Lingkungan). Di Kabupaten Demak tercatat **7.337 SLS**.
       - **Digit 11 > '0'** (1 s.d. 6): Wilayah Non-SLS (Sawah, Hutan, Perkebunan, Tambak, Perairan, Lahan Kosong). Di Kabupaten Demak tercatat **933 wilayah Non-SLS**.
-  - **Fitur Toggle Interaktif "Sembunyikan Non-SLS" (`hide_non_sls`)**:
-    - Menyediakan tombol switch/toggle interaktif di card header dan opsi dropdown cakupan wilayah untuk menyembunyikan wilayah Non-SLS secara default (`hide_non_sls = 1`).
+  - **Fitur Toggle Interaktif "Sembunyikan Non-SLS" (Default ON / Aktif)**:
+    - Menyediakan saklar switch toggle visual di card header tabel dengan status default **ON (Checked)**: `🛡️ Sembunyikan Non-SLS (Default) (933 disembunyikan)` sehingga saat pertama kali dibuka pengguna langsung difokuskan pada 7.337 SLS pemukiman penduduk riil.
+    - Dilengkapi hidden state parameter `hide_non_sls` yang otomatis konsisten di seluruh submit form filter dan navigasi kartu KPI.
     - Wilayah Non-SLS sawah/perairan secara alamiah memiliki temuan muatan murni sedikit atau nol sehingga 65% darinya (607 dari 933) otomatis terpicu anomali `< 80%` prelist.
-    - Dengan menyembunyikan Non-SLS, pengawas dan pimpinan BPS dapat 100% fokus mengawal SLS penduduk riil, memangkas daftar evaluasi undercoverage dari 3.333 menjadi 2.726 SLS murni yang benar-benar memerlukan perhatian lapangan.
+    - Dengan menyembunyikan Non-SLS secara default, pengawas dan pimpinan BPS dapat 100% fokus mengawal SLS penduduk riil, memangkas daftar evaluasi undercoverage dari 3.333 menjadi 2.726 SLS murni yang benar-benar memerlukan perhatian lapangan.
   - **Sinkronisasi Cache & Metrik Responsif**:
     - Parameter `hide_non_sls` dan `tipe_wilayah` disertakan dalam key caching 12 jam, memastikan pergantian filter berjalan instan dan akurat tanpa lag.
     - Metrik kartu ringkasan KPI dan badge tabel diperbarui untuk menampilkan penanda khusus `🌾 Non-SLS` serta status penyembunyian Non-SLS yang jelas.

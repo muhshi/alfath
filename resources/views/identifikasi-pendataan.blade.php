@@ -236,6 +236,7 @@
             <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px;">
                 <div class="card-body p-3">
                     <form method="GET" action="{{ route('identifikasi.pendataan') }}" class="row g-2 align-items-center">
+                        <input type="hidden" name="hide_non_sls" value="{{ $hideNonSls ? 1 : 0 }}">
                         
                         <!-- Filter Kategori -->
                         <div class="col-12 col-md-3">
@@ -258,8 +259,8 @@
                         <div class="col-12 col-md-3">
                             <label class="form-label small text-muted font-weight-bold mb-1">Cakupan Wilayah:</label>
                             <select name="tipe_wilayah" class="form-select form-select-sm font-weight-medium" onchange="this.form.submit()">
-                                <option value="sls" {{ in_array($filterTipeWilayah, ['sls', 'pemukiman']) ? 'selected' : '' }}>🏡 Hanya SLS ({{ number_format($summary['cnt_sls']) }} SLS) — Fokus Penduduk</option>
-                                <option value="all" {{ $filterTipeWilayah === 'all' ? 'selected' : '' }}>🌐 Semua Wilayah ({{ number_format($summary['total_all_sls']) }} SLS & Non-SLS)</option>
+                                <option value="sls" {{ in_array($filterTipeWilayah, ['sls', 'pemukiman']) ? 'selected' : '' }}>🏡 Hanya SLS ({{ number_format($summary['cnt_sls']) }} SLS) — Sembunyikan Non-SLS (Default)</option>
+                                <option value="all" {{ $filterTipeWilayah === 'all' ? 'selected' : '' }}>🌐 Semua Wilayah ({{ number_format($summary['total_all_sls']) }} SLS &amp; Non-SLS)</option>
                                 <option value="non_sls" {{ in_array($filterTipeWilayah, ['non_sls', 'non_pemukiman']) ? 'selected' : '' }}>🌾 Hanya Non-SLS ({{ number_format($summary['cnt_non_sls']) }} Sawah/Hutan)</option>
                             </select>
                         </div>
@@ -318,17 +319,25 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <!-- Toggle Switch: Sembunyikan Non-SLS -->
-                        <a href="{{ request()->fullUrlWithQuery(['hide_non_sls' => ($hideNonSls ? 0 : 1), 'tipe_wilayah' => ($hideNonSls ? 'all' : 'sls')]) }}" 
-                           class="btn btn-sm {{ $hideNonSls ? 'btn-outline-primary active' : 'btn-outline-secondary' }} d-flex align-items-center gap-1.5 shadow-xs px-2.5 py-1" 
-                           title="{{ $hideNonSls ? 'Klik untuk menampilkan semua wilayah (termasuk Non-SLS sawah/perairan)' : 'Klik untuk menyembunyikan wilayah Non-SLS (fokus SLS penduduk)' }}">
-                            <span class="form-check form-switch p-0 m-0 d-inline-flex align-items-center pointer-events-none">
-                                <input class="form-check-input ms-0 me-1" type="checkbox" {{ $hideNonSls ? 'checked' : '' }} style="pointer-events: none;">
-                            </span>
-                            <span class="font-weight-bold" style="font-size: 0.78rem;">
-                                {{ $hideNonSls ? '🚫 Non-SLS Tersembunyi (' . number_format($summary['cnt_non_sls']) . ')' : '🌾 Tampilkan Non-SLS (' . number_format($summary['cnt_non_sls']) . ')' }}
-                            </span>
-                        </a>
+                        <!-- Toggle Switch: Sembunyikan Non-SLS (Default: ON) -->
+                        <div class="d-flex align-items-center bg-light border px-2.5 py-1 rounded-2 shadow-2xs">
+                            <label class="form-check form-switch m-0 d-flex align-items-center gap-2 cursor-pointer" for="switchHideNonSls" title="{{ $hideNonSls ? 'Saat ini Non-SLS disembunyikan. Klik untuk menampilkan seluruh 8.270 wilayah.' : 'Saat ini semua wilayah ditampilkan. Klik untuk menyembunyikan Non-SLS (fokus 7.337 SLS penduduk).' }}">
+                                <input class="form-check-input m-0 cursor-pointer" 
+                                       type="checkbox" 
+                                       id="switchHideNonSls" 
+                                       {{ $hideNonSls ? 'checked' : '' }}
+                                       onchange="window.location.href='{{ request()->fullUrlWithQuery(['hide_non_sls' => ($hideNonSls ? 0 : 1), 'tipe_wilayah' => ($hideNonSls ? 'all' : 'sls')]) }}'">
+                                <span class="form-check-label font-weight-bold" style="font-size: 0.78rem;">
+                                    @if($hideNonSls)
+                                        <span class="text-primary">🛡️ Sembunyikan Non-SLS (Default)</span>
+                                        <span class="text-muted font-weight-normal ms-1">({{ number_format($summary['cnt_non_sls']) }} disembunyikan)</span>
+                                    @else
+                                        <span class="text-dark">🌾 Tampilkan Semua Wilayah</span>
+                                        <span class="text-muted font-weight-normal ms-1">(Termasuk {{ number_format($summary['cnt_non_sls']) }} Non-SLS)</span>
+                                    @endif
+                                </span>
+                            </label>
+                        </div>
 
                         <span class="text-muted small ms-1">Prelist: <strong>{{ number_format($records->sum('jml_prelist')) }}</strong> | Murni: <strong>{{ number_format($records->sum('muatan_murni')) }}</strong></span>
                     </div>
