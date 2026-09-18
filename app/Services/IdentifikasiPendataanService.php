@@ -52,15 +52,17 @@ class IdentifikasiPendataanService
         $search = trim((string) $request->get('search', ''));
 
         // Filter Tipe Wilayah:
-        // Jika ada parameter hide_non_sls: 1 => 'sls', 0 => 'all'
-        // Jika tidak, baca tipe_wilayah (default: 'sls' agar fokus ke wilayah SLS penduduk)
-        $hideNonSlsParam = $request->get('hide_non_sls');
-        if ($hideNonSlsParam !== null) {
-            $filterTipeWilayah = ($hideNonSlsParam == '1' || $hideNonSlsParam === 'true') ? 'sls' : 'all';
+        if ($request->filled('tipe_wilayah')) {
+            $filterTipeWilayah = $request->get('tipe_wilayah');
+            $hideNonSls = in_array($filterTipeWilayah, ['sls', 'pemukiman']);
+        } elseif ($request->has('hide_non_sls')) {
+            $hideNonSlsParam = $request->get('hide_non_sls');
+            $hideNonSls = ($hideNonSlsParam == '1' || $hideNonSlsParam === 'true');
+            $filterTipeWilayah = $hideNonSls ? 'sls' : 'all';
         } else {
-            $filterTipeWilayah = $request->get('tipe_wilayah', 'sls');
+            $filterTipeWilayah = 'sls';
+            $hideNonSls = true;
         }
-        $hideNonSls = in_array($filterTipeWilayah, ['sls', 'pemukiman']);
 
         $cacheKey = "se2026_identifikasi_w90_v{$cacheVersion}_" . md5(json_encode([
             'date' => $selectedDate,

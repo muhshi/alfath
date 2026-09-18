@@ -514,5 +514,9 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - Pengguna kini dapat memilih beberapa kombinasi filter sekaligus dengan leluasa tanpa gangguan interupsi reload halaman, kemudian mengeksekusi pencarian dengan menekan tombol utama **Filter** atau tombol **Reset**.
 - **Integrasi Baseline Muatan Wilkerstat di Kolom Prelist (`identifikasi-pendataan.blade.php`)**:
   - Menampilkan informasi komparasi ganda pada kolom **Jml Prelist & Wilkerstat**: total prelist FASIH beserta sub-rincian `KK | Usaha`, berdampingan dengan total target muatan Wilkerstat 2025 (`wilkerstat_kk + wilkerstat_usaha`) beserta breakdown per entitasnya.
+- **Perbaikan Selected State Dropdown Filter (`IdentifikasiPendataanService.php`, `identifikasi-pendataan.blade.php`)**:
+  - **Resolusi Type Mismatch Kecamatan**: Memperbaiki komparasi `selected` pada dropdown kecamatan (`(string) $kodekec === (string) $kecCode`) di mana sebelumnya key numerik array PHP secara implisit di-cast menjadi `int` sehingga tidak cocok dengan parameter string dari URL request.
+  - **Sinkronisasi Tipe Wilayah & Pembersihan Hidden Input**: Menghilangkan input hidden `hide_non_sls` yang bertabrakan dengan dropdown `tipe_wilayah`, serta menyelaraskan fallback pemilihan wilayah agar seluruh dropdown (Kategori, Cakupan Wilayah, Kecamatan, Status Submit, dan Tanggal) tetap konsisten terpilih setelah tombol Filter ditekan.
+
 
 

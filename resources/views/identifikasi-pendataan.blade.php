@@ -241,23 +241,21 @@
             <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px;">
                 <div class="card-body p-3">
                     <form method="GET" action="{{ route('identifikasi.pendataan') }}" class="row g-2 align-items-end">
-                        <input type="hidden" name="hide_non_sls" value="{{ $hideNonSls ? 1 : 0 }}">
-                        
                         <!-- Filter Kategori -->
                         <div class="col-12 col-sm-6 col-lg-3">
                             <label class="form-label small text-muted font-weight-bold mb-1">Kategori Temuan / QC:</label>
                             <select name="kategori" class="form-select form-select-sm font-weight-bold">
-                                <option value="anomali_only" {{ $filterKategori === 'anomali_only' ? 'selected' : '' }}>⚠️ Semua SLS Anomali / Perlu QC ({{ number_format($summary['cnt_total_anomali'] ?? 0) }})</option>
-                                <option value="all" {{ $filterKategori === 'all' ? 'selected' : '' }}>📋 Semua SLS ({{ number_format($summary['total_sls'] ?? 0) }})</option>
-                                <option value="under_80" {{ $filterKategori === 'under_80' ? 'selected' : '' }}>🚨 Muatan Murni &lt; 80% Prelist ({{ number_format($summary['cnt_under_80'] ?? 0) }})</option>
-                                <option value="saved_wilkerstat" {{ $filterKategori === 'saved_wilkerstat' ? 'selected' : '' }}>🛡️ Lolos Toleransi Wilkerstat &ge;90% ({{ number_format($summary['cnt_saved_by_wilkerstat'] ?? 0) }})</option>
-                                <option value="over_130" {{ $filterKategori === 'over_130' ? 'selected' : '' }}>📈 Lonjakan Muatan &gt; 130% Prelist ({{ number_format($summary['cnt_over_130'] ?? 0) }})</option>
-                                <option value="zero_usaha" {{ $filterKategori === 'zero_usaha' ? 'selected' : '' }}>🟣 Usaha SE Nol ({{ number_format($summary['cnt_zero_usaha'] ?? 0) }})</option>
-                                <option value="usaha_drop" {{ $filterKategori === 'usaha_drop' ? 'selected' : '' }}>📉 Usaha Drop vs Wilkerstat &gt;30% ({{ number_format($summary['cnt_usaha_drop'] ?? 0) }})</option>
-                                <option value="keluarga_drop" {{ $filterKategori === 'keluarga_drop' ? 'selected' : '' }}>🔴 Keluarga Tdk Ditemukan &ge;15% ({{ number_format($summary['cnt_keluarga_drop'] ?? 0) }})</option>
-                                <option value="ganda" {{ $filterKategori === 'ganda' ? 'selected' : '' }}>👥 Khusus Ganda Usaha ({{ number_format($summary['cnt_ganda'] ?? 0) }})</option>
-                                <option value="bangunan_lainnya" {{ $filterKategori === 'bangunan_lainnya' ? 'selected' : '' }}>🏚️ Bangunan Kosong/Lainnya &ge;15% ({{ number_format($summary['cnt_bangunan_lainnya'] ?? 0) }})</option>
-                                <option value="aman" {{ $filterKategori === 'aman' ? 'selected' : '' }}>✅ SLS Wajar / Aman ({{ number_format($summary['cnt_aman'] ?? 0) }})</option>
+                                <option value="anomali_only" {{ (string) $filterKategori === 'anomali_only' ? 'selected' : '' }}>⚠️ Semua SLS Anomali / Perlu QC ({{ number_format($summary['cnt_total_anomali'] ?? 0) }})</option>
+                                <option value="all" {{ (string) $filterKategori === 'all' ? 'selected' : '' }}>📋 Semua SLS ({{ number_format($summary['total_sls'] ?? 0) }})</option>
+                                <option value="under_80" {{ (string) $filterKategori === 'under_80' ? 'selected' : '' }}>🚨 Muatan Murni &lt; 80% Prelist ({{ number_format($summary['cnt_under_80'] ?? 0) }})</option>
+                                <option value="saved_wilkerstat" {{ (string) $filterKategori === 'saved_wilkerstat' ? 'selected' : '' }}>🛡️ Lolos Toleransi Wilkerstat &ge;90% ({{ number_format($summary['cnt_saved_by_wilkerstat'] ?? 0) }})</option>
+                                <option value="over_130" {{ (string) $filterKategori === 'over_130' ? 'selected' : '' }}>📈 Lonjakan Muatan &gt; 130% Prelist ({{ number_format($summary['cnt_over_130'] ?? 0) }})</option>
+                                <option value="zero_usaha" {{ (string) $filterKategori === 'zero_usaha' ? 'selected' : '' }}>🟣 Usaha SE Nol ({{ number_format($summary['cnt_zero_usaha'] ?? 0) }})</option>
+                                <option value="usaha_drop" {{ (string) $filterKategori === 'usaha_drop' ? 'selected' : '' }}>📉 Usaha Drop vs Wilkerstat &gt;30% ({{ number_format($summary['cnt_usaha_drop'] ?? 0) }})</option>
+                                <option value="keluarga_drop" {{ (string) $filterKategori === 'keluarga_drop' ? 'selected' : '' }}>🔴 Keluarga Tdk Ditemukan &ge;15% ({{ number_format($summary['cnt_keluarga_drop'] ?? 0) }})</option>
+                                <option value="ganda" {{ (string) $filterKategori === 'ganda' ? 'selected' : '' }}>👥 Khusus Ganda Usaha ({{ number_format($summary['cnt_ganda'] ?? 0) }})</option>
+                                <option value="bangunan_lainnya" {{ (string) $filterKategori === 'bangunan_lainnya' ? 'selected' : '' }}>🏚️ Bangunan Kosong/Lainnya &ge;15% ({{ number_format($summary['cnt_bangunan_lainnya'] ?? 0) }})</option>
+                                <option value="aman" {{ (string) $filterKategori === 'aman' ? 'selected' : '' }}>✅ SLS Wajar / Aman ({{ number_format($summary['cnt_aman'] ?? 0) }})</option>
                             </select>
                         </div>
 
@@ -265,19 +263,19 @@
                         <div class="col-6 col-sm-6 col-lg-2">
                             <label class="form-label small text-muted font-weight-bold mb-1">Cakupan Wilayah:</label>
                             <select name="tipe_wilayah" class="form-select form-select-sm font-weight-medium">
-                                <option value="sls" {{ in_array($filterTipeWilayah, ['sls', 'pemukiman']) ? 'selected' : '' }}>🏡 SLS Penduduk (Default)</option>
-                                <option value="all" {{ $filterTipeWilayah === 'all' ? 'selected' : '' }}>🌐 Semua Wilayah ({{ number_format($summary['total_all_sls'] ?? 0) }})</option>
-                                <option value="non_sls" {{ in_array($filterTipeWilayah, ['non_sls', 'non_pemukiman']) ? 'selected' : '' }}>🌾 Hanya Non-SLS ({{ number_format($summary['cnt_non_sls'] ?? 0) }})</option>
+                                <option value="sls" {{ in_array((string) $filterTipeWilayah, ['sls', 'pemukiman']) ? 'selected' : '' }}>🏡 SLS Penduduk (Default)</option>
+                                <option value="all" {{ (string) $filterTipeWilayah === 'all' ? 'selected' : '' }}>🌐 Semua Wilayah ({{ number_format($summary['total_all_sls'] ?? 0) }})</option>
+                                <option value="non_sls" {{ in_array((string) $filterTipeWilayah, ['non_sls', 'non_pemukiman']) ? 'selected' : '' }}>🌾 Hanya Non-SLS ({{ number_format($summary['cnt_non_sls'] ?? 0) }})</option>
                             </select>
                         </div>
 
                         <!-- Filter Kecamatan -->
                         <div class="col-6 col-sm-6 col-lg-2">
                             <label class="form-label small text-muted font-weight-bold mb-1">Kecamatan:</label>
-                            <select name="kodekec" class="form-select form-select-sm">
+                            <select name="kodekec" class="form-select form-select-sm font-weight-medium">
                                 <option value="">Semua Kecamatan</option>
                                 @foreach($kecNameMap as $kecCode => $kecName)
-                                    <option value="{{ $kecCode }}" {{ $kodekec === $kecCode ? 'selected' : '' }}>
+                                    <option value="{{ $kecCode }}" {{ (string) $kodekec === (string) $kecCode ? 'selected' : '' }}>
                                         {{ $kecName }} ({{ $kecCode }})
                                     </option>
                                 @endforeach
@@ -288,10 +286,10 @@
                         <div class="col-6 col-sm-6 col-lg-2">
                             <label class="form-label small text-muted font-weight-bold mb-1">Status Submit:</label>
                             <select name="status_submit" class="form-select form-select-sm">
-                                <option value="all" {{ $statusSubmitFilter === 'all' ? 'selected' : '' }}>Semua Status</option>
-                                <option value="completed" {{ $statusSubmitFilter === 'completed' ? 'selected' : '' }}>Selesai (100%)</option>
-                                <option value="in_progress" {{ $statusSubmitFilter === 'in_progress' ? 'selected' : '' }}>Berjalan (&gt;0% &lt;100%)</option>
-                                <option value="open" {{ $statusSubmitFilter === 'open' ? 'selected' : '' }}>Belum Mulai (0%)</option>
+                                <option value="all" {{ (string) $statusSubmitFilter === 'all' ? 'selected' : '' }}>Semua Status</option>
+                                <option value="completed" {{ (string) $statusSubmitFilter === 'completed' ? 'selected' : '' }}>Selesai (100%)</option>
+                                <option value="in_progress" {{ (string) $statusSubmitFilter === 'in_progress' ? 'selected' : '' }}>Berjalan (&gt;0% &lt;100%)</option>
+                                <option value="open" {{ (string) $statusSubmitFilter === 'open' ? 'selected' : '' }}>Belum Mulai (0%)</option>
                             </select>
                         </div>
 
@@ -300,7 +298,7 @@
                             <label class="form-label small text-muted font-weight-bold mb-1">Tanggal Data:</label>
                             <select name="tanggal_data" class="form-select form-select-sm">
                                 @foreach($availableDates as $d)
-                                    <option value="{{ $d }}" {{ $selectedDate == $d ? 'selected' : '' }}>
+                                    <option value="{{ $d }}" {{ (string) $selectedDate === (string) $d ? 'selected' : '' }}>
                                         {{ date('d M Y', strtotime($d)) }}
                                     </option>
                                 @endforeach
@@ -313,7 +311,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-filter" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.828 4.828a2 2 0 0 0 -.586 1.414v4.172l-4 2v-6.172a2 2 0 0 0 -.586 -1.414l-4.828 -4.828a2 2 0 0 1 -.586 -1.414v-2.172z" /></svg>
                                 <span>Filter</span>
                             </button>
-                            <a href="{{ route('identifikasi.pendataan', ['hide_non_sls' => $hideNonSls ? 1 : 0]) }}" class="btn btn-outline-secondary btn-sm px-2.5 d-inline-flex align-items-center gap-1" title="Reset Filter ke Default">
+                            <a href="{{ route('identifikasi.pendataan') }}" class="btn btn-outline-secondary btn-sm px-2.5 d-inline-flex align-items-center gap-1" title="Reset Filter ke Default">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-rotate" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M19.95 11a8 8 0 1 0 -.5 4m.5 5v-5h-5" /></svg>
                                 <span>Reset</span>
                             </a>
