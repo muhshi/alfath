@@ -498,8 +498,14 @@ Script `deploy.sh` secara otomatis mengeksekusi:
     - Menyediakan script delegasi global event dan CSS styling (`display: block !important`) di master layout Tablar sehingga seluruh dropdown (baik menu navbar `Sensus Ekonomi 2026 ▾`, dropdown pintasan beranda, maupun dropdown export) dijamin berfungsi 100% di server production tanpa bergantung pada build aset Vite lama.
     - Menambahkan dukungan efek *hover auto-open* pada desktop (layar lebar) untuk horizontal top navbar, memberikan kemudahan akses langsung ke submenu SE2026 tanpa harus mengeklik berulang kali.
   - **Pembersihan Redundansi Tombol di Beranda (`home.blade.php`)**:
-    - Menata ulang hierarki tombol pada hero banner untuk mengurangi kelelahan visual (*cognitive load*): 2 Call-to-Action utama yang menonjol (`Buka Executive Dashboard` & `Tabel Petugas SE2026`), didukung *Quick Access Bar* minimalis untuk modul Analisis & QC.
-
-
-
-
+- **Toleransi Wilkerstat untuk Evaluasi Muatan Murni & Proteksi Anomali False Positive (`IdentifikasiPendataanService.php`, `identifikasi-pendataan.blade.php`)**:
+  - **Aturan Bisnis Toleransi Baseline Wilkerstat (≥ 90%)**:
+    - Membandingkan Muatan Murni Lapangan (`BKU + KK Ditemukan`) terhadap total muatan Wilkerstat 2025 (`wilkerstat_kk + wilkerstat_usaha`).
+    - Jika suatu SLS memiliki Muatan Murni $< 80\%$ Prelist namun rasionya terhadap Wilkerstat sudah mencapai $\ge 90.0\%$, SLS tersebut dikategorikan **WAJAR / AMAN** (tidak dicap anomali *undercoverage*).
+    - Berhasil membebaskan **621 SLS** dari daftar anomali palsu (*false positive*), sehingga pengawas dapat memfokuskan konfirmasi ke SLS yang benar-benar mengalami penurunan drastis baik terhadap Prelist maupun Wilkerstat.
+  - **Indikator Visual & Rincian di Antarmuka**:
+    - Kartu metrik baru: `🛡️ Lolos Toleransi Wilkerstat (621 SLS)` dengan badge informatif `WAJAR / AMAN (🛡️ Wilkerstat OK)`.
+    - Kolom tabel rasio menampilkan perbandingan ganda: capaian terhadap Prelist dan capaian terhadap Wilkerstat secara transparan.
+  - **Penanganan Defensive Null-Safe Property pada `stdClass` & Cache**:
+    - Mengamankan seluruh akses properti objek row (`$row->pct_murni_vs_wilkerstat ?? null`, `$row->is_saved_by_wilkerstat ?? false`, dsb.) di Blade view dan Excel export.
+    - Menerapkan cache key versioning baru (`se2026_identifikasi_w90_v...`) serta mapping default fallback pasca-deserialisasi cache untuk mencegah `ErrorException: Undefined property: stdClass::$pct_murni_vs_wilkerstat` dan `Undefined array key "cnt_saved_by_wilkerstat"`.

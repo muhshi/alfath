@@ -62,7 +62,7 @@ class IdentifikasiPendataanService
         }
         $hideNonSls = in_array($filterTipeWilayah, ['sls', 'pemukiman']);
 
-        $cacheKey = "se2026_identifikasi_v{$cacheVersion}_" . md5(json_encode([
+        $cacheKey = "se2026_identifikasi_w90_v{$cacheVersion}_" . md5(json_encode([
             'date' => $selectedDate,
             'kodekec' => $kodekec,
             'kategori' => $filterKategori,
@@ -315,6 +315,25 @@ class IdentifikasiPendataanService
         ];
         $result['summary'] = array_merge($defaultSummary, (array) ($result['summary'] ?? []));
 
+        if (isset($result['records']) && is_iterable($result['records'])) {
+            $result['records'] = collect($result['records'])->map(function ($row) {
+                if (is_object($row)) {
+                    $row->pct_murni_vs_wilkerstat = $row->pct_murni_vs_wilkerstat ?? null;
+                    $row->is_saved_by_wilkerstat = $row->is_saved_by_wilkerstat ?? false;
+                    $row->wilkerstat_muatan = $row->wilkerstat_muatan ?? 0;
+                    $row->is_under_80 = $row->is_under_80 ?? false;
+                    $row->is_over_130 = $row->is_over_130 ?? false;
+                    $row->is_zero_usaha = $row->is_zero_usaha ?? false;
+                    $row->is_usaha_drop = $row->is_usaha_drop ?? false;
+                    $row->is_keluarga_drop = $row->is_keluarga_drop ?? false;
+                    $row->is_ganda = $row->is_ganda ?? false;
+                    $row->is_bangunan_lainnya = $row->is_bangunan_lainnya ?? false;
+                    $row->has_anomali = $row->has_anomali ?? false;
+                }
+                return $row;
+            });
+        }
+
         return $result;
     }
 
@@ -374,19 +393,22 @@ class IdentifikasiPendataanService
         $rowIdx = 5;
         foreach ($records as $index => $row) {
             $rincianList = [];
-            if ($row->is_under_80) $rincianList[] = "Muatan Murni < 80% Prelist (" . number_format($row->pct_murni_vs_prelist, 1) . "%)";
-            if ($row->is_saved_by_wilkerstat) $rincianList[] = "Toleransi Wilkerstat: Lolos Aman (" . number_format($row->pct_murni_vs_wilkerstat, 1) . "% Wilkerstat)";
-            if ($row->is_over_130) $rincianList[] = "Lonjakan Muatan > 130% (" . number_format($row->pct_murni_vs_prelist, 1) . "%)";
-            if ($row->is_zero_usaha) $rincianList[] = "Usaha SE Nol (Potensi Wilkerstat: " . number_format($row->wilkerstat_usaha) . ")";
-            if ($row->is_usaha_drop) $rincianList[] = "Usaha Drop vs Wilkerstat (" . number_format($row->pct_diff_usaha, 1) . "%)";
-            if ($row->is_keluarga_drop) $rincianList[] = "Keluarga Tdk Ditemukan Tinggi (" . number_format($row->pk_tdk) . ")";
-            if ($row->is_ganda) $rincianList[] = "Khusus Ganda (" . number_format($row->total_ganda) . ")";
-            if ($row->is_bangunan_lainnya) $rincianList[] = "Bangunan Kosong/Lainnya >= 15% (" . number_format($row->pct_bangunan_lainnya, 1) . "%)";
+            $pctMurniPrelist = $row->pct_murni_vs_prelist ?? null;
+            $pctMurniWilk = $row->pct_murni_vs_wilkerstat ?? null;
 
-            $statusQc = $row->has_anomali ? "⚠️ PERLU KONFIRMASI" : ($row->is_saved_by_wilkerstat ? "🛡️ LOLOS WILKERSTAT (AMAN)" : "✅ WAJAR / AMAN");
-            $katRasio = $row->pct_murni_vs_prelist < 80.0 ? ($row->is_saved_by_wilkerstat ? "🛡️ TOLERANSI WILKERSTAT" : "🚨 KURANG (<80%)") : ($row->pct_murni_vs_prelist > 130.0 ? "📈 LONJAKAN (>130%)" : "✅ NORMAL");
-            $toleransiWilkerstat = $row->is_saved_by_wilkerstat ? "YA (≥90%)" : ($row->pct_murni_vs_wilkerstat !== null && $row->pct_murni_vs_wilkerstat >= 90.0 ? "Aman Wilkerstat" : "-");
-            $jenisWilayah = $row->is_non_sls ? "🌾 Non-SLS" : "🏡 SLS";
+            if (!empty($row->is_under_80)) $rincianList[] = "Muatan Murni < 80% Prelist (" . ($pctMurniPrelist !== null ? number_format($pctMurniPrelist, 1) : '0') . "%)";
+            if (!empty($row->is_saved_by_wilkerstat)) $rincianList[] = "Toleransi Wilkerstat: Lolos Aman (" . ($pctMurniWilk !== null ? number_format($pctMurniWilk, 1) : '0') . "% Wilkerstat)";
+            if (!empty($row->is_over_130)) $rincianList[] = "Lonjakan Muatan > 130% (" . ($pctMurniPrelist !== null ? number_format($pctMurniPrelist, 1) : '0') . "%)";
+            if (!empty($row->is_zero_usaha)) $rincianList[] = "Usaha SE Nol (Potensi Wilkerstat: " . number_format($row->wilkerstat_usaha ?? 0) . ")";
+            if (!empty($row->is_usaha_drop)) $rincianList[] = "Usaha Drop vs Wilkerstat (" . number_format($row->pct_diff_usaha ?? 0, 1) . "%)";
+            if (!empty($row->is_keluarga_drop)) $rincianList[] = "Keluarga Tdk Ditemukan Tinggi (" . number_format($row->pk_tdk ?? 0) . ")";
+            if (!empty($row->is_ganda)) $rincianList[] = "Khusus Ganda (" . number_format($row->total_ganda ?? 0) . ")";
+            if (!empty($row->is_bangunan_lainnya)) $rincianList[] = "Bangunan Kosong/Lainnya >= 15% (" . number_format($row->pct_bangunan_lainnya ?? 0, 1) . "%)";
+
+            $statusQc = !empty($row->has_anomali) ? "⚠️ PERLU KONFIRMASI" : (!empty($row->is_saved_by_wilkerstat) ? "🛡️ LOLOS WILKERSTAT (AMAN)" : "✅ WAJAR / AMAN");
+            $katRasio = ($pctMurniPrelist !== null && $pctMurniPrelist < 80.0) ? (!empty($row->is_saved_by_wilkerstat) ? "🛡️ TOLERANSI WILKERSTAT" : "🚨 KURANG (<80%)") : (($pctMurniPrelist !== null && $pctMurniPrelist > 130.0) ? "📈 LONJAKAN (>130%)" : "✅ NORMAL");
+            $toleransiWilkerstat = !empty($row->is_saved_by_wilkerstat) ? "YA (≥90%)" : ($pctMurniWilk !== null && $pctMurniWilk >= 90.0 ? "Aman Wilkerstat" : "-");
+            $jenisWilayah = !empty($row->is_non_sls) ? "🌾 Non-SLS" : "🏡 SLS";
 
             $sheet->setCellValue('A' . $rowIdx, $index + 1);
             $sheet->setCellValue('B' . $rowIdx, $row->kode_kec);
@@ -402,10 +424,10 @@ class IdentifikasiPendataanService
             $sheet->setCellValue('L' . $rowIdx, (int) ($row->prelist_keluarga ?? 0));
             $sheet->setCellValue('M' . $rowIdx, (int) ($row->prelist_usaha ?? 0));
             $sheet->setCellValue('N' . $rowIdx, (int) ($row->muatan_murni ?? 0));
-            $sheet->setCellValue('O' . $rowIdx, $row->pct_murni_vs_prelist !== null ? (float) $row->pct_murni_vs_prelist : '-');
+            $sheet->setCellValue('O' . $rowIdx, $pctMurniPrelist !== null ? (float) $pctMurniPrelist : '-');
             $sheet->setCellValue('P' . $rowIdx, $katRasio);
             $sheet->setCellValue('Q' . $rowIdx, (int) ($row->wilkerstat_muatan ?? 0));
-            $sheet->setCellValue('R' . $rowIdx, $row->pct_murni_vs_wilkerstat !== null ? (float) $row->pct_murni_vs_wilkerstat : '-');
+            $sheet->setCellValue('R' . $rowIdx, $pctMurniWilk !== null ? (float) $pctMurniWilk : '-');
             $sheet->setCellValue('S' . $rowIdx, $toleransiWilkerstat);
             $sheet->setCellValue('T' . $rowIdx, (int) ($row->beban_saat_ini ?? 0));
             $sheet->setCellValue('U' . $rowIdx, (int) ($row->total_submit ?? 0));
