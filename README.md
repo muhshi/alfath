@@ -67,6 +67,21 @@ Script `deploy.sh` secara otomatis mengeksekusi:
 
 ## 📜 Changelog
 
+### 2026-09-18
+
+- **Penerapan Aturan Toleransi Baseline Wilkerstat ($\ge$ 90%) pada Identifikasi SLS (< 80% Prelist)**:
+  - **Klarifikasi Otomatis Anomali Semu Lapangan**:
+    - SLS dengan Muatan Murni (KK + BKU Ditemukan) $< 80\%$ terhadap Prelist kini dicek silang terhadap total muatan Wilkerstat 2025 (`wilkerstat_kk + wilkerstat_usaha`).
+    - Jika capaian muatan murni terhadap Wilkerstat sudah mencapai $\ge 90\%$, SLS tersebut otomatis dianggap **AMAN / WAJAR** dan tidak ditandai sebagai anomali undercoverage (`🛡️ Toleransi Wilkerstat`).
+    - Aturan ini berhasil menyelamatkan **621 SLS** dari deteksi anomali palsu akibat data prelist awal yang over-estimasi.
+  - **Peningkatan Antarmuka & Ekspor QC**:
+    - Menampilkan lencana perlindungan `🛡️ Aman Wilkerstat (≥90%)` pada kartu Fokus Utama dan kolom Rasio tabel.
+    - Menambahkan opsi filter khusus `🛡️ Lolos Toleransi Wilkerstat ≥90%` pada pilihan kategori evaluasi.
+    - Memperbarui berkas Ekspor Excel Native (`.xlsx`) dengan 3 kolom baru: *Muatan Wilkerstat 2025*, *Rasio Murni vs Wilkerstat (%)*, dan *Toleransi Wilkerstat (≥90%)*.
+  - **Navigasi Sub-Menu & Default Filter SLS**:
+    - Menerapkan pengelompokan sub-menu SE2026 pada navbar Tablar agar ringkas dan rapi.
+    - Pengaturan default switch filter langsung menyembunyikan wilayah non-pemukiman/Non-SLS (`hide_non_sls = 1`).
+
 ### 2026-09-17
 
 - **Menu Baru Identifikasi & Evaluasi Hasil Pendataan SLS (`/identifikasi-pendataan`)**:
