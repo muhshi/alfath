@@ -364,7 +364,7 @@
                                 <tr class="bg-light text-muted">
                                     <th class="w-1 text-center">No</th>
                                     <th>Kecamatan</th>
-                                    <th>Kode & Nama SLS / Sub-SLS</th>
+                                    <th>Desa &amp; Nama SLS / Sub-SLS</th>
                                     <th>Petugas (PPL / PML)</th>
                                     <th class="text-center">Status & Indikator QC</th>
                                     <th class="text-end bg-blue-lt text-blue font-weight-bold">Jml Prelist<br><span class="font-weight-normal small">&amp; Wilkerstat</span></th>
@@ -386,6 +386,7 @@
 @php
 $kodeKec = $row->kode_kec ?? '';
 $kecNama = $kecNameMap[$kodeKec] ?? 'Kec. ' . $kodeKec;
+$namaDesa = $row->nama_desa ?? '-';
 $pctMurniPrelist = $row->pct_murni_vs_prelist ?? null;
 $pMurni = $pctMurniPrelist !== null ? number_format($pctMurniPrelist, 1) . '%' : '-';
 $pctMurniWilk = $row->pct_murni_vs_wilkerstat ?? null;
@@ -400,8 +401,8 @@ $wilkerstatMuatan = (int) ($row->wilkerstat_muatan ?? 0);
 @endphp
 <tr>
 <td class="text-muted text-center">{{ $index + 1 }}</td>
-<td><div class="font-weight-bold">{{ $kecNama }}</div><div class="small text-muted">{{ $kodeKec }}</div></td>
-<td><div class="d-flex align-items-center gap-1 flex-wrap"><span class="font-weight-bold text-dark">{{ $row->nama_sls ?? '-' }}</span>@if(!empty($row->is_non_sls))<span class="badge bg-secondary-lt text-secondary px-1 py-0" style="font-size: 0.65rem;" title="Wilayah Non-SLS (Digit 11 > 0: Sawah/Perairan/Hutan)">🌾 Non-SLS</span>@endif</div><div class="small text-muted font-monospace">{{ $row->region_code ?? '-' }}</div></td>
+<td><div class="font-weight-bold">{{ $kecNama }}</div><div class="small text-muted font-monospace">{{ $kodeKec }}</div></td>
+<td data-search="{{ $namaDesa }} {{ $row->nama_sls ?? '' }} {{ $row->region_code ?? '' }}"><div class="d-flex align-items-center gap-1 flex-wrap mb-1"><span class="badge bg-blue-lt text-blue font-weight-bold px-1.5 py-0.5" style="font-size: 0.73rem;" title="Desa / Kelurahan">🏡 Desa {{ $namaDesa }}</span>@if(!empty($row->is_non_sls))<span class="badge bg-secondary-lt text-secondary px-1 py-0" style="font-size: 0.65rem;" title="Wilayah Non-SLS (Digit 11 > 0: Sawah/Perairan/Hutan)">🌾 Non-SLS</span>@endif</div><div class="font-weight-bold text-dark fs-4">{{ $row->nama_sls ?? '-' }}</div><div class="small text-muted font-monospace mt-0.5" style="font-size: 0.70rem;">{{ $row->region_code ?? '-' }}</div></td>
 <td><div class="font-weight-bold text-dark">{{ $row->nama_pencacah ?? '-' }}</div><div class="small text-muted">PML: {{ !empty($row->nama_pengawas) ? $row->nama_pengawas : '-' }}</div></td>
 <td class="text-center">@if(!$hasAnomali)@if($isSavedByWilkerstat)<span class="badge bg-success text-white badge-qc" title="Murni <80% Prelist tapi muatan sudah ≥90% Wilkerstat ({{ $pWilkerstat }})">✅ WAJAR / AMAN</span><div class="small text-teal font-weight-bold mt-0.5" style="font-size: 0.68rem;" title="Muatan murni mencakup target Wilkerstat">🛡️ Wilkerstat: {{ $pWilkerstat }}</div>@else<span class="badge bg-success text-white badge-qc">✅ WAJAR / AMAN</span>@endif @else<div class="d-flex flex-column gap-1 align-items-center">@if($isUnder80)<span class="badge bg-danger text-white badge-qc" title="Murni < 80% Prelist & < 90% Wilkerstat">🚨 Murni &lt; 80% Prelist</span>@endif @if($isSavedByWilkerstat)<span class="badge bg-teal-lt text-teal badge-qc" style="font-size: 0.65rem;" title="Murni <80% Prelist namun lolos toleransi Wilkerstat (≥90%)">🛡️ Wilkerstat OK ({{ $pWilkerstat }})</span>@endif @if(!empty($row->is_over_130))<span class="badge bg-warning text-dark badge-qc" title="Murni > 130% Prelist">📈 Lonjakan &gt; 130%</span>@endif @if(!empty($row->is_zero_usaha))<span class="badge bg-purple text-white badge-qc" title="Usaha SE Nol">🟣 Zero Usaha SE</span>@endif @if(!empty($row->is_usaha_drop))<span class="badge bg-orange text-white badge-qc" title="Usaha Drop vs Wilkerstat">📉 Usaha Drop vs Wilkerstat</span>@endif @if(!empty($row->is_keluarga_drop))<span class="badge bg-secondary text-white badge-qc" title="Keluarga Drop >= 15%">🔴 Drop Keluarga Tinggi</span>@endif @if(!empty($row->is_ganda))<span class="badge bg-pink text-white badge-qc" title="Khusus Ganda">👥 Khusus Ganda ({{ $row->total_ganda ?? 0 }})</span>@endif @if(!empty($row->is_bangunan_lainnya))<span class="badge bg-amber text-dark badge-qc" title="Bangunan Kosong >= 15%">🏚️ Bangunan Kosong &ge;15%</span>@endif</div>@endif</td>
 <td class="text-end font-weight-bold text-blue bg-blue-lt" data-order="{{ $jmlPrelist }}">{{ number_format($jmlPrelist) }}<div class="small text-muted font-weight-normal" style="font-size: 0.68rem;">KK: {{ number_format($row->prelist_keluarga ?? 0) }} | U: {{ number_format($row->prelist_usaha ?? 0) }}</div><div class="small text-indigo font-weight-bold mt-0.5" style="font-size: 0.68rem;" title="Total Wilkerstat: {{ number_format($wilkerstatMuatan) }} (KK: {{ number_format($row->wilkerstat_kk ?? 0) }} | Usaha: {{ number_format($row->wilkerstat_usaha ?? 0) }})">🏛️ Wil: {{ number_format($wilkerstatMuatan) }} <span class="text-muted font-weight-normal" style="font-size: 0.62rem;">(K:{{ number_format($row->wilkerstat_kk ?? 0) }}|U:{{ number_format($row->wilkerstat_usaha ?? 0) }})</span></div></td>

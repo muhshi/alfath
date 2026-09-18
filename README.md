@@ -514,9 +514,11 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - Pengguna kini dapat memilih beberapa kombinasi filter sekaligus dengan leluasa tanpa gangguan interupsi reload halaman, kemudian mengeksekusi pencarian dengan menekan tombol utama **Filter** atau tombol **Reset**.
 - **Integrasi Baseline Muatan Wilkerstat di Kolom Prelist (`identifikasi-pendataan.blade.php`)**:
   - Menampilkan informasi komparasi ganda pada kolom **Jml Prelist & Wilkerstat**: total prelist FASIH beserta sub-rincian `KK | Usaha`, berdampingan dengan total target muatan Wilkerstat 2025 (`wilkerstat_kk + wilkerstat_usaha`) beserta breakdown per entitasnya.
-- **Perbaikan Selected State Dropdown Filter (`IdentifikasiPendataanService.php`, `identifikasi-pendataan.blade.php`)**:
-  - **Resolusi Type Mismatch Kecamatan**: Memperbaiki komparasi `selected` pada dropdown kecamatan (`(string) $kodekec === (string) $kecCode`) di mana sebelumnya key numerik array PHP secara implisit di-cast menjadi `int` sehingga tidak cocok dengan parameter string dari URL request.
-  - **Sinkronisasi Tipe Wilayah & Pembersihan Hidden Input**: Menghilangkan input hidden `hide_non_sls` yang bertabrakan dengan dropdown `tipe_wilayah`, serta menyelaraskan fallback pemilihan wilayah agar seluruh dropdown (Kategori, Cakupan Wilayah, Kecamatan, Status Submit, dan Tanggal) tetap konsisten terpilih setelah tombol Filter ditekan.
+- **Penyertaan Identitas Nama Desa pada Kolom SLS & Export Excel (`Se2026MonitoringService.php`, `IdentifikasiPendataanService.php`, `identifikasi-pendataan.blade.php`)**:
+  - **Pemetaan Master Desa Otomatis (10 Digit BPS)**: Membangun method `getDesaNameMap()` yang memetakan 10 digit kode wilayah (`LEFT(id_subsls, 10)`) dari data SIPW/Wilkerstat ke nama desa resmi (mencakup 100% dari 249 desa/kelurahan di Kabupaten Demak).
+  - **Tampilan Tabel Interaktif**: Menambahkan badge `🏡 Desa [Nama Desa]` di atas nama SLS pada kolom ketiga (**Desa & Nama SLS / Sub-SLS**), lengkap dengan integrasi `data-search` sehingga pencarian nama desa pada search box DataTables berfungsi secara instan.
+  - **Sinkronisasi Export Excel**: Menambahkan informasi nama desa pada kolom nama SLS di file Excel export (`[Nama SLS] (Desa [Nama Desa])`).
+
 
 
 

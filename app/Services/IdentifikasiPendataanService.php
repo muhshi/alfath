@@ -45,6 +45,7 @@ class IdentifikasiPendataanService
         $selectedDate = $datesInfo['selectedDate'];
         $availableDates = $datesInfo['availableDates'];
         $kecNameMap = $this->monitoringService->getKecNameMap();
+        $desaNameMap = $this->monitoringService->getDesaNameMap();
 
         $filterKategori = $request->get('kategori', 'anomali_only');
         $statusSubmitFilter = $request->get('status_submit', 'all');
@@ -64,7 +65,7 @@ class IdentifikasiPendataanService
             $hideNonSls = true;
         }
 
-        $cacheKey = "se2026_identifikasi_w90_v{$cacheVersion}_" . md5(json_encode([
+        $cacheKey = "se2026_identifikasi_w90d_v{$cacheVersion}_" . md5(json_encode([
             'date' => $selectedDate,
             'kodekec' => $kodekec,
             'kategori' => $filterKategori,
@@ -75,7 +76,7 @@ class IdentifikasiPendataanService
         ]));
 
         $result = $cacheStore->remember($cacheKey, now()->addHours(12), function () use (
-            $request, $selectedDate, $availableDates, $kecNameMap,
+            $request, $selectedDate, $availableDates, $kecNameMap, $desaNameMap,
             $filterKategori, $statusSubmitFilter, $filterTipeWilayah, $hideNonSls, $kodekec, $search
         ) {
             $rawSlsRecords = $this->monitoringService->getSlsQuery($request, $selectedDate);
@@ -119,6 +120,10 @@ class IdentifikasiPendataanService
                 $row->is_non_sls = (bool) $isNonSls;
                 $row->is_non_pemukiman = (bool) $isNonSls;
                 $row->digit11 = $digit11;
+
+                $kdDesa = substr((string) ($row->region_code ?? ''), 0, 10);
+                $row->kode_desa = $kdDesa;
+                $row->nama_desa = $desaNameMap[$kdDesa] ?? '-';
 
                 $summary['total_all_sls']++;
                 if ($isNonSls) {
@@ -284,6 +289,7 @@ class IdentifikasiPendataanService
                 'availableDates' => $availableDates,
                 'selectedDate' => $selectedDate,
                 'kecNameMap' => $kecNameMap,
+                'desaNameMap' => $desaNameMap,
                 'filterKategori' => $filterKategori,
                 'statusSubmitFilter' => $statusSubmitFilter,
                 'filterTipeWilayah' => $filterTipeWilayah,
@@ -318,8 +324,11 @@ class IdentifikasiPendataanService
         $result['summary'] = array_merge($defaultSummary, (array) ($result['summary'] ?? []));
 
         if (isset($result['records']) && is_iterable($result['records'])) {
-            $result['records'] = collect($result['records'])->map(function ($row) {
+            $result['records'] = collect($result['records'])->map(function ($row) use ($desaNameMap) {
                 if (is_object($row)) {
+                    $kdDesa = $row->kode_desa ?? substr((string) ($row->region_code ?? ''), 0, 10);
+                    $row->kode_desa = $kdDesa;
+                    $row->nama_desa = $row->nama_desa ?? ($desaNameMap[$kdDesa] ?? '-');
                     $row->pct_murni_vs_wilkerstat = $row->pct_murni_vs_wilkerstat ?? null;
                     $row->is_saved_by_wilkerstat = $row->is_saved_by_wilkerstat ?? false;
                     $row->wilkerstat_muatan = $row->wilkerstat_muatan ?? 0;
@@ -417,7 +426,8 @@ class IdentifikasiPendataanService
             $sheet->setCellValue('C' . $rowIdx, $kecNameMap[$row->kode_kec] ?? 'Kec. ' . $row->kode_kec);
             $sheet->setCellValue('D' . $rowIdx, $row->region_code);
             $sheet->setCellValue('E' . $rowIdx, $jenisWilayah);
-            $sheet->setCellValue('F' . $rowIdx, $row->nama_sls);
+            $namaSlsLengkap = $row->nama_sls . (!empty($row->nama_desa) && $row->nama_desa !== '-' ? ' (Desa ' . $row->nama_desa . ')' : '');
+            $sheet->setCellValue('F' . $rowIdx, $namaSlsLengkap);
             $sheet->setCellValue('G' . $rowIdx, $row->nama_pencacah);
             $sheet->setCellValue('H' . $rowIdx, $row->nama_pengawas ?: '-');
             $sheet->setCellValue('I' . $rowIdx, $statusQc);

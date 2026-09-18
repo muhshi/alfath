@@ -36,6 +36,28 @@ class Se2026MonitoringService
     }
 
     /**
+     * Master Desa Map (10 digit BPS Code => Nama Desa)
+     */
+    public function getDesaNameMap(): array
+    {
+        return \Illuminate\Support\Facades\Cache::store('file')->remember('se2026_desa_name_map', now()->addDays(7), function () {
+            $connName = config()->has('database.connections.fasih') ? 'fasih' : null;
+            $db = $connName ? DB::connection($connName) : DB::connection();
+
+            return $db->table('sipw')
+                ->whereNotNull('nmdesa')
+                ->where('nmdesa', '!=', '')
+                ->select(
+                    DB::raw('LEFT(id_subsls, 10) as kode_desa'),
+                    DB::raw('MAX(nmdesa) as nama_desa')
+                )
+                ->groupBy(DB::raw('LEFT(id_subsls, 10)'))
+                ->pluck('nama_desa', 'kode_desa')
+                ->toArray();
+        });
+    }
+
+    /**
      * Get available dates list and resolved selected date.
      */
     public function getAvailableDates(?string $selectedDate = null): array
