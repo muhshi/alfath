@@ -151,31 +151,35 @@ return [
         ],
 
         [
-            'text' => 'Tabel Petugas',
-            'url' => 'dashboard-pengolahan',
-            'icon' => 'ti ti-table',
-            'active' => ['dashboard-pengolahan'],
-        ],
-
-        [
-            'text' => 'Timeline Submit',
-            'url' => 'timeline-petugas',
-            'icon' => 'ti ti-calendar-time',
-            'active' => ['timeline-petugas'],
-        ],
-
-        [
-            'text' => 'Anomali Geotag',
-            'url' => 'dashboard-anomali-geotag',
-            'icon' => 'ti ti-map-pin-cancel',
-            'active' => ['dashboard-anomali-geotag*'],
-        ],
-
-        [
-            'text' => 'Identifikasi Hasil',
-            'url' => 'identifikasi-pendataan',
-            'icon' => 'ti ti-shield-check',
-            'active' => ['identifikasi-pendataan*'],
+            'text' => 'Sensus Ekonomi 2026',
+            'icon' => 'ti ti-chart-dots-3',
+            'submenu' => [
+                [
+                    'text' => 'Executive Dashboard',
+                    'url' => 'dashboard-se2026',
+                    'icon' => 'ti ti-chart-bar',
+                ],
+                [
+                    'text' => 'Tabel Petugas & SLS',
+                    'url' => 'dashboard-pengolahan',
+                    'icon' => 'ti ti-table',
+                ],
+                [
+                    'text' => 'Timeline Submit',
+                    'url' => 'timeline-petugas',
+                    'icon' => 'ti ti-calendar-time',
+                ],
+                [
+                    'text' => 'Anomali Geotag',
+                    'url' => 'dashboard-anomali-geotag',
+                    'icon' => 'ti ti-map-pin-cancel',
+                ],
+                [
+                    'text' => 'Identifikasi Hasil SLS',
+                    'url' => 'identifikasi-pendataan',
+                    'icon' => 'ti ti-shield-check',
+                ],
+            ],
         ],
 
         [
@@ -190,21 +194,6 @@ return [
             'icon' => 'ti ti-file-analytics',
             'active' => ['surveys?category=validasi'],
         ],
-
-        // [
-        //     'text' => 'Support 3',
-        //     'url' => '#',
-        //     'icon' => 'ti ti-help',
-        //     'active' => ['support3'],
-        //     'submenu' => [
-        //         [
-        //             'text' => 'Ticket',
-        //             'url' => 'support3',
-        //             'icon' => 'ti ti-article',
-        //         ]
-        //     ],
-        // ],
-
     ],
 
     /*

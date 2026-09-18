@@ -474,6 +474,14 @@ Script `deploy.sh` secara otomatis mengeksekusi:
   - **Sinkronisasi Cache & Metrik Responsif**:
     - Parameter `hide_non_sls` dan `tipe_wilayah` disertakan dalam key caching 12 jam, memastikan pergantian filter berjalan instan dan akurat tanpa lag.
     - Metrik kartu ringkasan KPI dan badge tabel diperbarui untuk menampilkan penanda khusus `🌾 Non-SLS` serta status penyembunyian Non-SLS yang jelas.
+- **Penyederhanaan Navbar & Optimasi UI/UX Modul SE2026 (`config/tablar.php`, `tabler-init.js`, `home.blade.php`)**:
+  - **Pengelompokan Navbar Sensus Ekonomi 2026 ke dalam Submenu**:
+    - Merestrukturisasi menu navbar atas yang sebelumnya membentang melebar (7 menu berjejer) menjadi lebih ringkas, elegan, dan terstruktur.
+    - Seluruh modul SE2026 kini dikelompokkan ke dalam satu dropdown menu induk **`Sensus Ekonomi 2026`** (`Executive Dashboard`, `Tabel Petugas & SLS`, `Timeline Submit`, `Anomali Geotag`, dan `Identifikasi Hasil SLS`), berdampingan dengan menu rutin `Monitoring` dan `Validasi`.
+  - **Perbaikan Dropdown Pintasan Beranda & Export Global Library**:
+    - Mengintegrasikan `@popperjs/core` dan `bootstrap` ke dalam `tabler-init.js` serta menyediakan script handler interaktif (*click toggle*, *click-outside-to-close*, dan *ESC key support*), sehingga dropdown Pintasan Modul SE2026 di Beranda dapat dibuka dan ditutup dengan responsif dan mulus di seluruh browser.
+  - **Pembersihan Redundansi Tombol di Beranda (`home.blade.php`)**:
+    - Menata ulang hierarki tombol pada hero banner untuk mengurangi kelelahan visual (*cognitive load*): 2 Call-to-Action utama yang menonjol (`Buka Executive Dashboard` & `Tabel Petugas SE2026`), didukung *Quick Access Bar* minimalis untuk modul Analisis & QC.
 
 
 
